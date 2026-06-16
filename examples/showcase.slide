@@ -1,0 +1,132 @@
+# 全型ショーケース
+
+slide title
+  headline "新営業支援ツール {SalesBoost} 導入のご提案"
+  subtitle "営業部 業務改善プロジェクト"
+  foot "2026年5月 / 株式会社サンプル"
+
+---
+
+slide agenda
+  kicker "本日の内容"
+  headline "目次"
+  col "現状の課題"
+  col "提案の概要" highlight
+  col "導入効果"
+  col "費用とスケジュール"
+
+---
+
+slide quote
+  kicker "問いかけ"
+  headline "営業1人あたり、月に{12時間}を報告作業に使っていませんか？"
+  foot "※ 社内アンケート（n=48）より"
+
+---
+
+slide bullets
+  kicker "現状整理"
+  headline "営業現場が抱える3つの課題"
+  col "報告作業の負担"
+    "日報・週報の手入力に毎日30分"
+  col "情報の分散" highlight
+    "顧客情報がExcelとメールに散在"
+  col "案件の見落とし"
+    "フォロー漏れで失注が発生"
+
+---
+
+slide cards
+  kicker "提案の概要"
+  headline "SalesBoost の主要機能"
+  col "自動日報"
+    "活動を自動で記録し報告を生成"
+  col "顧客一元管理" highlight
+    "全顧客情報を1画面に集約"
+  col "アラート"
+    "フォロー時期を自動で通知"
+  col "ダッシュボード"
+    "案件状況をリアルタイム可視化"
+
+---
+
+slide pros_cons
+  kicker "導入判断の材料"
+  headline "導入のメリットと留意点"
+  col "メリット"
+    "報告時間を月10時間削減"
+    "失注率の低下が見込める"
+    "管理者の状況把握が容易に"
+  col "留意点"
+    "初期の入力ルール整備が必要"
+    "定着まで約1〜2か月"
+
+---
+
+slide table
+  kicker "他社比較"
+  headline "主要3製品の早見表"
+  col "項目"
+    "SalesBoost"
+    "A社"
+    "B社"
+  col "月額"
+    "2,580円"
+    "3,980円"
+    "3,200円"
+  col "自動日報" highlight
+    "○"
+    "×"
+    "△"
+  col "サポート"
+    "電話+チャット"
+    "メール"
+    "チャット"
+
+---
+
+slide process
+  kicker "導入の流れ"
+  headline "4ステップで1か月以内に稼働"
+  col "契約"
+    "申込から最短3日"
+  col "初期設定" highlight
+    "顧客データを移行"
+  col "研修"
+    "オンライン説明会を実施"
+  col "本稼働"
+    "運用開始・効果測定"
+
+---
+
+slide kpi
+  kicker "想定効果"
+  headline "導入1年で見込まれる成果"
+  col "-40%"
+    "報告作業時間"
+  col "+15%" highlight
+    "成約率"
+  col "120h"
+    "年間削減時間/人"
+
+---
+
+slide section
+  kicker "03"
+  headline "費用とスケジュール"
+
+---
+
+slide compare
+  kicker "ご提案"
+  headline "推奨は{スタンダードプラン}です"
+  foot "税抜・年間契約の場合"
+  col "ライト"
+    月額 "1,980円"
+    上限 "5名"
+  col "スタンダード" highlight
+    月額 "2,580円"
+    上限 "無制限"
+  col "プレミアム"
+    月額 "4,800円"
+    上限 "無制限+API"

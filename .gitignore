@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# pytest
+.pytest_cache/
+
+# slidegen 生成物（モンタージュ/出力pptx）
+out/
+
+# OS
+.DS_Store

@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "slidegen"
+version = "0.1.0"
+description = "記法(DSL)から編集可能なPowerPoint(.pptx)を生成する。アプリのバックエンド／単一CLIの両方で使える。"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "python-pptx",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pillow",
+]
+
+[project.scripts]
+slidegen = "slidegen.__main__:main"
+
+[tool.setuptools]
+# 配布対象は import パッケージ slidegen のみ。tests/examples/docs は repo 同梱だが wheel 非同梱。
+packages = ["slidegen"]

@@ -1,0 +1,97 @@
+# 39パターン由来の新型ショーケース
+
+slide matrix
+  kicker "ポジショニング"
+  headline "自社製品の市場ポジション"
+  x_axis "← 低価格 ／ 高価格 →"
+  y_axis "← 機能少 ／ 機能多 →"
+  col "高機能・高価格"
+    "競合A、競合B"
+  col "高機能・低価格" highlight
+    "自社製品（狙うべき領域）"
+  col "低機能・高価格"
+    "（空白市場）"
+  col "低機能・低価格"
+    "競合C"
+
+---
+
+slide cycle
+  kicker "改善の進め方"
+  headline "PDCAサイクルで継続的に改善する"
+  col "Plan"
+    "計画を立てる"
+  col "Do"
+    "実行する"
+  col "Check" highlight
+    "結果を測定し評価"
+  col "Action"
+    "次サイクルへ反映"
+
+---
+
+slide pyramid
+  kicker "ユーザー階層"
+  headline "上位ほど熱量が高く、規模は小さい"
+  col "コア顧客"
+    "リピート率90%以上"
+  col "ロイヤル顧客" highlight
+    "月1回以上の利用"
+  col "ライト顧客"
+    "年数回の利用"
+  col "潜在顧客"
+    "未利用・認知あり"
+
+---
+
+slide tree
+  kicker "課題の構造化"
+  headline "売上低下の要因分解"
+  col "売上低下"
+    "前年比 -12%"
+  col "客数の減少"
+    "新規流入が-20%"
+  col "客単価の低下" highlight
+    "値下げ施策が原因"
+  col "リピート率"
+    "横ばい（変化なし）"
+
+---
+
+slide formula
+  kicker "成果の構造"
+  headline "成果 ＝ 質 × 量 × 継続"
+  col "質"
+    "1回あたりの価値"
+  col "量" highlight
+    "頻度・回数"
+  col "継続"
+    "期間"
+  col "成果"
+    "総合的なアウトプット"
+
+---
+
+slide timeline
+  kicker "プロジェクト年表"
+  headline "3年間の主要マイルストーン"
+  col "2024 Q1"
+    "プロジェクト立ち上げ"
+  col "2024 Q3"
+    "MVP リリース"
+  col "2025 Q2" highlight
+    "ユーザー1万人突破"
+  col "2026 Q1"
+    "海外展開を開始"
+
+---
+
+slide image_left
+  kicker "サービス概要"
+  headline "3つの特徴で業務を変える"
+  col "自動化"
+    "繰り返し作業をゼロに"
+  col "可視化" highlight
+    "状況を一目で把握"
+  col "連携"
+    "既存ツールとシームレス"

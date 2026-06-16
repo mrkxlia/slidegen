@@ -1,0 +1,36 @@
+# 基底 split_layout の実証：同一基底から異なる型が出る
+
+slide before_after
+  kicker "導入効果"
+  headline "運用はこう変わる"
+  foot "Before/After ラベルと中央矢印は型から自動付与"
+  col
+    "手動デプロイで4時間"
+    "障害が頻発"
+    "復旧が属人化"
+  col
+    "自動デプロイで5分"
+    "障害ほぼゼロ"
+    "手順を標準化"
+
+---
+
+slide problem_solution
+  kicker "提案の骨子"
+  headline "現場の課題を仕組みで解く"
+  col
+    "申請の差し戻しが多い"
+    "承認に平均3日"
+  col
+    "入力チェックを自動化"
+    "ワークフローで即日承認"
+
+---
+
+slide hypothesis_prediction
+  kicker "検証設計"
+  headline "施策の効果を事前に定義する"
+  col
+    "オンボーディング強化で定着率が上がる"
+  col
+    "30日継続率が15pt改善する"
