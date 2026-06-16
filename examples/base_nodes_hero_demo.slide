@@ -1,0 +1,48 @@
+# 基底 nodes_and_connectors と hero_canvas の実証
+
+slide process_flow
+  kicker "進め方"
+  headline "リリースまでの4ステップ"
+  foot "横一列＋矢印は型が自動付与"
+  col "要件定義"
+    "体制と要件を確定"
+  col "設計"
+    "アーキを決める"
+  col "実装"
+    "TDDで開発"
+  col "リリース"
+    "段階的に展開"
+
+---
+
+slide pdca
+  kicker "改善サイクル"
+  headline "PDCAを回す"
+  foot "円周配置＋ラベルは型が自動"
+  col
+    "目標と計画"
+  col
+    "実行"
+  col
+    "効果測定"
+  col
+    "改善"
+
+---
+
+slide big_fact
+  number "80%"
+  caption "自動化による障害削減率"
+  foot "※前年比・社内集計"
+
+---
+
+slide stat_trio
+  kicker "実績"
+  headline "導入後の成果"
+  col "98%"
+    "顧客継続率"
+  col "1.5億"
+    "累計取引額"
+  col "24h"
+    "平均応答時間"

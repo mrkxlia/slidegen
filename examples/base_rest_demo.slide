@@ -1,0 +1,47 @@
+# 残り4基底の実証：columns_with_header / band_strip / narrative_curve / framed_canvas
+
+slide policy_3col
+  kicker "論点整理"
+  headline "次期システムの論点"
+  lead "現状の課題を3つの論点で整理する"
+  foot "共通ヘッダー帯＋3列は型が自動"
+  col "コスト"
+    "保守費が年々増加"
+    "属人化でリスク大"
+  col "スピード"
+    "申請処理に3日かかる"
+  col "ガバナンス"
+    "監査ログが分散"
+
+---
+
+slide section_band
+  headline "第2章 設計方針"
+  caption "なぜこのアーキテクチャを選ぶか"
+
+---
+
+slide emotion_arc
+  kicker "顧客体験"
+  headline "申込から定着までの感情の起伏"
+  foot "折れ線＋強調点の吹き出しは型が自動"
+  col "認知"
+    "0"
+  col "検討"
+    "1"
+  col "申込"
+    "2"
+  col "初回利用" highlight
+    "-2"
+    "ここが離脱の山場"
+  col "定着"
+    "2"
+
+---
+
+slide program
+  headline "開会式 式次第"
+  col "開会の辞"
+  col "来賓挨拶"
+  col "記念講演"
+  col "閉会の辞"

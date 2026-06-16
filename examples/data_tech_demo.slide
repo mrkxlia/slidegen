@@ -1,0 +1,60 @@
+# データ補助・waterfall・技術系の実証
+
+slide waterfall
+  kicker "収益分解"
+  headline "営業利益の増減要因"
+  foot "増=青・減=赤・着地=紺（highlightで着地指定）"
+  col "期初利益" highlight
+    "100"
+  col "売上増"
+    "+45"
+  col "コスト増"
+    "-20"
+  col "為替影響"
+    "-8"
+  col "期末利益" highlight
+    "117"
+
+---
+
+slide data_source_footer
+  kicker "市場規模"
+  headline "国内SaaS市場は年率18%で拡大している"
+  message "2025年の市場規模は1.2兆円。{特に中小企業向けが牽引}し、今後5年で2倍超に達する見込み。"
+  source "矢野経済研究所"
+  period "2020〜2025"
+  n "—"
+  note "編集部推計を含む"
+
+---
+
+slide code_block
+  kicker "実装例"
+  headline "リトライ処理の実装"
+  lang "python — retry.py"
+  col
+    "def fetch_with_retry(url, n=3):"
+    "    for i in range(n):"
+    "        try:"
+    "            return http.get(url)"
+    "        except TimeoutError:"
+    "            sleep(2 ** i)"
+    "    raise RuntimeError('failed')"
+
+---
+
+slide api_endpoint_table
+  kicker "API仕様"
+  headline "ユーザーリソースのエンドポイント"
+  col "GET"
+    "/api/users"
+    "ユーザー一覧を取得"
+  col "POST"
+    "/api/users"
+    "ユーザーを新規作成"
+  col "GET"
+    "/api/users/{id}"
+    "個別ユーザーを取得"
+  col "DELETE"
+    "/api/users/{id}"
+    "ユーザーを削除"

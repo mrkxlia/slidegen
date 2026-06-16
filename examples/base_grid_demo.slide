@@ -1,0 +1,45 @@
+# 基底 grid_2d の実証：行×列のセル表（評価記号・RAGの自動色分け）
+
+slide comparison_matrix
+  kicker "技術選定"
+  headline "フロントエンド技術の比較"
+  foot "◎○△× は型がセル色に変換・自社行を強調"
+  columns "性能" "コスト" "学習コスト" "エコシステム"
+  col "React"
+    "◎"
+    "○"
+    "△"
+    "◎"
+  col "Vue"
+    "○"
+    "◎"
+    "◎"
+    "○"
+  col "自社採用" highlight
+    "◎"
+    "◎"
+    "○"
+    "◎"
+
+---
+
+slide raci
+  kicker "体制"
+  headline "リリース作業の責任分担"
+  foot "R/A/C/I を色で識別"
+  columns "PM" "開発" "QA" "運用"
+  col "要件定義"
+    "A"
+    "C"
+    "I"
+    "I"
+  col "実装"
+    "I"
+    "R"
+    "C"
+    "I"
+  col "リリース判定"
+    "A"
+    "C"
+    "R"
+    "C"
