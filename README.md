@@ -7,6 +7,19 @@
 slidegen は **アプリのバックエンド**（import して使うライブラリ）としても、
 **単一CLI**（`slidegen` コマンド）としても使える。
 
+## Web アプリ（Cloudflare 無料枠）
+
+AIと壁打ちしてスライドを作る Web フロント＋ゲートウェイを `frontend/` と `gateway/` に同梱。
+**全て Cloudflare 無料枠**で動く構成（pptx生成はブラウザ内Pyodideで実行＝サーバCPU制限なし）。
+
+- `frontend/` … React+Vite+TS（Cloudflare Pages）。チャット/DSLエディタ/ブラウザpptx生成。
+- `gateway/` … Hono/TS（Cloudflare Workers）。Cloudflare Access 認証付きの LLM 中継。
+- LLM … テストは Gemini/OpenRouter/Workers AI（無料枠）、本番は API キーを secret 設定。
+
+デプロイと運用は **[docs/deployment.md](docs/deployment.md)** を参照。
+最初に STEP0 関門（`bash tools/build_wheel.sh && node tools/pyodide_spike.mjs`）で
+ブラウザ相当のpptx生成が通ることを確認すること。
+
 ## インストール
 
 ```bash

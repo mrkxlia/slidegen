@@ -1,0 +1,12 @@
+# Cloudflare Pages ヘッダ設定。
+# wheel は内容ハッシュ付きディレクトリ配信なので immutable で長期キャッシュしてよい。
+/wheels/*
+  Cache-Control: public, max-age=31536000, immutable
+  Content-Type: application/octet-stream
+
+# 注: Pyodide ランタイム(.wasm 等)は CDN(jsDelivr) から配信されるため
+# ここでの MIME 指定は不要。自己ホストする場合は /pyodide/* に
+# `Content-Type: application/wasm` を追加すること。
+#
+# 本構成は SharedArrayBuffer 不要のため COOP/COEP は設定しない。
+# CSP を導入する場合は WASM 実行のため script-src に 'wasm-unsafe-eval' を許可する。
