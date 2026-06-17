@@ -4,6 +4,7 @@ import type { Message } from "./phases";
 import type { IngestResult } from "./ingest";
 import type { ModelInfo } from "./api";
 import type { RenderStage } from "./render/renderClient";
+import { renderMarkdown } from "./md";
 
 const PHASE_LABELS: Record<Phase, string> = {
   hearing: "① 壁打ち",
@@ -33,9 +34,33 @@ export function ChatView({ messages }: { messages: Message[] }) {
     <div className="chat">
       {messages.map((m, i) => (
         <div key={i} className={`msg ${m.role}`}>
-          <div className="bubble">{m.content}</div>
+          {m.role === "assistant"
+            ? <div className="bubble" dangerouslySetInnerHTML={{ __html: renderMarkdown(m.content) }} />
+            : <div className="bubble">{m.content}</div>}
         </div>
       ))}
+    </div>
+  );
+}
+
+// Pyodide ロード〜生成の進捗オーバーレイ。
+const STAGE_LABEL: Record<RenderStage, string> = {
+  idle: "", ready: "",
+  "loading-pyodide": "Pyodide を読み込み中…（初回のみ数秒）",
+  "loading-micropip": "パッケージ管理を初期化中…",
+  "installing-slidegen": "slidegen と依存(python-pptx 等)を導入中…",
+  "warming-up": "ウォームアップ中…",
+  error: "エラーが発生しました",
+};
+export function RenderOverlay({ stage, rendering }: { stage: RenderStage; rendering: boolean }) {
+  const loading = rendering && stage !== "ready" && stage !== "idle";
+  if (!loading) return null;
+  return (
+    <div className="overlay">
+      <div className="overlay-card">
+        <div className="spinner" />
+        <p>{STAGE_LABEL[stage] || "pptx を生成中…"}</p>
+      </div>
     </div>
   );
 }
@@ -49,6 +74,7 @@ export function Sidebar(props: {
   onPurposeChange: (p: string) => void;
   attachments: IngestResult[];
   onFiles: (files: FileList | null) => void;
+  onRemoveAttachment: (name: string) => void;
   onReset: () => void;
 }) {
   return (
@@ -76,7 +102,12 @@ export function Sidebar(props: {
         onChange={(e) => props.onFiles(e.target.files)}
       />
       <ul className="attach-list">
-        {props.attachments.map((a) => <li key={a.name}>✓ {a.name} … {a.kind}</li>)}
+        {props.attachments.map((a) => (
+          <li key={a.name}>
+            <span>✓ {a.name} … {a.kind}</span>
+            <button className="link-btn" title="削除" onClick={() => props.onRemoveAttachment(a.name)}>×</button>
+          </li>
+        ))}
       </ul>
 
       <hr />
@@ -96,19 +127,18 @@ export function DslPanel(props: {
   canApplyReview: boolean;
   renderStage: RenderStage;
   rendering: boolean;
+  generating: boolean;
   error: string | null;
 }) {
   return (
     <div className="dslpanel">
       <div className="dsl-toolbar">
-        <button onClick={props.onRender} disabled={props.rendering}>
+        <button onClick={props.onRender} disabled={props.rendering || props.generating}>
           {props.rendering ? "生成中…" : "▶ PowerPointを生成・ダウンロード"}
         </button>
-        <button className="ghost" onClick={props.onReview}>🔍 AIレビュー</button>
+        <button className="ghost" onClick={props.onReview} disabled={props.generating}>🔍 AIレビュー</button>
         <button className="ghost" onClick={props.onBackToChat}>← チャットで修正</button>
-        {props.renderStage !== "idle" && props.renderStage !== "ready" && (
-          <span className="stage">Pyodide: {props.renderStage}…</span>
-        )}
+        {props.generating && <span className="stage">✍️ AI生成中…</span>}
       </div>
       {props.error && <div className="error">⚠ {props.error}</div>}
       <textarea

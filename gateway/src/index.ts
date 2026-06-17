@@ -16,6 +16,7 @@ import {
   availableModels, chat, findModel, LLMError,
   type ChatMessage, type ModelEntry, type ProviderEnv,
 } from "./providers";
+import { streamDeltas } from "./stream";
 
 type Env = ProviderEnv & {
   RL?: KVNamespace;
@@ -99,6 +100,41 @@ app.post("/api/chat", async (c) => {
 
   const primary = findModel(body.modelId);
   if (!primary) return c.json({ error: `unknown modelId: ${body.modelId}` }, 400);
+
+  // --- ストリーミング(SSE) ---
+  // primary のみ対象。delta を `data: {"delta": "..."}`、終了は `data: {"done": true}`、
+  // 失敗は `data: {"error": "..."}` で返す（共通形式に正規化済み）。
+  const wantStream = c.req.query("stream") === "1";
+  if (wantStream) {
+    const stream = new ReadableStream<Uint8Array>({
+      async start(ctrl) {
+        const enc = new TextEncoder();
+        const send = (obj: unknown) => ctrl.enqueue(enc.encode(`data: ${JSON.stringify(obj)}\n\n`));
+        try {
+          for await (const delta of streamDeltas(
+            { provider: primary.provider, model: primary.model, system: body.system, messages: body.messages },
+            c.env,
+          )) {
+            send({ delta });
+          }
+          send({ done: true, provider: primary.provider, model: primary.id });
+        } catch (e) {
+          const err = e instanceof LLMError ? e : new LLMError(String(e));
+          send({ error: err.message, status: err.status });
+        } finally {
+          ctrl.close();
+        }
+      },
+    });
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no",
+      },
+    });
+  }
 
   // フォールバック順: 指定モデル → 同 tier の利用可能モデル（別プロバイダ）
   const usable = availableModels(c.env);

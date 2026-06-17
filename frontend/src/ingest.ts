@@ -2,9 +2,7 @@
 // 旧 ingest.py の移植（pandas → SheetJS、python-pptx 読取 → JSZip）。
 // 返す summary を LLM 文脈に入れ、数値はネイティブチャート型(bar_chart 等)で反映させる。
 
-import * as XLSX from "xlsx";
-import JSZip from "jszip";
-
+// xlsx / jszip は添付処理時のみ必要なので動的 import で別チャンク化し、初期ロードを軽くする。
 export type Kind = "table" | "pptx" | "image" | "text" | "unknown";
 
 export interface IngestResult {
@@ -18,8 +16,9 @@ export async function ingest(file: File): Promise<IngestResult> {
   const ext = name.slice(name.lastIndexOf(".")).toLowerCase();
   const buf = await file.arrayBuffer();
 
-  if (ext === ".xlsx" || ext === ".xls") return ingestTable(name, buf, false);
-  if (ext === ".csv" || ext === ".tsv") return ingestTable(name, buf, ext === ".tsv");
+  if (ext === ".xlsx" || ext === ".xls") return ingestTable(name, buf, "binary");
+  if (ext === ".csv") return ingestTable(name, buf, "csv");
+  if (ext === ".tsv") return ingestTable(name, buf, "tsv");
   if (ext === ".pptx") return ingestPptx(name, buf);
   if ([".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"].includes(ext)) {
     return { name, kind: "image",
@@ -37,12 +36,17 @@ function fmt(n: number): string {
   return Number(n.toPrecision(4)).toString();
 }
 
-function ingestTable(name: string, buf: ArrayBuffer, tsv: boolean): IngestResult {
-  let wb: XLSX.WorkBook;
+async function ingestTable(name: string, buf: ArrayBuffer, format: "binary" | "csv" | "tsv"): Promise<IngestResult> {
+  const XLSX = await import("xlsx");
+  let wb: import("xlsx").WorkBook;
   try {
-    wb = tsv
-      ? XLSX.read(new TextDecoder().decode(buf), { type: "string", FS: "\t" })
-      : XLSX.read(buf, { type: "array" });
+    if (format === "binary") {
+      wb = XLSX.read(buf, { type: "array" });
+    } else {
+      // CSV/TSV は UTF-8 文字列として読む（バイト読みだと日本語が文字化けする）
+      const text = new TextDecoder("utf-8").decode(buf);
+      wb = XLSX.read(text, { type: "string", FS: format === "tsv" ? "\t" : "," });
+    }
   } catch (e) {
     return { name, kind: "table", summary: `表データ「${name}」の読み込み失敗: ${(e as Error).message}` };
   }
@@ -84,6 +88,7 @@ function ingestTable(name: string, buf: ArrayBuffer, tsv: boolean): IngestResult
 
 async function ingestPptx(name: string, buf: ArrayBuffer): Promise<IngestResult> {
   try {
+    const { default: JSZip } = await import("jszip");
     const zip = await JSZip.loadAsync(buf);
     const slidePaths = Object.keys(zip.files)
       .filter((p) => /^ppt\/slides\/slide\d+\.xml$/.test(p))

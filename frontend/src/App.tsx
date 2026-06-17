@@ -9,7 +9,7 @@ import {
 import { ingest, type IngestResult } from "./ingest";
 import * as api from "./api";
 import { initRenderer, renderDsl, downloadPptx, type RenderStage } from "./render/renderClient";
-import { PhaseBar, ChatView, Sidebar, DslPanel } from "./components";
+import { PhaseBar, ChatView, Sidebar, DslPanel, RenderOverlay } from "./components";
 
 export function App() {
   const [models, setModels] = useState<api.ModelInfo[]>([]);
@@ -42,8 +42,8 @@ export function App() {
   const attachmentsSummary = () => attachments.map((a) => a.summary).join("\n\n");
   const purposeText = () => (purpose.startsWith("（") ? "" : purpose);
 
-  // 現フェーズの system + (必要なら)文脈 + トリミング履歴で LLM を呼ぶ。
-  async function callLLM(p: Phase, forceContext = false): Promise<string> {
+  // 現フェーズの system + (必要なら)文脈 + トリミング履歴を組み立てる。
+  function prepare(p: Phase, baseMsgs: Message[], forceContext = false): { system: string; messages: Message[] } {
     let system = phaseSystemPrompt(p);
     if ((p === "hearing" || p === "outline") && dslText.trim()) {
       system += "\n\n## 補足: すでにスライドが一度生成されています。" +
@@ -51,13 +51,25 @@ export function App() {
         "最初から全項目を聞き直さない。必要な確認だけ簡潔に行い、" +
         "準備ができたら [READY_TO_GENERATE] を出す。";
     }
-    let msgs = trimHistory(messages);
+    let msgs = trimHistory(baseMsgs);
     if (forceContext || !contextInjected.current) {
       const preamble = buildContextPreamble(purposeText(), attachmentsSummary());
       if (preamble) msgs = [{ role: "user", content: preamble }, ...msgs];
       contextInjected.current = true;
     }
-    const res = await api.chat({ modelId, system, messages: msgs });
+    return { system, messages: msgs };
+  }
+
+  // ストリーミングで assistant 応答を受け取り、最後の assistant メッセージへ逐次反映。
+  // 返り値は raw 全文（タグ込み）。
+  async function streamAssistant(p: Phase, baseMsgs: Message[], forceContext = false): Promise<string> {
+    const { system, messages: msgs } = prepare(p, baseMsgs, forceContext);
+    setMessages([...baseMsgs, { role: "assistant", content: "" }]);
+    const res = await api.chatStream({ modelId, system, messages: msgs }, (_d, full) => {
+      // タグは表示前に除去（生成途中で一瞬見えるのを防ぐ）
+      const shown = scanTags(full).cleaned;
+      setMessages([...baseMsgs, { role: "assistant", content: shown || "▍" }]);
+    });
     return res.text;
   }
 
@@ -65,21 +77,21 @@ export function App() {
     const text = input.trim();
     if (!text || busy || !modelId) return;
     setError(null);
-    const userMsg: Message = { role: "user", content: text };
-    const newMsgs = [...messages, userMsg];
+    const newMsgs = [...messages, { role: "user", content: text } as Message];
     setMessages(newMsgs);
     setInput("");
     setBusy(true);
     try {
-      const raw = await callLLM(phase);
+      const raw = await streamAssistant(phase, newMsgs);
       const scan = scanTags(raw);
-      setMessages([...newMsgs, { role: "assistant", content: scan.cleaned }]);
+      const settled = [...newMsgs, { role: "assistant", content: scan.cleaned } as Message];
+      setMessages(settled);
       const np = nextPhase(phase, scan);
       if (scan.readyToGenerate) {
         await generateNow(newMsgs);
       } else if (np !== phase) {
         setPhase(np);
-        if (np === "outline") await autoOutline([...newMsgs, { role: "assistant", content: scan.cleaned }]);
+        if (np === "outline") await autoOutline(settled);
       }
     } catch (e) { handleApiError(e); }
     finally { setBusy(false); }
@@ -88,9 +100,8 @@ export function App() {
   // 流れフェーズに入ったら、すぐ流れ案を出す。
   async function autoOutline(history: Message[]) {
     try {
-      const raw = await callLLM("outline", true);
-      const scan = scanTags(raw);
-      setMessages([...history, { role: "assistant", content: scan.cleaned }]);
+      const raw = await streamAssistant("outline", history, true);
+      setMessages([...history, { role: "assistant", content: scanTags(raw).cleaned }]);
     } catch (e) { handleApiError(e); }
   }
 
@@ -101,25 +112,24 @@ export function App() {
     if (!hasContext) { setError("先に内容を入力するか、目的の選択・ファイル添付をしてください。"); return; }
     setBusy(true);
     setError(null);
+    setReviewText("");
+    const existing = dslText.trim();
+    setPhase("dsl");
+    setDslText(""); // 生成過程を編集欄に逐次表示
     try {
-      const existing = dslText.trim();
-      let dsl: string;
+      let system: string;
+      let messages: Message[];
       if (existing) {
-        const head = (() => {
-          const preamble = buildContextPreamble(purposeText(), attachmentsSummary());
-          return (preamble ? preamble + "\n\n" : "") + "【現在のDSL（これをベースに更新）】\n" + existing;
-        })();
-        const res = await api.chat({
-          modelId, system: phaseSystemPrompt("revise"),
-          messages: [{ role: "user", content: head }, ...trimHistory(hist)],
-        });
-        dsl = res.text;
+        const preamble = buildContextPreamble(purposeText(), attachmentsSummary());
+        const head = (preamble ? preamble + "\n\n" : "") + "【現在のDSL（これをベースに更新）】\n" + existing;
+        system = phaseSystemPrompt("revise");
+        messages = [{ role: "user", content: head }, ...trimHistory(hist)];
       } else {
-        dsl = await callLLM("dsl", true);
+        const prep = prepare("dsl", hist, true);
+        system = prep.system; messages = prep.messages;
       }
-      setDslText(stripFences(dsl));
-      setReviewText("");
-      setPhase("dsl");
+      const res = await api.chatStream({ modelId, system, messages }, (_d, full) => setDslText(stripFences(full)));
+      setDslText(stripFences(res.text));
     } catch (e) { handleApiError(e); }
     finally { setBusy(false); }
   }
@@ -127,13 +137,14 @@ export function App() {
   async function onReview() {
     if (!dslText.trim()) return;
     setBusy(true); setError(null);
+    setReviewText("");
     try {
       const preamble = buildContextPreamble(purposeText(), attachmentsSummary());
       const user = (preamble ? preamble + "\n\n" : "") + "次のDSLをレビューしてください:\n\n" + dslText;
-      const res = await api.chat({
-        modelId, system: phaseSystemPrompt("review"),
-        messages: [{ role: "user", content: user }],
-      });
+      const res = await api.chatStream(
+        { modelId, system: phaseSystemPrompt("review"), messages: [{ role: "user", content: user }] },
+        (_d, full) => setReviewText(full),
+      );
       setReviewText(res.text);
     } catch (e) { handleApiError(e); }
     finally { setBusy(false); }
@@ -167,6 +178,11 @@ export function App() {
     contextInjected.current = false; // 次回 LLM 呼び出しで添付を文脈へ
   }
 
+  function onRemoveAttachment(name: string) {
+    setAttachments(attachments.filter((a) => a.name !== name));
+    contextInjected.current = false;
+  }
+
   function onReset() {
     setMessages([]); setPhase("hearing"); setDslText(""); setReviewText("");
     setAttachments([]); setInput(""); setError(null); contextInjected.current = false;
@@ -187,7 +203,8 @@ export function App() {
       <Sidebar
         models={models} modelId={modelId} onModelChange={setModelId}
         purposes={PURPOSES} purpose={purpose} onPurposeChange={setPurpose}
-        attachments={attachments} onFiles={onFiles} onReset={onReset}
+        attachments={attachments} onFiles={onFiles}
+        onRemoveAttachment={onRemoveAttachment} onReset={onReset}
       />
       <main className="main">
         <h1>🪄 slidegen — AIと壁打ちしてスライドを作る</h1>
@@ -227,11 +244,13 @@ export function App() {
             reviewText={reviewText}
             onApplyReview={applyReview}
             canApplyReview={!!extractFencedDsl(reviewText)}
-            renderStage={renderStage} rendering={rendering} error={null}
+            renderStage={renderStage} rendering={rendering}
+            generating={busy} error={null}
           />
         )}
         {(phase === "dsl") && error && <div className="error">⚠ {error}</div>}
       </main>
+      <RenderOverlay stage={renderStage} rendering={rendering} />
     </div>
   );
 }
