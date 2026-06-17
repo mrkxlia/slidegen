@@ -1,0 +1,33 @@
+name = "slidegen-gateway"
+main = "src/index.ts"
+compatibility_date = "2024-12-05"
+compatibility_flags = ["nodejs_compat"]
+
+# Workers AI バインディング（無料枠 10,000 neurons/日）。
+# 移植先 (Node/Bun) ではこのバインディングは無く、providers 側で workers_ai を無効化する。
+[ai]
+binding = "AI"
+
+# 簡易レート制限・カウンタ用 KV。デプロイ前に `wrangler kv namespace create RL` で id を作って差し替える。
+# [[kv_namespaces]]
+# binding = "RL"
+# id = "<your-kv-namespace-id>"
+
+[vars]
+# 公開してよい設定のみ。秘密は `wrangler secret put` で投入する:
+#   GEMINI_API_KEY / OPENROUTER_API_KEY / OPENAI_API_KEY / ANTHROPIC_API_KEY
+#   CF_ACCOUNT_ID（Workers AI REST フォールバック用・任意）
+# ALLOWED_ORIGIN: フロント(Pages)のオリジン。CORS 許可元。
+ALLOWED_ORIGIN = "http://localhost:5173"
+# ACCESS_TEAM_DOMAIN: 例 "myteam"（→ https://myteam.cloudflareaccess.com）
+ACCESS_TEAM_DOMAIN = ""
+# ACCESS_AUD: Access アプリの Application Audience (AUD) タグ。
+# 未設定だと auth はフェイルクローズ（全リクエスト 500）になる。
+ACCESS_AUD = ""
+# 入力サイズ上限（バイト）。本番キーの暴走課金防止のサーバ強制ガード。
+MAX_INPUT_BYTES = "200000"
+# レート制限: 時間窓(秒)あたりの最大リクエスト数。
+RATE_WINDOW_SEC = "60"
+RATE_MAX_REQUESTS = "30"
+# 開発時に Access を無効化（ローカルのみ）。"1" でバイパス。本番では絶対に設定しない。
+DEV_BYPASS_AUTH = "0"

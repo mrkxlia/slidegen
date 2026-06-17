@@ -16,3 +16,11 @@ out/
 
 # OS
 .DS_Store
+
+# Node / フロント・ゲートウェイ
+node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/public/wheels/
+gateway/.wrangler/
+*.tsbuildinfo
