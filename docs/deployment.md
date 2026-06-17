@@ -29,6 +29,12 @@ bash tools/build_wheel.sh          # slidegen を wheel 化（hash付きdir + .e
 cd tools && npm i pyodide@0.28.3 && node pyodide_spike.mjs
 # → "✔ STEP0 PASS: ... slides" が出れば合格
 ```
+> ✅ 検証済み: Node 上の Pyodide 0.28.3 で `charts_frameworks_demo.slide` が
+> render_to_bytes でき、45KB / 4枚の pptx を生成（python-pptx 1.0.2 + XlsxWriter は
+> PyPI、lxml 6.0.0 + Pillow 11.3.0 は Pyodide から解決）。ブラウザでも同一パッケージ群。
+> 注: micropip は wheel の basename をファイル名として解釈するため、配信URLは必ず
+> `…/slidegen-0.1.0-py3-none-any.whl`（正規名）であること（本リポジトリの hash付き
+> ディレクトリ配信はこれを満たす）。
 
 ## 2. ゲートウェイ（Workers）
 ```bash
