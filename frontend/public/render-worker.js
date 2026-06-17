@@ -7,8 +7,9 @@
  * Cloudflare Worker の無料 CPU 制限(10ms) を一切受けない。
  *
  * メッセージ:
- *   {type:'init', pyodideUrl, wheelUrl}  → 'ready' | 'progress' | 'error'
- *   {type:'render', id, dsl}             → 'rendered'{id, bytes} | 'render-error'{id, error}
+ *   {type:'init', pyodideUrl, wheelUrl}        → 'ready' | 'progress' | 'error'
+ *   {type:'render', id, dsl, template?}        → 'rendered'{id, bytes} | 'render-error'{id, error}
+ *   {type:'preview', id, dsl}                  → 'previewed'{id, slides} | 'preview-error'{id, error}
  */
 let pyodideReady = null;
 
@@ -37,19 +38,53 @@ async function init(pyodideUrl, wheelUrl) {
   return pyodideReady;
 }
 
-async function render(id, dsl) {
+async function render(id, dsl, template) {
   try {
     const pyodide = await pyodideReady;
     pyodide.globals.set("dsl_text", dsl);
+    let tplPath = null;
+    if (template && template.byteLength) {
+      tplPath = "/tmp/template" + (template.name && template.name.endsWith(".potx") ? ".potx" : ".pptx");
+      pyodide.FS.writeFile(tplPath, new Uint8Array(template.bytes));
+    }
+    pyodide.globals.set("tpl_path", tplPath);
     const proxy = await pyodide.runPythonAsync(
-      "import slidegen; slidegen.render_to_bytes(dsl_text)",
+      "import slidegen; slidegen.render_to_bytes(dsl_text, template=tpl_path)",
     );
     const bytes = proxy.toJs(); // Uint8Array
     proxy.destroy();
-    // transferable で渡す
     self.postMessage({ type: "rendered", id, bytes }, [bytes.buffer]);
   } catch (e) {
     self.postMessage({ type: "render-error", id, error: String(e && e.message ? e.message : e) });
+  }
+}
+
+// DSL を slidegen.parser でパースし、スライド構成(JSON)を返す（構成プレビュー用）。
+async function preview(id, dsl) {
+  try {
+    const pyodide = await pyodideReady;
+    pyodide.globals.set("dsl_text", dsl);
+    const json = await pyodide.runPythonAsync(`
+import json
+from slidegen.parser import parse
+_out = []
+for s in parse(dsl_text):
+    _out.append({
+        "type": s.type,
+        "headline": s.props.get("headline", ""),
+        "kicker": s.props.get("kicker", ""),
+        "foot": s.props.get("foot", ""),
+        "columns": s.props.get("columns_list", []),
+        "blocks": [{
+            "title": b.title, "highlight": b.highlight,
+            "lines": list(b.lines), "rows": [list(r) for r in b.rows],
+        } for b in s.blocks],
+    })
+json.dumps(_out, ensure_ascii=False)
+`);
+    self.postMessage({ type: "previewed", id, slides: JSON.parse(json) });
+  } catch (e) {
+    self.postMessage({ type: "preview-error", id, error: String(e && e.message ? e.message : e) });
   }
 }
 
@@ -66,6 +101,8 @@ self.onmessage = async (ev) => {
       post("error", { error: String(e && e.message ? e.message : e) });
     }
   } else if (msg.type === "render") {
-    await render(msg.id, msg.dsl);
+    await render(msg.id, msg.dsl, msg.template);
+  } else if (msg.type === "preview") {
+    await preview(msg.id, msg.dsl);
   }
 };
