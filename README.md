@@ -20,6 +20,14 @@ AIと壁打ちしてスライドを作る Web フロント＋ゲートウェイ�
 最初に STEP0 関門（`bash tools/build_wheel.sh && node tools/pyodide_spike.mjs`）で
 ブラウザ相当のpptx生成が通ることを確認すること。
 
+### 現在の状態
+- 実装・検証は完了。**残るは実デプロイ（Cloudflare アカウント所有者の操作）のみ**（PR #3）。
+- Python 105 / gateway vitest 20（API E2E 含む）/ frontend vitest 21、各 tsc clean・build 成功。
+- STEP0（ブラウザ相当 Pyodide での pptx 生成）実機検証済み。
+- 機能: 壁打ち（SSE ストリーミング）→ 流れ → DSL 編集 → pptx 生成/DL、添付(xlsx/csv/pptx)取込、
+  会社テンプレ(.potx)適用、構成プレビュー、AIレビュー、設定の永続化。
+- アーキテクチャ/設計メモ・ローカル開発手順は **[CLAUDE.md](CLAUDE.md)** に集約。
+
 ## インストール
 
 ```bash

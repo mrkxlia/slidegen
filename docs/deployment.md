@@ -85,6 +85,34 @@ Zero Trust ダッシュボード → Access → Applications：
 
 ---
 
+## ローカル開発（PC でクローン後）
+前提: Node 20+ / Python 3.10+ / `npm i -g wrangler`。
+```bash
+# wheel 生成（frontend/public/wheels/<hash>/ と frontend/.env.local を作る）
+python3 -m pip install build python-pptx
+bash tools/build_wheel.sh
+
+# ターミナルA: gateway（:8787）
+cd gateway && npm i
+cp .dev.vars.example .dev.vars   # GEMINI_API_KEY 等を記入（.dev.vars は gitignore 済み）
+npx wrangler dev
+
+# ターミナルB: frontend（:5173 → /api を :8787 へ proxy）
+cd frontend && npm i && npm run dev
+```
+ローカルの要点:
+- 認証は `wrangler.toml` の `DEV_BYPASS_AUTH = "1"` で素通し（**本番は必ず `"0"`**）。
+- `wrangler dev` のシークレットは `gateway/.dev.vars` から読む。ローカル確認は Gemini/OpenRouter が確実
+  （`env.AI`=Workers AI はローカルで使えないことがある）。
+- 初回 pptx 生成は Pyodide ロードに数秒（要ネット、以後キャッシュ）。
+
+テスト:
+```bash
+PYTHONPATH=. python3 -m pytest tests/      # 本体 + chart-DSL ガード
+cd gateway && npm test                     # vitest（API E2E 含む）
+cd frontend && npm test                    # vitest（e2e/ は対象外）
+```
+
 ## 機能と制約（追加分）
 - **会社テンプレート(.potx/.pptx)**: サイドバーから添付すると、それを土台に生成
   （`render_to_bytes(dsl, template=…)`）。ブラウザ FS に書き込んで Pyodide へ渡す。
