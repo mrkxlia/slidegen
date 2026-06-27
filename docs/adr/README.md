@@ -1,0 +1,10 @@
+# Architecture Decision Records (ADR)
+
+このプロジェクトの重要な設計判断を記録する。各 ADR は「コンテキスト → 決定 → 結果（トレードオフ）→ 代替案」を簡潔にまとめた不変の記録で、後から状況が変われば新しい ADR で **Superseded** にする（過去の ADR は書き換えない）。
+
+| # | タイトル | ステータス | 日付 |
+|---|---|---|---|
+| [0001](0001-same-origin-pages-functions.md) | ゲートウェイを Pages Functions として同一オリジン配信する | 採用 | 2026-06-27 |
+| [0002](0002-uv-for-python-packaging.md) | Python のパッケージ管理・ビルドを uv に統一する | 採用 | 2026-06-27 |
+
+新規追加: 連番 `NNNN-kebab-title.md` で作成し、この表に1行足す。
