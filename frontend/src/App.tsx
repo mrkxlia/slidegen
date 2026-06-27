@@ -8,18 +8,26 @@ import {
 } from "./phases";
 import { ingest, type IngestResult } from "./ingest";
 import * as api from "./api";
-import { initRenderer, renderDsl, downloadPptx, type RenderStage } from "./render/renderClient";
+import {
+  initRenderer, renderDsl, previewDsl, downloadPptx,
+  type RenderStage, type TemplateFile, type SlidePreview,
+} from "./render/renderClient";
+import { loadSettings, saveSettings } from "./storage";
 import { PhaseBar, ChatView, Sidebar, DslPanel, RenderOverlay } from "./components";
 
 export function App() {
+  const saved = loadSettings();
   const [models, setModels] = useState<api.ModelInfo[]>([]);
-  const [modelId, setModelId] = useState("");
-  const [purpose, setPurpose] = useState(PURPOSES[0]);
+  const [modelId, setModelId] = useState(saved.modelId ?? "");
+  const [purpose, setPurpose] = useState(saved.purpose ?? PURPOSES[0]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [phase, setPhase] = useState<Phase>("hearing");
   const [attachments, setAttachments] = useState<IngestResult[]>([]);
+  const [template, setTemplate] = useState<TemplateFile | null>(null);
   const [dslText, setDslText] = useState("");
   const [reviewText, setReviewText] = useState("");
+  const [preview, setPreview] = useState<SlidePreview[] | null>(null);
+  const [previewing, setPreviewing] = useState(false);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [rendering, setRendering] = useState(false);
@@ -30,9 +38,16 @@ export function App() {
 
   useEffect(() => {
     api.fetchModels()
-      .then((ms) => { setModels(ms); if (ms.length) setModelId(ms[0].id); })
+      .then((ms) => {
+        setModels(ms);
+        // 保存済みモデルが利用可能ならそれを、無ければ先頭を選ぶ
+        setModelId((cur) => (ms.some((m) => m.id === cur) ? cur : ms[0]?.id ?? ""));
+      })
       .catch(handleApiError);
   }, []);
+
+  // 設定の永続化
+  useEffect(() => { saveSettings({ modelId, purpose }); }, [modelId, purpose]);
 
   function handleApiError(e: unknown) {
     if (e instanceof api.AuthExpiredError) { setAuthExpired(true); return; }
@@ -160,12 +175,30 @@ export function App() {
     setRendering(true); setError(null);
     try {
       await initRenderer(setRenderStage);
-      const bytes = await renderDsl(dslText);
+      const bytes = await renderDsl(dslText, template ?? undefined);
       downloadPptx(bytes);
     } catch (e) {
       // parse エラー等: 編集して再生成できるよう、編集画面に留めてエラー表示。
       setError(`生成に失敗しました: ${(e as Error).message}\nDSLを修正して再度お試しください。`);
     } finally { setRendering(false); }
+  }
+
+  async function onPreview() {
+    if (!dslText.trim()) return;
+    setPreviewing(true); setError(null);
+    try {
+      await initRenderer(setRenderStage);
+      setPreview(await previewDsl(dslText));
+    } catch (e) {
+      setError(`プレビューに失敗しました: ${(e as Error).message}`);
+    } finally { setPreviewing(false); }
+  }
+
+  async function onTemplate(files: FileList | null) {
+    const f = files?.[0];
+    if (!f) return;
+    const bytes = await f.arrayBuffer();
+    setTemplate({ name: f.name, bytes, byteLength: bytes.byteLength });
   }
 
   async function onFiles(files: FileList | null) {
@@ -183,9 +216,12 @@ export function App() {
     contextInjected.current = false;
   }
 
+  function onDslChange(v: string) { setDslText(v); setPreview(null); }
+
   function onReset() {
     setMessages([]); setPhase("hearing"); setDslText(""); setReviewText("");
-    setAttachments([]); setInput(""); setError(null); contextInjected.current = false;
+    setAttachments([]); setPreview(null); setInput(""); setError(null);
+    contextInjected.current = false;
   }
 
   if (authExpired) {
@@ -204,7 +240,10 @@ export function App() {
         models={models} modelId={modelId} onModelChange={setModelId}
         purposes={PURPOSES} purpose={purpose} onPurposeChange={setPurpose}
         attachments={attachments} onFiles={onFiles}
-        onRemoveAttachment={onRemoveAttachment} onReset={onReset}
+        onRemoveAttachment={onRemoveAttachment}
+        template={template} onTemplate={onTemplate}
+        onClearTemplate={() => setTemplate(null)}
+        onReset={onReset}
       />
       <main className="main">
         <h1>🪄 slidegen — AIと壁打ちしてスライドを作る</h1>
@@ -238,7 +277,7 @@ export function App() {
 
         {(phase === "dsl" || phase === "review" || phase === "revise") && (
           <DslPanel
-            dsl={dslText} onChange={setDslText}
+            dsl={dslText} onChange={onDslChange}
             onRender={onRender} onReview={onReview}
             onBackToChat={() => setPhase("hearing")}
             reviewText={reviewText}
@@ -246,6 +285,8 @@ export function App() {
             canApplyReview={!!extractFencedDsl(reviewText)}
             renderStage={renderStage} rendering={rendering}
             generating={busy} error={null}
+            onPreview={onPreview} previewing={previewing}
+            preview={preview} hasTemplate={!!template}
           />
         )}
         {(phase === "dsl") && error && <div className="error">⚠ {error}</div>}

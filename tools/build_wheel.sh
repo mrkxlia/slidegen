@@ -13,7 +13,9 @@ cd "$(dirname "$0")/.."
 
 echo "▶ building wheel from $(pwd)"
 rm -rf dist
-python3 -m build --wheel
+# Python パッケージ管理は uv に統一。uv build がビルドフロントエンドを提供するため
+# `build` を別途インストールする必要はない（pyproject の [build-system] を使用）。
+uv build --wheel
 
 SRC_WHEEL=$(ls dist/slidegen-*-py3-none-any.whl | head -1)
 WHEEL_BASE=$(basename "$SRC_WHEEL")

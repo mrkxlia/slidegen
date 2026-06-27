@@ -3,7 +3,7 @@ import type { Phase } from "./prompts";
 import type { Message } from "./phases";
 import type { IngestResult } from "./ingest";
 import type { ModelInfo } from "./api";
-import type { RenderStage } from "./render/renderClient";
+import type { RenderStage, TemplateFile, SlidePreview } from "./render/renderClient";
 import { renderMarkdown } from "./md";
 
 const PHASE_LABELS: Record<Phase, string> = {
@@ -75,6 +75,9 @@ export function Sidebar(props: {
   attachments: IngestResult[];
   onFiles: (files: FileList | null) => void;
   onRemoveAttachment: (name: string) => void;
+  template: TemplateFile | null;
+  onTemplate: (files: FileList | null) => void;
+  onClearTemplate: () => void;
   onReset: () => void;
 }) {
   return (
@@ -111,8 +114,47 @@ export function Sidebar(props: {
       </ul>
 
       <hr />
+      <h3>🎨 会社テンプレート（任意）</h3>
+      <small>.potx / .pptx を土台にして生成します。</small>
+      <input type="file" accept=".potx,.pptx" onChange={(e) => props.onTemplate(e.target.files)} />
+      {props.template && (
+        <p className="tpl-row">
+          <span>✓ {props.template.name}</span>
+          <button className="link-btn" title="解除" onClick={props.onClearTemplate}>×</button>
+        </p>
+      )}
+
+      <hr />
       <button className="ghost" onClick={props.onReset}>🔄 会話をリセット</button>
     </aside>
+  );
+}
+
+// 構成プレビュー（DSL をパースしたスライド構成のカード一覧）。
+// 注: pptx の画素レンダリングではなく「構成（型・主張・要素）」のプレビュー。
+export function PreviewCards({ slides }: { slides: SlidePreview[] }) {
+  return (
+    <div className="preview-grid">
+      {slides.map((s, i) => (
+        <div key={i} className="preview-card">
+          <div className="pc-head">
+            <span className="pc-no">{i + 1}</span>
+            <span className="pc-type">{s.type}</span>
+          </div>
+          {s.kicker && <div className="pc-kicker">{s.kicker}</div>}
+          <div className="pc-headline">{s.headline || <em>（headline なし）</em>}</div>
+          {s.columns.length > 0 && <div className="pc-cols">列: {s.columns.join(" / ")}</div>}
+          <ul className="pc-blocks">
+            {s.blocks.slice(0, 6).map((b, j) => (
+              <li key={j}>
+                {b.title && <strong>{b.title}{b.highlight ? " ★" : ""}: </strong>}
+                {(b.lines.length ? b.lines : b.rows.map((r) => r.join(" / "))).slice(0, 4).join(" ・ ")}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -129,17 +171,25 @@ export function DslPanel(props: {
   rendering: boolean;
   generating: boolean;
   error: string | null;
+  onPreview: () => void;
+  previewing: boolean;
+  preview: SlidePreview[] | null;
+  hasTemplate: boolean;
 }) {
   return (
     <div className="dslpanel">
       <div className="dsl-toolbar">
         <button onClick={props.onRender} disabled={props.rendering || props.generating}>
-          {props.rendering ? "生成中…" : "▶ PowerPointを生成・ダウンロード"}
+          {props.rendering ? "生成中…" : `▶ PowerPointを生成${props.hasTemplate ? "（テンプレ適用）" : ""}・DL`}
+        </button>
+        <button className="ghost" onClick={props.onPreview} disabled={props.previewing || props.generating}>
+          {props.previewing ? "プレビュー中…" : "👁 構成プレビュー"}
         </button>
         <button className="ghost" onClick={props.onReview} disabled={props.generating}>🔍 AIレビュー</button>
         <button className="ghost" onClick={props.onBackToChat}>← チャットで修正</button>
         {props.generating && <span className="stage">✍️ AI生成中…</span>}
       </div>
+      {props.preview && <PreviewCards slides={props.preview} />}
       {props.error && <div className="error">⚠ {props.error}</div>}
       <textarea
         className="dsl-editor"

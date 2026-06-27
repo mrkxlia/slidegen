@@ -23,4 +23,5 @@ frontend/dist/
 frontend/.env.local
 frontend/public/wheels/
 gateway/.wrangler/
+gateway/.dev.vars
 *.tsbuildinfo
