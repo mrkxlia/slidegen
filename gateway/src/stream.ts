@@ -14,7 +14,9 @@ async function* sseJson(resp: Response): AsyncGenerator<unknown> {
   for (;;) {
     const { done, value } = await reader.read();
     if (done) break;
-    buf += decoder.decode(value, { stream: true });
+    // Gemini の alt=sse は CRLF(\r\n\r\n)区切り。\r を除去して \n\n に正規化する
+    // （これが無いとイベントを1件も切り出せず、delta ゼロで done になる）。
+    buf += decoder.decode(value, { stream: true }).replace(/\r/g, "");
     // SSE イベントは空行(\n\n)区切り。各イベントの data: を連結。
     let idx: number;
     while ((idx = buf.indexOf("\n\n")) >= 0) {
