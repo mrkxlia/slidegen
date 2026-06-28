@@ -3,7 +3,7 @@
 // プロバイダごとに SSE/チャンク形式が違うため、ここで吸収し、
 // 呼び出し側へは「テキスト delta の AsyncGenerator」として渡す。
 // index.ts はこれを `data: {"delta": "..."}` の自前 SSE にして返す。
-import { LLMError, type ChatRequest, type ProviderEnv } from "./providers";
+import { buildGeminiPayload, LLMError, type ChatRequest, type ProviderEnv } from "./providers";
 
 // fetch レスポンス body(SSE) を行単位でパースし、`data:` の JSON を yield する。
 async function* sseJson(resp: Response): AsyncGenerator<unknown> {
@@ -62,11 +62,7 @@ export async function* streamDeltas(
 async function* streamGemini(req: ChatRequest, env: ProviderEnv, maxTokens: number, temperature: number) {
   if (!env.GEMINI_API_KEY) throw new LLMError("GEMINI_API_KEY not set", 401);
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(req.model)}:streamGenerateContent?alt=sse`;
-  const body: Record<string, unknown> = {
-    contents: req.messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
-    generationConfig: { maxOutputTokens: maxTokens, temperature },
-  };
-  if (req.system) body.systemInstruction = { parts: [{ text: req.system }] };
+  const body = buildGeminiPayload(req, maxTokens, temperature);
   const resp = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
