@@ -287,6 +287,4 @@ def _wrap(slide, data, theme):
 
 
 # 基底 + 全ラッパーを登録
-R.RENDERERS["labeled_blocks"] = render_labeled_blocks
-for _name in VARIANTS:
-    R.RENDERERS[_name] = render_labeled_blocks
+R.register_many(["labeled_blocks", *VARIANTS], render_labeled_blocks)

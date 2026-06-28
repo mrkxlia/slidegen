@@ -145,6 +145,4 @@ def render_nodes_and_connectors(slide, data: Slide, theme):
                        Inches(0.28), gap - Inches(0.08), "down")
 
 
-R.RENDERERS["nodes_and_connectors"] = render_nodes_and_connectors
-for _name in VARIANTS:
-    R.RENDERERS[_name] = render_nodes_and_connectors
+R.register_many(["nodes_and_connectors", *VARIANTS], render_nodes_and_connectors)

@@ -233,14 +233,11 @@ def render_agenda(slide, data: Slide, theme):
 
 
 # 追加型を登録（render.RENDERERS にマージ）
-EXTRA = {
-    "title": render_title,
-    "section": render_section,
-    "bullets": render_bullets,
-    "cards": render_cards,
-    "pros_cons": render_pros_cons,
-    "table": render_table,
-    "quote": render_quote,
-    "agenda": render_agenda,
-}
-R.RENDERERS.update(EXTRA)
+R.register("title", render_title)
+R.register("section", render_section)
+R.register("bullets", render_bullets)
+R.register("cards", render_cards)
+R.register("pros_cons", render_pros_cons)
+R.register("table", render_table)
+R.register("quote", render_quote)
+R.register("agenda", render_agenda)

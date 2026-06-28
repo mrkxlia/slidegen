@@ -118,6 +118,4 @@ def render_framed_canvas(slide, data: Slide, theme):
                      align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.TOP)
 
 
-R.RENDERERS["framed_canvas"] = render_framed_canvas
-for _name in VARIANTS:
-    R.RENDERERS[_name] = render_framed_canvas
+R.register_many(["framed_canvas", *VARIANTS], render_framed_canvas)

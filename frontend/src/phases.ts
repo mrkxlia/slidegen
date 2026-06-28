@@ -1,41 +1,16 @@
-// phases.ts — フェーズ遷移・タグ判定・履歴トリミング。
-// slidegen_app.py のフェーズ制御ロジックを移植。
-
-import type { Phase } from "./prompts";
+// phases.ts — 応答の表示用クリーニング・DSL 抽出・履歴トリミング。
+// slidegen_app.py のフェーズ制御ロジックを移植（フェーズ遷移は手動UIへ移行済み）。
 
 export type Role = "user" | "assistant";
 export interface Message { role: Role; content: string; }
 
-// フェーズ遷移タグ（本文には出さず、判定にのみ使う）
-export const TAGS = {
-  READY_FOR_OUTLINE: "[READY_FOR_OUTLINE]",
-  OUTLINE_READY: "[OUTLINE_READY]",
-  READY_TO_GENERATE: "[READY_TO_GENERATE]",
-} as const;
+// 旧フェーズ遷移タグの除去用。UIは手動進行に移行したためタグでの遷移はしないが、
+// 過去履歴や移行期のモデル出力に残るタグを表示前に取り除く（安全側のクリーニング）。
+const TAG_RE = /\[(READY_FOR_OUTLINE|OUTLINE_READY|READY_TO_GENERATE)\]/g;
 
-export interface TagScan {
-  cleaned: string;        // タグを除去した表示用テキスト
-  readyForOutline: boolean;
-  outlineReady: boolean;
-  readyToGenerate: boolean;
-}
-
-// LLM 応答からタグを検出し、表示用に除去する。
-export function scanTags(text: string): TagScan {
-  const readyForOutline = text.includes(TAGS.READY_FOR_OUTLINE);
-  const outlineReady = text.includes(TAGS.OUTLINE_READY);
-  const readyToGenerate = text.includes(TAGS.READY_TO_GENERATE);
-  let cleaned = text;
-  for (const t of Object.values(TAGS)) cleaned = cleaned.split(t).join("");
-  return { cleaned: cleaned.trim(), readyForOutline, outlineReady, readyToGenerate };
-}
-
-// 次フェーズを決める。READY_TO_GENERATE が最優先（流れを省いて直接生成へ）。
-export function nextPhase(current: Phase, scan: TagScan): Phase {
-  if (scan.readyToGenerate) return "dsl";
-  if (current === "hearing" && scan.readyForOutline) return "outline";
-  if (current === "outline" && scan.outlineReady) return "dsl";
-  return current;
+// LLM 応答を表示用にクリーニングする（残存タグの除去）。
+export function cleanReply(text: string): string {
+  return text.replace(TAG_RE, "").trim();
 }
 
 // コードフェンス内の DSL を取り出す（review 出力の「改善後DSL」用）。
@@ -59,11 +34,6 @@ export function extractFencedDsl(text: string): string | null {
 export function trimHistory(messages: Message[], maxTurns = 16): Message[] {
   if (messages.length <= maxTurns) return messages;
   return messages.slice(messages.length - maxTurns);
-}
-
-// 生成済みDSLからコードフェンス記号を除去（生成出力のサニタイズ）。
-export function stripFences(text: string): string {
-  return text.split("```").join("").trim();
 }
 
 // 行頭 `slide <type>` の検出パターン（DSL本体の開始）。stripToDsl と hasValidDsl で共有。

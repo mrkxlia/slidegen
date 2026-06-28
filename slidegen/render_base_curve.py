@@ -124,6 +124,4 @@ def render_narrative_curve(slide, data: Slide, theme):
                      align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
 
 
-R.RENDERERS["narrative_curve"] = render_narrative_curve
-for _name in VARIANTS:
-    R.RENDERERS[_name] = render_narrative_curve
+R.register_many(["narrative_curve", *VARIANTS], render_narrative_curve)

@@ -1,33 +1,16 @@
 import { describe, it, expect } from "vitest";
 import {
-  scanTags, nextPhase, extractFencedDsl, trimHistory, stripFences, stripToDsl, stripReasoning, hasValidDsl, type Message,
+  cleanReply, extractFencedDsl, trimHistory, stripToDsl, stripReasoning, hasValidDsl, type Message,
 } from "../src/phases";
 
-describe("scanTags", () => {
-  it("タグを検出し表示テキストから除去する", () => {
-    const r = scanTags("これで作れます\n[READY_TO_GENERATE]");
-    expect(r.readyToGenerate).toBe(true);
-    expect(r.cleaned).toBe("これで作れます");
+describe("cleanReply", () => {
+  it("残存タグを除去する", () => {
+    expect(cleanReply("これで作れます\n[READY_TO_GENERATE]")).toBe("これで作れます");
+    expect(cleanReply("流れ案[OUTLINE_READY]")).toBe("流れ案");
   });
-  it("タグ無しはそのまま", () => {
-    const r = scanTags("質問です");
-    expect(r.readyToGenerate).toBe(false);
-    expect(r.cleaned).toBe("質問です");
-  });
-});
-
-describe("nextPhase", () => {
-  it("READY_TO_GENERATE は最優先で dsl へ", () => {
-    expect(nextPhase("hearing", scanTags("x[READY_TO_GENERATE]"))).toBe("dsl");
-  });
-  it("hearing→outline は READY_FOR_OUTLINE", () => {
-    expect(nextPhase("hearing", scanTags("x[READY_FOR_OUTLINE]"))).toBe("outline");
-  });
-  it("outline→dsl は OUTLINE_READY", () => {
-    expect(nextPhase("outline", scanTags("x[OUTLINE_READY]"))).toBe("dsl");
-  });
-  it("タグ無しは現状維持", () => {
-    expect(nextPhase("hearing", scanTags("x"))).toBe("hearing");
+  it("タグ無しはそのまま（trim のみ）", () => {
+    expect(cleanReply("質問です")).toBe("質問です");
+    expect(cleanReply("  前後空白  ")).toBe("前後空白");
   });
 });
 
@@ -41,14 +24,11 @@ describe("extractFencedDsl", () => {
   });
 });
 
-describe("trimHistory / stripFences", () => {
+describe("trimHistory / stripToDsl", () => {
   it("直近Nターンに絞る", () => {
     const msgs: Message[] = Array.from({ length: 30 }, (_, i) => ({ role: "user", content: String(i) }));
     expect(trimHistory(msgs, 10)).toHaveLength(10);
     expect(trimHistory(msgs, 10)[0].content).toBe("20");
-  });
-  it("フェンス記号を除去", () => {
-    expect(stripFences("```\nslide title\n```")).toBe("slide title");
   });
   it("stripToDsl: 思考過程の前置きを捨てて slide 本体から返す", () => {
     const out = stripToDsl(

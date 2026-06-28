@@ -106,6 +106,4 @@ def render_columns_with_header(slide, data: Slide, theme):
                             bullet=(len(items) > 1))
 
 
-R.RENDERERS["columns_with_header"] = render_columns_with_header
-for _name in VARIANTS:
-    R.RENDERERS[_name] = render_columns_with_header
+R.register_many(["columns_with_header", *VARIANTS], render_columns_with_header)

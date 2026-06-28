@@ -40,7 +40,11 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 
 ---
 
-## 2. 実装済みの型（34型）
+## 2. 実装済みの型（`RENDERERS` に計100型）
+
+> **真実は `slidegen/render.py` の `RENDERERS`**（`uv run python -c "import slidegen,slidegen.render as r;print(len(r.RENDERERS))"`
+> → 100）。本書は分類のための見取り図で、以下のセクション3も含め多くが既に ✅ 実装済み。
+> 数の手入力は古くなりやすいので、網羅確認は `RENDERERS` を参照すること。
 
 ### ベース構成（既存）
 ✅ title / section / agenda / quote / bullets
@@ -62,29 +66,29 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 
 ---
 
-## 3. 次に実装すべき型（基底 split_layout / grid_2d の上に載る）
+## 3. 基底 split_layout / grid_2d の variant（大半が ✅ 実装済み）
 
-### split_layout で実装するもの（🔜）
-| 型 | 用途 | variant/設定 |
-|---|---|---|
-| before_after | 現状とTo-Be対比 | left=現状, right=To-Be, 中央矢印 |
-| problem_solution | 課題赤×解決青 | ratio=50/50, 色分け |
-| dual_hero | 2要素同等並置 | ratio=50/50 |
-| image_text | 画像左+テキスト右 | ratio=40/60（既存image_leftを統合） |
-| hypothesis_prediction | 仮説と予測 | left=H, right=予測 |
-| limitations_future | 限界と次研究 | left=限界, right=Future |
+### split_layout 系
+| 型 | 状態 | 用途 | variant/設定 |
+|---|---|---|---|
+| before_after | ✅ | 現状とTo-Be対比 | left=現状, right=To-Be, 中央矢印 |
+| problem_solution | ✅ | 課題赤×解決青 | ratio=50/50, 色分け |
+| dual_hero | ✅ | 2要素同等並置 | ratio=50/50 |
+| image_text | ✅ | 画像左+テキスト右 | ratio=40/60（既存image_leftを統合） |
+| hypothesis_prediction | ✅ | 仮説と予測 | left=H, right=予測 |
+| limitations_future | ✅ | 限界と次研究 | left=限界, right=Future |
 
-### grid_2d で実装するもの（🔜）
-| 型 | 用途 | variant/設定 |
-|---|---|---|
-| comparison_matrix | 技術選定◎○△× | 行=選択肢, 列=評価軸, 記号セル |
-| priority_matrix_2x2 | Eisenhower等 | preset=eisenhower/impact_effort |
-| heatmap_matrix | 評価の色濃淡 | セル={value,color} |
-| raci | 責任分担表 | R/A/C/I色付き |
-| quiz_mcq | 4択クイズ | 問題+A-D+Answer |
-| mandala_chart | マンダラート3×3 | 中央+周囲8 |
-| sdg_grid | SDGs17マス | 公式色, highlight |
-| conjugation_table | 活用表 | 行=人称, 列=時制 |
+### grid_2d 系
+| 型 | 状態 | 用途 | variant/設定 |
+|---|---|---|---|
+| comparison_matrix | ✅ | 技術選定◎○△× | 行=選択肢, 列=評価軸, 記号セル |
+| heatmap_matrix | ✅ | 評価の色濃淡 | セル={value,color} |
+| raci | ✅ | 責任分担表 | R/A/C/I色付き |
+| priority_matrix_2x2 | 🔜 | Eisenhower等 | preset=eisenhower/impact_effort |
+| quiz_mcq | 🔜 | 4択クイズ | 問題+A-D+Answer |
+| mandala_chart | 🔜 | マンダラート3×3 | 中央+周囲8 |
+| sdg_grid | 🔜 | SDGs17マス | 公式色, highlight |
+| conjugation_table | 🔜 | 活用表 | 行=人称, 列=時制 |
 
 ---
 
@@ -101,7 +105,7 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 
 ### ビジネスフレーム（①③調査）
 ✅ swot / ✅ venn2 / ✅ bmc（9ブロック固定）／ 📋 lean_canvas / vpc
-📋 five_forces / value_chain / 3c / 4p / pestel / bcg_matrix
+✅ value_chain ／ 📋 five_forces / 3c / 4p / pestel / bcg_matrix
 ✅ journey_map（スイムレーン）／ 📋 empathy_map / persona_card
 
 ### 技術資料（②調査）
@@ -125,7 +129,7 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 
 ### データ補助（③調査）
 ✅ data_source_footer（実装済み・ROI最大）
-📋 big_fact / stat_trio / annotated_chart / before_after_metric
+✅ big_fact / ✅ stat_trio ／ 📋 annotated_chart / before_after_metric
 
 ### 個人・イベント・ライフ（③調査）
 ✅ pricing_tiers ／ 📋 elevator_pitch / event_timetable / okr / maturity_model

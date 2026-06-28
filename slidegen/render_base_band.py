@@ -120,6 +120,4 @@ def render_band_strip(slide, data: Slide, theme):
                      align=PP_ALIGN.LEFT, anchor=MSO_ANCHOR.MIDDLE)
 
 
-R.RENDERERS["band_strip"] = render_band_strip
-for _name in VARIANTS:
-    R.RENDERERS[_name] = render_band_strip
+R.register_many(["band_strip", *VARIANTS], render_band_strip)

@@ -111,5 +111,5 @@ def _join(b):
     return "  ".join(p for p in parts if p)
 
 
-R.RENDERERS["swot"] = render_swot
-R.RENDERERS["venn2"] = render_venn2
+R.register("swot", render_swot)
+R.register("venn2", render_venn2)

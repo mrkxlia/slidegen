@@ -13,7 +13,8 @@ AIと壁打ちしてスライドを作る Web フロント＋ゲートウェイ�
 **全て Cloudflare 無料枠**で動く構成（pptx生成はブラウザ内Pyodideで実行＝サーバCPU制限なし）。
 
 - `frontend/` … React+Vite+TS（Cloudflare Pages）。チャット/DSLエディタ/ブラウザpptx生成。
-- `gateway/` … Hono/TS（Cloudflare Workers）。Cloudflare Access 認証付きの LLM 中継。
+- `gateway/` … Hono/TS。Cloudflare Access 認証付きの LLM 中継。本番はフロントと**同一オリジンの
+  Pages Functions** として配信（独立 Worker はローカル開発用。理由は docs/adr/0001）。
 - LLM … テストは Gemini/OpenRouter/Workers AI（無料枠）、本番は API キーを secret 設定。
 
 デプロイと運用は **[docs/deployment.md](docs/deployment.md)** を参照。
@@ -21,21 +22,29 @@ AIと壁打ちしてスライドを作る Web フロント＋ゲートウェイ�
 ブラウザ相当のpptx生成が通ることを確認すること。
 
 ### 現在の状態
-- 実装・検証は完了。**残るは実デプロイ（Cloudflare アカウント所有者の操作）のみ**（PR #3）。
-- Python 105 / gateway vitest 20（API E2E 含む）/ frontend vitest 21、各 tsc clean・build 成功。
+- 実装・検証は完了。**PR #3 は main へマージ済み**。残るは実デプロイ（Cloudflare アカウント所有者の操作）のみ。
+- Python 106 / gateway vitest（API E2E 含む）/ frontend vitest、各 tsc clean・build 成功。
 - STEP0（ブラウザ相当 Pyodide での pptx 生成）実機検証済み。
 - 機能: 壁打ち（SSE ストリーミング）→ 流れ → DSL 編集 → pptx 生成/DL、添付(xlsx/csv/pptx)取込、
   会社テンプレ(.potx)適用、構成プレビュー、AIレビュー、設定の永続化。
 - アーキテクチャ/設計メモ・ローカル開発手順は **[CLAUDE.md](CLAUDE.md)** に集約。
 
-## インストール
+## インストール / 開発セットアップ
+
+Python は **uv に統一**（ADR 0002）。リポジトリを clone したら:
 
 ```bash
-pip install -e ".[dev]"   # 開発用（pytest/pillow 込み）。本番は pip install . で可
+uv sync                              # 仮想環境 + 依存をセットアップ
+uv run --extra dev pytest tests/ -q  # 本体テスト（106 passed）
+uv run slidegen build ...            # CLI 実行
+uv build                             # wheel 化（配布物。bash tools/build_wheel.sh も同等）
 ```
 
-これで `import slidegen` と `slidegen` コマンドの両方が使えるようになる。
-（コア依存は python-pptx のみ。pytest/pillow は dev extra。）
+`import slidegen` と `slidegen` コマンドの両方が使える。コア依存は python-pptx のみ、
+pytest/pillow は dev extra。
+
+> 配布済み wheel の**利用者**側は uv 不要で `pip install slidegen-0.1.0-py3-none-any.whl` でも入る
+> （ビルド側のみ uv 統一）。
 
 ## クイックスタート
 
@@ -44,6 +53,9 @@ make test        # 第1層: 構造インバリアントの自動テスト
 make visual      # 第2層: モンタージュを生成して目視確認
 make all         # 両方
 ```
+
+> Makefile は bare `python3` を呼ぶため、事前に `uv sync` で依存を入れた仮想環境を有効化
+> （`source .venv/bin/activate`）してから使う。CI/単発実行は `uv run --extra dev pytest tests/` が手軽。
 
 ## 統合CLI
 
@@ -88,27 +100,44 @@ slidegen/
   slidegen/
     theme.py                        デザイン制約をコードで固定
     parser.py                       記法 → 内部データ構造
-    render.py                       共通ヘルパー + 基本3型
+    render.py                       共通ヘルパー + 登録表(register/register_many) + 基本3型
+    render_base_*.py (9)            9つの基底レイアウト + variant 群
+                                      (labeled/split/grid/nodes/hero/columns/band/curve/framed)
     render_more.py                  構成型 (title/section/agenda/quote/bullets/cards/pros_cons/table)
     render_relations.py             39パターン由来 (matrix/cycle/pyramid/tree/formula/timeline/image_left)
+    render_charts.py                ネイティブチャート型 (bar/line/stacked/clustered など)
+    render_frameworks.py / _frameworks2.py   ビジネスフレーム (swot/venn2/bmc/journey_map/pricing_tiers)
+    render_data_support.py          データ補助 (data_source_footer/waterfall)
+    render_tech.py                  技術系 (code_block/terminal/api_endpoint_table)
+    api.py                          バックエンド用 public API (render_text/render_to_bytes/render_file)
     inspect_pptx.py                 既存pptx → 型スペック抽出
     scaffold_type.py                型スペック → render関数雛形
-    cli.py
+    cli.py / sync.py / __main__.py  CLI（build / sync / python -m slidegen）
   tests/                            ★ テスト駆動の中核
     test_invariants.py              第1層: 構造インバリアントの自動テスト (pytest)
+    test_chart_dsl.py               prompts↔renderer のチャート型一致ガード
     visual.py                       第2層: モンタージュ生成 + 目視チェックリスト
     new_type.py                     新型追加ワークフロー（1コマンド）
   examples/                         サンプル記法
   docs/
+    adr/                            設計判断の記録 (ADR)
     ppt_design_doc.md               設計の全体像・背景思想・要件
-    system_prompt.md                AIに記法を書かせるためのシステムプロンプト
+    system_prompt.md                記法リファレンス（設計参照。ライブアプリは frontend/src/prompts.ts）
+    type_catalog.md                 型カタログ（9基底 × variant の決定版）
     type_authoring.md               Web/画像/pptx → 記法 or 新型 のワークフロー
     test_driven_workflow.md         ★ テスト駆動の作業フロー
-  type_specs/                       型スペックJSON（type_authoring.md 参照）
-  out/                              モンタージュ出力（自動生成）
+    deployment.md                   デプロイ/ローカル開発/制約/セキュリティ
+  frontend/ , gateway/              Web アプリ（上記「Web アプリ」節）
+  type_specs/ , out/                型スペックJSON / モンタージュ出力（必要時に生成。既定では存在しない）
 ```
 
-## 全18型
+## 対応する型（計100型）
+
+型は **9つの基底レイアウト × variant（ラベル/配置/強調位置の辞書）× 中身** の3軸分解で構成し、
+個別型を量産せずに広いカタログを吸収する設計（詳細は `docs/type_catalog.md`）。現在 `RENDERERS` に
+**計100型**が登録済み（`uv run python -c "import slidegen,slidegen.render as r;print(len(r.RENDERERS))"` で確認）。
+
+代表例（ベース／よく使う型）:
 
 ### A. ベース構成
 title / section / agenda / quote / bullets
@@ -118,6 +147,16 @@ compare / cards / kpi / process / pros_cons / table
 
 ### C. 関係図（Cone社の39パターンから取り込み）
 matrix / cycle / pyramid / tree / formula / timeline / image_left
+
+### D. 基底レイアウト（variant の土台・9種）
+labeled_blocks / split_layout / grid_2d / nodes_and_connectors / hero_canvas /
+columns_with_header / band_strip / narrative_curve / framed_canvas
+
+### E. チャート / フレーム / 技術系
+bar_chart / line_chart / stacked_bar / clustered_bar ほか・swot / venn2 / bmc /
+journey_map / pricing_tiers・code_block / terminal / api_endpoint_table
+
+> 網羅リストは `RENDERERS` が単一の真実。`docs/type_catalog.md` に各型の実装ステータスをまとめている。
 
 ## テスト駆動で型を増やす（社内Claude Code向け）
 

@@ -35,20 +35,6 @@ export async function fetchModels(): Promise<ModelInfo[]> {
   return data.models as ModelInfo[];
 }
 
-export async function chat(args: {
-  modelId: string;
-  system: string;
-  messages: Message[];
-}): Promise<{ text: string; provider: string; model: string }> {
-  const resp = await fetch(`${API_BASE}/api/chat`, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(args),
-  });
-  return parseJsonOrReauth(resp);
-}
-
 // ストリーミング版 chat。onDelta でトークンを逐次受け取り、完了で全文を resolve。
 export async function chatStream(
   args: { modelId: string; system: string; messages: Message[] },
