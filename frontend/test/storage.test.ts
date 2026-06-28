@@ -16,9 +16,9 @@ beforeEach(() => {
 
 describe("settings persistence", () => {
   it("保存した設定を復元できる", () => {
-    saveSettings({ modelId: "gemini-2.0-flash", purpose: "意思決定・承認を得る提案" });
+    saveSettings({ modelId: "gemini-3.1-flash-lite", purpose: "意思決定・承認を得る提案" });
     const s = loadSettings();
-    expect(s.modelId).toBe("gemini-2.0-flash");
+    expect(s.modelId).toBe("gemini-3.1-flash-lite");
     expect(s.purpose).toBe("意思決定・承認を得る提案");
   });
 

@@ -31,6 +31,11 @@ async function* sseJson(resp: Response): AsyncGenerator<unknown> {
   }
 }
 
+// OpenAI互換/Workers AI 共通のメッセージ配列を組み立てる（system を先頭に畳む）。
+function buildOpenAIMessages(req: ChatRequest) {
+  return [...(req.system ? [{ role: "system", content: req.system }] : []), ...req.messages];
+}
+
 async function httpError(resp: Response, who: string): Promise<LLMError> {
   const body = await resp.text().catch(() => "");
   const retryable = resp.status === 429 || resp.status >= 500;
@@ -86,7 +91,7 @@ async function* streamOpenAICompatible(
   maxTokens: number, temperature: number, extraHeaders: Record<string, string> = {},
 ) {
   if (!apiKey) throw new LLMError("API key not set", 401);
-  const messages = [...(req.system ? [{ role: "system", content: req.system }] : []), ...req.messages];
+  const messages = buildOpenAIMessages(req);
   const resp = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}`, ...extraHeaders },
@@ -114,7 +119,7 @@ async function* streamAnthropic(req: ChatRequest, env: ProviderEnv, maxTokens: n
 }
 
 async function* streamWorkersAI(req: ChatRequest, env: ProviderEnv, maxTokens: number) {
-  const messages = [...(req.system ? [{ role: "system", content: req.system }] : []), ...req.messages];
+  const messages = buildOpenAIMessages(req);
   if (env.AI) {
     const out = (await env.AI.run(req.model, { messages, max_tokens: maxTokens, stream: true })) as ReadableStream;
     const resp = new Response(out);

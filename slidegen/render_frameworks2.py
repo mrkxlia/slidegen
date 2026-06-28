@@ -198,6 +198,6 @@ def render_pricing_tiers(slide, data: Slide, theme):
                             theme, feats, size=12, anchor=MSO_ANCHOR.TOP, bullet=True)
 
 
-R.RENDERERS["bmc"] = render_bmc
-R.RENDERERS["journey_map"] = render_journey_map
-R.RENDERERS["pricing_tiers"] = render_pricing_tiers
+R.register("bmc", render_bmc)
+R.register("journey_map", render_journey_map)
+R.register("pricing_tiers", render_pricing_tiers)

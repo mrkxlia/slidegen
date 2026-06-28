@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { PURPOSES, phaseSystemPrompt, buildContextPreamble, type Phase } from "./prompts";
 import {
-  scanTags, extractFencedDsl, stripToDsl, stripReasoning, hasValidDsl, trimHistory,
+  cleanReply, extractFencedDsl, stripToDsl, stripReasoning, hasValidDsl, trimHistory,
   type Message,
 } from "./phases";
 import { ingest, type IngestResult } from "./ingest";
@@ -72,8 +72,8 @@ export function App() {
     if ((p === "hearing" || p === "outline") && dslText.trim()) {
       system += "\n\n## 補足: すでにスライドが一度生成されています。" +
         "ユーザーの発言は基本的に既存スライドへの修正・追記の依頼として扱い、" +
-        "最初から全項目を聞き直さない。必要な確認だけ簡潔に行い、" +
-        "準備ができたら [READY_TO_GENERATE] を出す。";
+        "最初から全項目を聞き直さない。必要な確認だけ簡潔に行う" +
+        "（生成へ進むかはユーザーがボタンで判断する）。";
     }
     let msgs = trimHistory(baseMsgs);
     if (forceContext || !contextInjected.current) {
@@ -90,8 +90,8 @@ export function App() {
     const { system, messages: msgs } = prepare(p, baseMsgs, forceContext);
     setMessages([...baseMsgs, { role: "assistant", content: "" }]);
     const res = await api.chatStream({ modelId, system, messages: msgs }, (_d, full) => {
-      // タグは表示前に除去（生成途中で一瞬見えるのを防ぐ）
-      const shown = scanTags(full).cleaned;
+      // 残存タグは表示前に除去（生成途中で一瞬見えるのを防ぐ）
+      const shown = cleanReply(full);
       setMessages([...baseMsgs, { role: "assistant", content: shown || "▍" }]);
     });
     return res.text;
@@ -109,7 +109,7 @@ export function App() {
       // 手動進行: AI は壁打ち中に自動で次フェーズへ進まない（タグは表示用に除去するだけ）。
       // 進行はユーザーが「流れを作る →」「今ある情報で生成 →」を押したときだけ。
       const raw = await streamAssistant(phase, newMsgs);
-      setMessages([...newMsgs, { role: "assistant", content: scanTags(raw).cleaned } as Message]);
+      setMessages([...newMsgs, { role: "assistant", content: cleanReply(raw) } as Message]);
     } catch (e) { handleApiError(e); }
     finally { setBusy(false); }
   }
@@ -128,7 +128,7 @@ export function App() {
   async function autoOutline(history: Message[]) {
     try {
       const raw = await streamAssistant("outline", history, true);
-      setMessages([...history, { role: "assistant", content: scanTags(raw).cleaned }]);
+      setMessages([...history, { role: "assistant", content: cleanReply(raw) }]);
     } catch (e) { handleApiError(e); }
   }
 

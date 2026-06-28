@@ -379,13 +379,10 @@ def render_image_left(slide, data: Slide, theme):
 
 
 # 登録
-EXTRA = {
-    "matrix": render_matrix,
-    "cycle": render_cycle,
-    "pyramid": render_pyramid,
-    "tree": render_tree,
-    "formula": render_formula,
-    "timeline": render_timeline,
-    "image_left": render_image_left,
-}
-R.RENDERERS.update(EXTRA)
+R.register("matrix", render_matrix)
+R.register("cycle", render_cycle)
+R.register("pyramid", render_pyramid)
+R.register("tree", render_tree)
+R.register("formula", render_formula)
+R.register("timeline", render_timeline)
+R.register("image_left", render_image_left)

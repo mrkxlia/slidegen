@@ -127,6 +127,4 @@ def render_hero_canvas(slide, data: Slide, theme):
         render_foot(slide, data, theme)
 
 
-R.RENDERERS["hero_canvas"] = render_hero_canvas
-for _name in VARIANTS:
-    R.RENDERERS[_name] = render_hero_canvas
+R.register_many(["hero_canvas", *VARIANTS], render_hero_canvas)

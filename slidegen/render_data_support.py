@@ -125,5 +125,5 @@ def render_waterfall(slide, data: Slide, theme):
                  align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.TOP)
 
 
-R.RENDERERS["data_source_footer"] = render_data_source_footer
-R.RENDERERS["waterfall"] = render_waterfall
+R.register("data_source_footer", render_data_source_footer)
+R.register("waterfall", render_waterfall)

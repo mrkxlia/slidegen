@@ -83,7 +83,7 @@ def render_{name}(slide, data: Slide, theme):
         pass
 
 
-R.RENDERERS["{name}"] = render_{name}
+R.register("{name}", render_{name})
 '''
 
 

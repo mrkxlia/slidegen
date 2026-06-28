@@ -230,11 +230,22 @@ def render_process(slide, data: Slide, theme: Theme):
 # ---------------------------------------------------------------------------
 # ディスパッチ
 # ---------------------------------------------------------------------------
-RENDERERS = {
-    "compare": render_compare,
-    "kpi": render_kpi,
-    "process": render_process,
-}
+# 型名→render関数の登録表。各モジュール(render_*.py)は import 時に
+# register / register_many でここへ自分の型を足す（__init__.py が全 render_* を読む）。
+RENDERERS: dict = {}
+
+def register(name, fn):
+    """型を1つ登録する。"""
+    RENDERERS[name] = fn
+
+def register_many(names, fn):
+    """同一 render 関数を複数の型名（base + variants 等）へまとめて登録する。"""
+    for name in names:
+        RENDERERS[name] = fn
+
+register("compare", render_compare)
+register("kpi", render_kpi)
+register("process", render_process)
 
 def _strip_placeholders(slide):
     """白紙レイアウトに残るプレースホルダ(日付/ページ番号/タイトル枠など)を除去。

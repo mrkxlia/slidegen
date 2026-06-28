@@ -27,19 +27,6 @@ describe("gateway API (E2E)", () => {
     expect(body.models.some((m: any) => m.id === "gemini-2.5-flash")).toBe(true);
   });
 
-  it("POST /api/chat は LLM 応答テキストを返す（gemini モック）", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () =>
-      new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: "やあ" }] } }] }), { status: 200 }),
-    ));
-    const res = await app.request("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ modelId: "gemini-2.5-flash", system: "s", messages: [{ role: "user", content: "hi" }] }),
-    }, baseEnv);
-    expect(res.status).toBe(200);
-    expect((await res.json()).text).toBe("やあ");
-  });
-
   it("POST /api/chat?stream=1 は SSE で delta と done を返す", async () => {
     vi.stubGlobal("fetch", vi.fn(async () =>
       new Response('data: {"candidates":[{"content":{"parts":[{"text":"A"}]}}]}\r\n\r\n', { status: 200 }),

@@ -145,6 +145,4 @@ def _split_quoted(s: str):
     return found if found else s.split()
 
 
-R.RENDERERS["grid_2d"] = render_grid_2d
-for _name in VARIANTS:
-    R.RENDERERS[_name] = render_grid_2d
+R.register_many(["grid_2d", *VARIANTS], render_grid_2d)

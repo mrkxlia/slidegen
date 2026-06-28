@@ -3,6 +3,9 @@
 
 const PYODIDE_URL =
   import.meta.env.VITE_PYODIDE_URL ?? "https://cdn.jsdelivr.net/pyodide/v0.28.3/full/";
+// 既定値はハッシュ無しの素朴なパス。実際の配信URLは内容ハッシュ付きディレクトリ
+// （tools/build_wheel.sh が .env.local の VITE_WHEEL_URL に出力）なので、本番/ローカルとも
+// env で上書きする前提。env 欠落時はこの既定パスが 404 になりうる点に注意。
 const WHEEL_URL = import.meta.env.VITE_WHEEL_URL ?? "/wheels/slidegen-0.1.0-py3-none-any.whl";
 
 export type RenderStage =

@@ -152,5 +152,4 @@ def render_chart(slide, data: Slide, theme):
                  f"（単位：{unit}）", size=10, color_name="muted")
 
 
-for _name in CHART_TYPES:
-    R.RENDERERS[_name] = render_chart
+R.register_many(CHART_TYPES, render_chart)

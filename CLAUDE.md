@@ -9,7 +9,7 @@ slidegen ＝ DSL から **編集可能な PowerPoint(.pptx)** を生成する純
 - 設計判断は `docs/adr/`（[0001 同一オリジン Pages Functions](docs/adr/0001-same-origin-pages-functions.md)、
   [0002 uv 統一](docs/adr/0002-uv-for-python-packaging.md)）。
 - 検証状況:
-  - Python **106 passed**（`uv run --extra dev pytest`）/ gateway vitest 20（API E2E 7 含む）/ frontend vitest 21、
+  - Python **106 passed**（`uv run --extra dev pytest`）/ gateway vitest 23（API E2E 含む）/ frontend vitest 23、
     各 tsc clean（functions 専用 tsconfig 含む）・build 成功。Pages Functions バンドルも実機で成功。
   - **STEP0（ブラウザ相当 Pyodide での pptx 生成）実機検証済み**（Node の Pyodide 0.28.3、
     `tools/pyodide_spike.mjs`）。render / 会社テンプレ / 構成プレビューの3経路ともPASS。
@@ -31,11 +31,14 @@ Cloudflare Pages（単一オリジン, React+Vite+TS）
 ```
 
 ## ディレクトリ
-- `slidegen/` … 既存ライブラリ（**不変**）。chart は `render_charts.py`(複数形)が正
+- `slidegen/` … コアライブラリ。型は継続的に追加され現在 `RENDERERS` に**計100型**登録済みだが、
+  **レンダ規約（編集可能なネイティブ要素・theme経由・登録は `register`/`register_many`）と public API は不変**。
+  chart は `render_charts.py`(複数形)が正
   （`bar_chart`/`line_chart`/`stacked_bar`/`stacked_100_bar`/`bar_horizontal`/`clustered_bar`、
   DSL は `categories` + `col` + 数値行）。
-- `gateway/` … Hono/TS。`providers.ts`(LLM抽象/async fetch), `auth.ts`(Access JWT),
-  `stream.ts`(SSE正規化), `ratelimit.ts`, `index.ts`(ルート/CORS/入力上限/レート制限),
+- `gateway/` … Hono/TS。`providers.ts`(LLM抽象/カタログ・フォールバック・`buildGeminiPayload`),
+  `stream.ts`(SSE 正規化＋全プロバイダのストリーミング = `/api/chat` の唯一の経路。**非ストリームは廃止**),
+  `auth.ts`(Access JWT), `ratelimit.ts`, `index.ts`(ルート/CORS/入力上限/レート制限・SSE専用),
   **`pages.ts`(Pages Functions アダプタ: `handle(app)`)**。`test/`=vitest。ロジックは本番でも無改変で再利用。
 - `frontend/` … React+Vite+TS。`App.tsx`(フェーズ駆動), `prompts.ts`/`phases.ts`(agent移植),
   `ingest.ts`(動的import), `render/`(Pyodide worker クライアント), `md.ts`, `storage.ts`,

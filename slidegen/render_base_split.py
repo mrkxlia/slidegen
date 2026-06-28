@@ -159,6 +159,4 @@ def render_split_layout(slide, data: Slide, theme):
 
 
 # 登録：基底 + 全 variant
-R.RENDERERS["split_layout"] = render_split_layout
-for _name in VARIANTS:
-    R.RENDERERS[_name] = render_split_layout
+R.register_many(["split_layout", *VARIANTS], render_split_layout)

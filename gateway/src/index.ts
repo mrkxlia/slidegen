@@ -13,7 +13,7 @@ import { cors } from "hono/cors";
 import { verifyAccess } from "./auth";
 import { checkRateLimit } from "./ratelimit";
 import {
-  availableModels, chat, fallbackChain, findModel, LLMError,
+  availableModels, fallbackChain, findModel, LLMError,
   type ChatMessage, type ProviderEnv,
 } from "./providers";
 import { streamDeltas } from "./stream";
@@ -106,76 +106,55 @@ app.post("/api/chat", async (c) => {
   // 全 free が gemini の構成でも機能するよう、同プロバイダ・別モデルも対象（fallbackChain）。
   const chain = body.allowFallback === false ? [primary] : fallbackChain(primary.id, c.env);
 
-  // --- ストリーミング(SSE) ---
+  // --- ストリーミング(SSE) 専用 ---
   // delta=`data:{"delta":"..."}`、モデル切替=`data:{"switch":"<id>"}`、
   // 終了=`data:{"done":true}`、失敗=`data:{"error":"..."}`。
   // チェーンを上から試し、エラー種別を問わず候補が残れば次モデルへ続行（404/400 でも止めない）。
   // 既に出力(acc)が始まっていたら、部分出力を引き継いで別モデルに継続させる。
-  const wantStream = c.req.query("stream") === "1";
-  if (wantStream) {
-    const stream = new ReadableStream<Uint8Array>({
-      async start(ctrl) {
-        const enc = new TextEncoder();
-        const send = (obj: unknown) => ctrl.enqueue(enc.encode(`data: ${JSON.stringify(obj)}\n\n`));
-        let acc = "";
-        let lastErr: LLMError | undefined;
-        let okModelId: string | undefined;
-        for (let i = 0; i < chain.length; i++) {
-          const m = chain[i];
-          if (i > 0) send({ switch: m.id });
-          const msgs: ChatMessage[] = acc
-            ? [
-                ...body.messages,
-                { role: "assistant", content: acc },
-                { role: "user", content: "前のモデルが上限に達しました。上の途中までの内容に自然に続けて、重複せず最後まで出力してください。" },
-              ]
-            : body.messages;
-          try {
-            for await (const delta of streamDeltas(
-              { provider: m.provider, model: m.model, system: body.system, messages: msgs, noSystemInstruction: m.noSystemInstruction },
-              c.env,
-            )) {
-              acc += delta;
-              send({ delta });
-            }
-            okModelId = m.id;
-            break;
-          } catch (e) {
-            lastErr = e instanceof LLMError ? e : new LLMError(String(e));
+  const stream = new ReadableStream<Uint8Array>({
+    async start(ctrl) {
+      const enc = new TextEncoder();
+      const send = (obj: unknown) => ctrl.enqueue(enc.encode(`data: ${JSON.stringify(obj)}\n\n`));
+      let acc = "";
+      let lastErr: LLMError | undefined;
+      let okModelId: string | undefined;
+      for (let i = 0; i < chain.length; i++) {
+        const m = chain[i];
+        if (i > 0) send({ switch: m.id });
+        const msgs: ChatMessage[] = acc
+          ? [
+              ...body.messages,
+              { role: "assistant", content: acc },
+              { role: "user", content: "前のモデルが上限に達しました。上の途中までの内容に自然に続けて、重複せず最後まで出力してください。" },
+            ]
+          : body.messages;
+        try {
+          for await (const delta of streamDeltas(
+            { provider: m.provider, model: m.model, system: body.system, messages: msgs, noSystemInstruction: m.noSystemInstruction },
+            c.env,
+          )) {
+            acc += delta;
+            send({ delta });
           }
+          okModelId = m.id;
+          break;
+        } catch (e) {
+          lastErr = e instanceof LLMError ? e : new LLMError(String(e));
         }
-        if (okModelId) send({ done: true, model: okModelId });
-        else send({ error: lastErr?.message ?? "all models failed", status: lastErr?.status ?? 502 });
-        ctrl.close();
-      },
-    });
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/event-stream; charset=utf-8",
-        "Cache-Control": "no-cache, no-transform",
-        "Connection": "keep-alive",
-        "X-Accel-Buffering": "no",
-      },
-    });
-  }
-
-  // --- 非ストリーム: 同じ chain を上から試す。エラー種別を問わず候補が残れば次へ。 ---
-  let lastErr: LLMError | undefined;
-  for (const m of chain) {
-    try {
-      const res = await chat(
-        { provider: m.provider, model: m.model, system: body.system, messages: body.messages, noSystemInstruction: m.noSystemInstruction },
-        c.env,
-      );
-      return c.json({ text: res.text, provider: res.provider, model: m.id });
-    } catch (e) {
-      lastErr = e instanceof LLMError ? e : new LLMError(String(e));
-    }
-  }
-  return c.json(
-    { error: lastErr?.message || "all providers failed" },
-    (lastErr?.status as 401 | 429 | 502) || 502,
-  );
+      }
+      if (okModelId) send({ done: true, model: okModelId });
+      else send({ error: lastErr?.message ?? "all models failed", status: lastErr?.status ?? 502 });
+      ctrl.close();
+    },
+  });
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      "Connection": "keep-alive",
+      "X-Accel-Buffering": "no",
+    },
+  });
 });
 
 export default app;

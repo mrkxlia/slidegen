@@ -131,6 +131,6 @@ def render_api_endpoint_table(slide, data: Slide, theme):
                  align=PP_ALIGN.LEFT, anchor=MSO_ANCHOR.MIDDLE)
 
 
-R.RENDERERS["code_block"] = render_code_block
-R.RENDERERS["terminal"] = render_terminal
-R.RENDERERS["api_endpoint_table"] = render_api_endpoint_table
+R.register("code_block", render_code_block)
+R.register("terminal", render_terminal)
+R.register("api_endpoint_table", render_api_endpoint_table)
