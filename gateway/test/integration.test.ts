@@ -65,6 +65,18 @@ describe("gateway API (E2E)", () => {
     expect(res.status).toBe(413);
   });
 
+  it("マルチバイトは UTF-16 長でなく UTF-8 バイト数で 413", async () => {
+    // 「あ」は UTF-8 で 3 バイト。char 長(700)は上限 2000 未満だが、
+    // バイト長(2100超)は上限超過 → バイト判定でなければ素通りしてしまうケース。
+    const ja = "あ".repeat(700);
+    const res = await app.request("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ modelId: "gemini-2.5-flash", messages: [{ role: "user", content: ja }] }),
+    }, baseEnv);
+    expect(res.status).toBe(413);
+  });
+
   it("レート上限超過で 429", async () => {
     vi.stubGlobal("fetch", vi.fn(async () =>
       new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: "ok" }] } }] }), { status: 200 }),
