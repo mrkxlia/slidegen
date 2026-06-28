@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { PURPOSES, phaseSystemPrompt, buildContextPreamble, type Phase } from "./prompts";
 import {
-  scanTags, extractFencedDsl, stripToDsl, stripReasoning, trimHistory,
+  scanTags, extractFencedDsl, stripToDsl, stripReasoning, hasValidDsl, trimHistory,
   type Message,
 } from "./phases";
 import { ingest, type IngestResult } from "./ingest";
@@ -30,11 +30,19 @@ export function App() {
   const [previewing, setPreviewing] = useState(false);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [genRunning, setGenRunning] = useState(false); // DSL生成中（進捗カード表示用）
+  const [genFailedRaw, setGenFailedRaw] = useState<string | null>(null); // 無効DSL時の生出力
   const [rendering, setRendering] = useState(false);
   const [renderStage, setRenderStage] = useState<RenderStage>("idle");
   const [error, setError] = useState<string | null>(null);
   const [authExpired, setAuthExpired] = useState(false);
   const contextInjected = useRef(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // 新メッセージで内部スクロール領域を最下部へ（ページではなくチャット枠が内部スクロールするため必須）。
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages]);
 
   useEffect(() => {
     api.fetchModels()
@@ -124,16 +132,20 @@ export function App() {
   }
 
   // 今ある情報で生成（既存DSLがあれば revise、無ければ dsl 生成）。
+  // 生成中は「進捗のみ」表示にし、途中の生出力（劣化モデルの `}` 連発等）は見せない。
+  // 完了時に DSL として妥当か検証し、妥当なときだけエディタへ反映する。
   async function generateNow(history?: Message[]) {
     const hist = history ?? messages;
     const hasContext = hist.length > 0 || attachments.length > 0 || purposeText() !== "";
     if (!hasContext) { setError("先に内容を入力するか、目的の選択・ファイル添付をしてください。"); return; }
     setBusy(true);
+    setGenRunning(true);
     setError(null);
+    setGenFailedRaw(null);
     setReviewText("");
     const existing = dslText.trim();
     setPhase("dsl");
-    setDslText(""); // 生成過程を編集欄に逐次表示
+    setDslText("");
     try {
       let system: string;
       let messages: Message[];
@@ -146,10 +158,18 @@ export function App() {
         const prep = prepare("dsl", hist, true);
         system = prep.system; messages = prep.messages;
       }
-      const res = await api.chatStream({ modelId, system, messages }, (_d, full) => setDslText(stripToDsl(full)));
-      setDslText(stripToDsl(res.text));
+      // onDelta は意図的に無視（生の途中出力をエディタに流さない）。進捗はスピナーで示す。
+      const res = await api.chatStream({ modelId, system, messages }, () => {});
+      const dsl = stripToDsl(res.text);
+      if (hasValidDsl(dsl)) {
+        setDslText(dsl);
+      } else {
+        // 劣化出力等で `slide <型>` 行が1つも無い → 反映せず、親切なエラー＋再生成導線。
+        setGenFailedRaw(res.text);
+        setError("AIが有効なDSLを生成できませんでした。別のモデルに変えるか、もう一度生成してください。");
+      }
     } catch (e) { handleApiError(e); }
-    finally { setBusy(false); }
+    finally { setGenRunning(false); setBusy(false); }
   }
 
   async function onReview() {
@@ -173,8 +193,16 @@ export function App() {
     if (dsl) { setDslText(dsl); setReviewText(""); }
   }
 
+  // DSL が `slide <型>` で始まる体裁か。preview/render 前にここで止め、
+  // 無効テキストを Pyodide に渡して Python traceback を露出させない。
+  function guardDsl(): boolean {
+    if (hasValidDsl(dslText)) return true;
+    setError("DSL が正しくありません。各スライドは行頭 `slide <型>`（例: slide title）から始まる必要があります。チャットで修正するか、もう一度生成してください。");
+    return false;
+  }
+
   async function onRender() {
-    if (!dslText.trim()) return;
+    if (!dslText.trim() || !guardDsl()) return;
     setRendering(true); setError(null);
     try {
       await initRenderer(setRenderStage);
@@ -187,7 +215,7 @@ export function App() {
   }
 
   async function onPreview() {
-    if (!dslText.trim()) return;
+    if (!dslText.trim() || !guardDsl()) return;
     setPreviewing(true); setError(null);
     try {
       await initRenderer(setRenderStage);
@@ -224,6 +252,7 @@ export function App() {
   function onReset() {
     setMessages([]); setPhase("hearing"); setDslText(""); setReviewText("");
     setAttachments([]); setPreview(null); setInput(""); setError(null);
+    setGenFailedRaw(null); setGenRunning(false);
     contextInjected.current = false;
   }
 
@@ -249,55 +278,82 @@ export function App() {
         onReset={onReset}
       />
       <main className="main">
-        <h1>🪄 slidegen — AIと壁打ちしてスライドを作る</h1>
-        <PhaseBar phase={phase} />
+        <header className="main-header">
+          <div className="wordmark">
+            <span className="wordmark-icon" aria-hidden="true">🪄</span>
+            <span className="wordmark-name">slidegen</span>
+            <span className="wordmark-tag">AIと壁打ちしてスライドを作る</span>
+          </div>
+          <PhaseBar phase={phase} />
+        </header>
 
-        {(phase === "hearing" || phase === "outline") && (
-          <>
-            {dslText.trim() && (
-              <div className="info">✏️ 既存スライドの修正モード。直したい点を送って「今ある情報で生成」を押すと更新します。</div>
-            )}
-            <ChatView messages={messages} />
-            {error && <div className="error">⚠ {error}</div>}
-            <div className="composer">
-              <textarea
-                placeholder={phase === "hearing"
-                  ? "作りたいスライドについて教えてください（例：来月の経営会議で新監視基盤の導入承認を得たい）"
-                  : "流れへの修正点や「これでOK」など"}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) onSend(); }}
-              />
-              <div className="composer-actions">
-                <button onClick={onSend} disabled={busy || !modelId}>{busy ? "送信中…" : "送信 (⌘/Ctrl+Enter)"}</button>
-                {phase === "hearing" && (
-                  <button className="ghost" onClick={onMakeOutline} disabled={busy || !modelId || messages.length === 0}>
-                    流れを作る →
-                  </button>
+        <div className="main-body">
+          {(phase === "hearing" || phase === "outline") && (
+            <div className="chat-pane">
+              <div className="chat-scroll">
+                {dslText.trim() && (
+                  <div className="info">✏️ 既存スライドの修正モード。直したい点を送って「今ある情報で生成」を押すと更新します。</div>
                 )}
-                <button className="ghost" onClick={() => generateNow()} disabled={busy || !modelId}>
-                  今ある情報で生成 →
-                </button>
+                <ChatView messages={messages} />
+                <div ref={chatEndRef} />
+              </div>
+              {error && <div className="error">⚠ {error}</div>}
+              <div className="composer">
+                <textarea
+                  placeholder={phase === "hearing"
+                    ? "作りたいスライドについて教えてください（例：来月の経営会議で新監視基盤の導入承認を得たい）"
+                    : "流れへの修正点や「これでOK」など"}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) onSend(); }}
+                />
+                <div className="composer-actions">
+                  <button onClick={onSend} disabled={busy || !modelId}>{busy ? "送信中…" : "送信 (⌘/Ctrl+Enter)"}</button>
+                  {phase === "hearing" && (
+                    <button className="ghost" onClick={onMakeOutline} disabled={busy || !modelId || messages.length === 0}>
+                      流れを作る →
+                    </button>
+                  )}
+                  <button className="ghost" onClick={() => generateNow()} disabled={busy || !modelId}>
+                    今ある情報で生成 →
+                  </button>
+                </div>
               </div>
             </div>
-          </>
-        )}
+          )}
 
-        {(phase === "dsl" || phase === "review" || phase === "revise") && (
-          <DslPanel
-            dsl={dslText} onChange={onDslChange}
-            onRender={onRender} onReview={onReview}
-            onBackToChat={() => setPhase("hearing")}
-            reviewText={reviewText}
-            onApplyReview={applyReview}
-            canApplyReview={!!extractFencedDsl(reviewText)}
-            renderStage={renderStage} rendering={rendering}
-            generating={busy} error={null}
-            onPreview={onPreview} previewing={previewing}
-            preview={preview} hasTemplate={!!template}
-          />
-        )}
-        {(phase === "dsl") && error && <div className="error">⚠ {error}</div>}
+          {(phase === "dsl" || phase === "review" || phase === "revise") && (
+            <div className="dsl-pane">
+              <DslPanel
+                dsl={dslText} onChange={onDslChange}
+                onRender={onRender} onReview={onReview}
+                onBackToChat={() => setPhase("hearing")}
+                reviewText={reviewText}
+                onApplyReview={applyReview}
+                canApplyReview={!!extractFencedDsl(reviewText)}
+                renderStage={renderStage} rendering={rendering}
+                generating={busy} dslGenerating={genRunning}
+                generatingModel={models.find((m) => m.id === modelId)?.label ?? modelId}
+                onPreview={onPreview} previewing={previewing}
+                preview={preview} hasTemplate={!!template}
+              />
+              {error && (
+                <div className="error">
+                  ⚠ {error}
+                  {genFailedRaw != null && (
+                    <div className="error-actions">
+                      <button onClick={() => generateNow()} disabled={busy || !modelId}>もう一度生成</button>
+                      <details>
+                        <summary>生成結果を表示（デバッグ）</summary>
+                        <pre>{genFailedRaw}</pre>
+                      </details>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </main>
       <RenderOverlay stage={renderStage} rendering={rendering} />
     </div>

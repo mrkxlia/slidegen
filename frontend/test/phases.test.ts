@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-  scanTags, nextPhase, extractFencedDsl, trimHistory, stripFences, stripToDsl, stripReasoning, type Message,
+  scanTags, nextPhase, extractFencedDsl, trimHistory, stripFences, stripToDsl, stripReasoning, hasValidDsl, type Message,
 } from "../src/phases";
 
 describe("scanTags", () => {
@@ -72,5 +72,14 @@ describe("trimHistory / stripFences", () => {
   });
   it("stripReasoning: 見出しが無ければ全体を返す", () => {
     expect(stripReasoning("ただのテキスト")).toBe("ただのテキスト");
+  });
+  it("hasValidDsl: slide 行があれば true", () => {
+    expect(hasValidDsl('slide title\n  title "X"')).toBe(true);
+    expect(hasValidDsl('# 前置き\n\nslide bullets\n  items "a"')).toBe(true);
+  });
+  it("hasValidDsl: slide 行が無ければ false（劣化出力ガード）", () => {
+    expect(hasValidDsl("}\n}\n}\n}")).toBe(false);
+    expect(hasValidDsl("")).toBe(false);
+    expect(hasValidDsl("ただのテキスト")).toBe(false);
   });
 });

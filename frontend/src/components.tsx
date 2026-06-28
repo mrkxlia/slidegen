@@ -6,26 +6,39 @@ import type { ModelInfo } from "./api";
 import type { RenderStage, TemplateFile, SlidePreview } from "./render/renderClient";
 import { renderMarkdown } from "./md";
 
-const PHASE_LABELS: Record<Phase, string> = {
-  hearing: "① 壁打ち",
-  outline: "② 流れの作成",
-  dsl: "③ DSL生成・編集",
-  review: "③ レビュー",
-  revise: "③ 修正",
-};
-const PHASE_ORDER: Phase[] = ["hearing", "outline", "dsl"];
+// フェーズの「スライドレール」: デッキのコマ送りで現在地を常時示す署名要素。
+// 各段は 16:9 のスライドチップ＋細いレールで連結。番号は実際の工程順を表す。
+const PHASE_STEPS: { label: string }[] = [
+  { label: "壁打ち" },
+  { label: "流れ" },
+  { label: "DSL生成" },
+  { label: "PowerPoint" },
+];
+// 現フェーズ → レール上のアクティブ index（review/revise は dsl=2 に集約）。
+function phaseIndex(phase: Phase): number {
+  switch (phase) {
+    case "hearing": return 0;
+    case "outline": return 1;
+    case "dsl":
+    case "review":
+    case "revise": return 2;
+  }
+}
 
 export function PhaseBar({ phase }: { phase: Phase }) {
-  const active = phase === "review" || phase === "revise" ? "dsl" : phase;
+  const active = phaseIndex(phase);
   return (
-    <div className="phasebar">
-      {PHASE_ORDER.map((p) => (
-        <span key={p} className={p === active ? "phase active" : "phase"}>
-          {PHASE_LABELS[p]}
-        </span>
-      ))}
-      <span className={phase === "dsl" ? "phase done-step" : "phase"}>④ PowerPoint生成</span>
-    </div>
+    <ol className="phase-rail" aria-label="作成の進行">
+      {PHASE_STEPS.map((s, i) => {
+        const state = i < active ? "done" : i === active ? "current" : "future";
+        return (
+          <li key={s.label} className={`phase-step ${state}`} aria-current={state === "current" ? "step" : undefined}>
+            <span className="phase-slide">{i + 1}</span>
+            <span className="phase-label">{s.label}</span>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
@@ -169,13 +182,26 @@ export function DslPanel(props: {
   canApplyReview: boolean;
   renderStage: RenderStage;
   rendering: boolean;
-  generating: boolean;
-  error: string | null;
+  generating: boolean;      // 何らかの AI 処理中（ボタン無効化用）
+  dslGenerating: boolean;   // DSL 生成中（進捗カードに切替）
+  generatingModel: string;  // 進捗カードに出すモデル名
   onPreview: () => void;
   previewing: boolean;
   preview: SlidePreview[] | null;
   hasTemplate: boolean;
 }) {
+  // DSL 生成中は「進捗のみ」を表示し、途中の生出力（劣化モデルの `}` 連発等）は見せない。
+  if (props.dslGenerating) {
+    return (
+      <div className="dslpanel">
+        <div className="gen-progress" role="status" aria-live="polite">
+          <div className="spinner" />
+          <p className="gen-progress-title">✍️ AIがスライドを生成しています…</p>
+          <p className="gen-progress-sub">モデル: {props.generatingModel}</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="dslpanel">
       <div className="dsl-toolbar">
@@ -187,14 +213,14 @@ export function DslPanel(props: {
         </button>
         <button className="ghost" onClick={props.onReview} disabled={props.generating}>🔍 AIレビュー</button>
         <button className="ghost" onClick={props.onBackToChat}>← チャットで修正</button>
-        {props.generating && <span className="stage">✍️ AI生成中…</span>}
+        {props.generating && <span className="stage">✍️ AIレビュー中…</span>}
       </div>
       {props.preview && <PreviewCards slides={props.preview} />}
-      {props.error && <div className="error">⚠ {props.error}</div>}
       <textarea
         className="dsl-editor"
         value={props.dsl}
         spellCheck={false}
+        placeholder="ここに生成された DSL が表示されます。直接編集もできます。"
         onChange={(e) => props.onChange(e.target.value)}
       />
       {props.reviewText && (
