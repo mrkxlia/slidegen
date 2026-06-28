@@ -18,12 +18,12 @@ binding = "AI"
 #   GEMINI_API_KEY / OPENROUTER_API_KEY / OPENAI_API_KEY / ANTHROPIC_API_KEY
 # ALLOWED_ORIGIN: 同一オリジン運用では CORS 判定に実質効かないが、Hono cors の origin に使う。
 #   実際の Pages URL に合わせる（プロジェクト名が取得済みだと *.pages.dev が変わる点に注意）。
-ALLOWED_ORIGIN = "https://slidegen.pages.dev"
+ALLOWED_ORIGIN = "https://slidegen-ezt.pages.dev"
 # ACCESS_TEAM_DOMAIN: Zero Trust チーム名（例 "myteam" → https://myteam.cloudflareaccess.com）。
-ACCESS_TEAM_DOMAIN = ""
+ACCESS_TEAM_DOMAIN = "mrxlia"
 # ACCESS_AUD: Access アプリの Application Audience (AUD) タグ。
 #   未設定だと auth はフェイルクローズ（全リクエスト 500）。本番では必ず設定。
-ACCESS_AUD = ""
+ACCESS_AUD = "5ac4a02110059e3aa7d6031b22608224ddd987ce1202191c8cd1f66d05817c03"
 # 入力サイズ上限（バイト）。本番キーの暴走課金防止のサーバ強制ガード。
 MAX_INPUT_BYTES = "200000"
 # レート制限: 時間窓(秒)あたりの最大リクエスト数。

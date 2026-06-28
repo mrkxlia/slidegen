@@ -6,11 +6,12 @@ describe("availableModels", () => {
     expect(availableModels({})).toHaveLength(0);
   });
 
-  it("GEMINI_API_KEY があれば gemini モデルのみ出る", () => {
+  it("GEMINI_API_KEY があれば gemini プロバイダのモデルのみ出る", () => {
     const env: ProviderEnv = { GEMINI_API_KEY: "x" };
-    const ids = availableModels(env).map((m) => m.id);
-    expect(ids).toContain("gemini-2.0-flash");
-    expect(ids.every((i) => i.startsWith("gemini"))).toBe(true);
+    const list = availableModels(env);
+    expect(list.map((m) => m.id)).toContain("gemini-2.5-flash");
+    // Gemma も provider は "gemini"（同 API/同キー）。id 前提でなく provider で確認。
+    expect(list.every((m) => m.provider === "gemini")).toBe(true);
   });
 
   it("Workers AI は binding だけで有効化される", () => {
@@ -28,7 +29,7 @@ describe("availableModels", () => {
 
 describe("findModel", () => {
   it("既知IDを解決し、未知は undefined", () => {
-    expect(findModel("gemini-2.0-flash")?.provider).toBe("gemini");
+    expect(findModel("gemini-2.5-flash")?.provider).toBe("gemini");
     expect(findModel("nope")).toBeUndefined();
   });
 });
