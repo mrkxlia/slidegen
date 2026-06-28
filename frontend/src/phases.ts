@@ -65,3 +65,13 @@ export function trimHistory(messages: Message[], maxTurns = 16): Message[] {
 export function stripFences(text: string): string {
   return text.split("```").join("").trim();
 }
+
+// 生成出力から DSL 本体だけを取り出す。
+// コードフェンスを除去し、最初の行頭 `slide <type>` より前（思考過程・前置き）を捨てる。
+// 思考型モデル(Gemini 3.x 等)が reasoning を本文に混ぜても、preview/render が
+// 壊れないようにするための堅牢化。`slide` が見つからなければ従来どおり全体を返す。
+export function stripToDsl(text: string): string {
+  const noFence = text.split("```").join("");
+  const m = noFence.match(/^slide[ \t]+\S+/m);
+  return (m?.index != null ? noFence.slice(m.index) : noFence).trim();
+}
