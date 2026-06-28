@@ -75,3 +75,11 @@ export function stripToDsl(text: string): string {
   const m = noFence.match(/^slide[ \t]+\S+/m);
   return (m?.index != null ? noFence.slice(m.index) : noFence).trim();
 }
+
+// レビュー等の出力から思考過程の前置きを除去し、最初の Markdown 見出し(### …)以降を返す。
+// 思考型モデルが冒頭に長い reasoning を吐いても、講評を読みやすく表示するため。
+// 見出しが無ければ全体を返す（フォールバック）。
+export function stripReasoning(text: string): string {
+  const m = text.match(/^#{1,6}[ \t]\S/m);
+  return (m?.index != null ? text.slice(m.index) : text).trim();
+}
