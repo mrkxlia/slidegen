@@ -42,7 +42,7 @@ describe("gateway API (E2E)", () => {
 
   it("POST /api/chat?stream=1 は SSE で delta と done を返す", async () => {
     vi.stubGlobal("fetch", vi.fn(async () =>
-      new Response('data: {"candidates":[{"content":{"parts":[{"text":"A"}]}}]}\n\n', { status: 200 }),
+      new Response('data: {"candidates":[{"content":{"parts":[{"text":"A"}]}}]}\r\n\r\n', { status: 200 }),
     ));
     const res = await app.request("/api/chat?stream=1", {
       method: "POST",
@@ -86,7 +86,7 @@ describe("gateway API (E2E)", () => {
     vi.stubGlobal("fetch", vi.fn(async () => {
       calls++;
       if (calls === 1) return new Response("rate limited", { status: 429 });
-      return new Response('data: {"candidates":[{"content":{"parts":[{"text":"A"}]}}]}\n\n', { status: 200 });
+      return new Response('data: {"candidates":[{"content":{"parts":[{"text":"A"}]}}]}\r\n\r\n', { status: 200 });
     }));
     const res = await app.request("/api/chat?stream=1", {
       method: "POST",
@@ -104,7 +104,7 @@ describe("gateway API (E2E)", () => {
     vi.stubGlobal("fetch", vi.fn(async () => {
       calls++;
       if (calls === 1) return new Response("bad request", { status: 400 });
-      return new Response('data: {"candidates":[{"content":{"parts":[{"text":"B"}]}}]}\n\n', { status: 200 });
+      return new Response('data: {"candidates":[{"content":{"parts":[{"text":"B"}]}}]}\r\n\r\n', { status: 200 });
     }));
     const res = await app.request("/api/chat?stream=1", {
       method: "POST",
