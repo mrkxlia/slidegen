@@ -32,6 +32,7 @@ export function App() {
   const [busy, setBusy] = useState(false);
   const [genRunning, setGenRunning] = useState(false); // DSL生成中（進捗カード表示用）
   const [genFailedRaw, setGenFailedRaw] = useState<string | null>(null); // 無効DSL時の生出力
+  const [genNotice, setGenNotice] = useState<string | null>(null); // 自動フォールバック等の通知
   const [rendering, setRendering] = useState(false);
   const [renderStage, setRenderStage] = useState<RenderStage>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -131,9 +132,23 @@ export function App() {
     } catch (e) { handleApiError(e); }
   }
 
+  const labelOf = (id: string) => models.find((m) => m.id === id)?.label ?? id;
+
+  // DSL生成で選択モデルが無効出力（Gemma の劣化等）だったときの、信頼できる代替モデル。
+  // gemini 系を優先（構造化出力が安定）。選択中以外から1つだけ拾う。
+  function dslFallbackModel(currentId: string): string | undefined {
+    const others = models.filter((m) => m.id !== currentId);
+    return (
+      others.find((m) => m.id === "gemini-3.1-flash-lite") ??
+      others.find((m) => m.id.startsWith("gemini")) ??
+      others.find((m) => !m.id.startsWith("gemma"))
+    )?.id;
+  }
+
   // 今ある情報で生成（既存DSLがあれば revise、無ければ dsl 生成）。
   // 生成中は「進捗のみ」表示にし、途中の生出力（劣化モデルの `}` 連発等）は見せない。
-  // 完了時に DSL として妥当か検証し、妥当なときだけエディタへ反映する。
+  // 完了時に DSL として妥当か検証。無効なら信頼できる別モデルで1回だけ自動リトライし、
+  // それでも駄目なときだけ親切なエラー＋再生成導線を出す。
   async function generateNow(history?: Message[]) {
     const hist = history ?? messages;
     const hasContext = hist.length > 0 || attachments.length > 0 || purposeText() !== "";
@@ -142,6 +157,7 @@ export function App() {
     setGenRunning(true);
     setError(null);
     setGenFailedRaw(null);
+    setGenNotice(null);
     setReviewText("");
     const existing = dslText.trim();
     setPhase("dsl");
@@ -158,16 +174,25 @@ export function App() {
         const prep = prepare("dsl", hist, true);
         system = prep.system; messages = prep.messages;
       }
-      // onDelta は意図的に無視（生の途中出力をエディタに流さない）。進捗はスピナーで示す。
-      const res = await api.chatStream({ modelId, system, messages }, () => {});
-      const dsl = stripToDsl(res.text);
-      if (hasValidDsl(dsl)) {
-        setDslText(dsl);
-      } else {
-        // 劣化出力等で `slide <型>` 行が1つも無い → 反映せず、親切なエラー＋再生成導線。
-        setGenFailedRaw(res.text);
-        setError("AIが有効なDSLを生成できませんでした。別のモデルに変えるか、もう一度生成してください。");
+      // 選択モデル → （無効なら）信頼できる代替モデルの順に、有効DSLが出るまで試す。
+      const chain = [modelId, dslFallbackModel(modelId)].filter((id): id is string => !!id);
+      let lastRaw = "";
+      for (let i = 0; i < chain.length; i++) {
+        // onDelta は意図的に無視（生の途中出力をエディタに流さない）。進捗はスピナーで示す。
+        const res = await api.chatStream({ modelId: chain[i], system, messages }, () => {});
+        const dsl = stripToDsl(res.text);
+        if (hasValidDsl(dsl)) {
+          setDslText(dsl);
+          if (i > 0) {
+            setGenNotice(`「${labelOf(modelId)}」が有効なDSLを出せなかったため、「${labelOf(chain[i])}」で生成しました。`);
+          }
+          return;
+        }
+        lastRaw = res.text;
       }
+      // 全候補が無効 → 反映せず、親切なエラー＋再生成導線。
+      setGenFailedRaw(lastRaw);
+      setError("AIが有効なDSLを生成できませんでした。別のモデルに変えるか、もう一度生成してください。");
     } catch (e) { handleApiError(e); }
     finally { setGenRunning(false); setBusy(false); }
   }
@@ -252,7 +277,7 @@ export function App() {
   function onReset() {
     setMessages([]); setPhase("hearing"); setDslText(""); setReviewText("");
     setAttachments([]); setPreview(null); setInput(""); setError(null);
-    setGenFailedRaw(null); setGenRunning(false);
+    setGenFailedRaw(null); setGenRunning(false); setGenNotice(null);
     contextInjected.current = false;
   }
 
@@ -324,6 +349,7 @@ export function App() {
 
           {(phase === "dsl" || phase === "review" || phase === "revise") && (
             <div className="dsl-pane">
+              {genNotice && <div className="info">ℹ️ {genNotice}</div>}
               <DslPanel
                 dsl={dslText} onChange={onDslChange}
                 onRender={onRender} onReview={onReview}
