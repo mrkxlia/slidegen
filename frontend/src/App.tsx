@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { PURPOSES, phaseSystemPrompt, buildContextPreamble, type Phase } from "./prompts";
 import {
-  scanTags, nextPhase, extractFencedDsl, stripFences, trimHistory,
+  scanTags, nextPhase, extractFencedDsl, stripToDsl, trimHistory,
   type Message,
 } from "./phases";
 import { ingest, type IngestResult } from "./ingest";
@@ -143,8 +143,8 @@ export function App() {
         const prep = prepare("dsl", hist, true);
         system = prep.system; messages = prep.messages;
       }
-      const res = await api.chatStream({ modelId, system, messages }, (_d, full) => setDslText(stripFences(full)));
-      setDslText(stripFences(res.text));
+      const res = await api.chatStream({ modelId, system, messages }, (_d, full) => setDslText(stripToDsl(full)));
+      setDslText(stripToDsl(res.text));
     } catch (e) { handleApiError(e); }
     finally { setBusy(false); }
   }

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-  scanTags, nextPhase, extractFencedDsl, trimHistory, stripFences, type Message,
+  scanTags, nextPhase, extractFencedDsl, trimHistory, stripFences, stripToDsl, type Message,
 } from "../src/phases";
 
 describe("scanTags", () => {
@@ -49,5 +49,19 @@ describe("trimHistory / stripFences", () => {
   });
   it("フェンス記号を除去", () => {
     expect(stripFences("```\nslide title\n```")).toBe("slide title");
+  });
+  it("stripToDsl: 思考過程の前置きを捨てて slide 本体から返す", () => {
+    const out = stripToDsl(
+      "* Goal: output only DSL\n* Constraints:\n  * `slide title` example\n\nslide title\n  title \"X\"\n---\nslide bullets\n  items \"a\"",
+    );
+    expect(out.startsWith("slide title")).toBe(true);
+    expect(out).not.toContain("Goal:");
+    expect(out).toContain("slide bullets");
+  });
+  it("stripToDsl: コードフェンス付きでも本体を取り出す", () => {
+    expect(stripToDsl("```dsl\nslide title\n  title \"X\"\n```")).toBe('slide title\n  title "X"');
+  });
+  it("stripToDsl: slide が無ければ全体を返す（フォールバック）", () => {
+    expect(stripToDsl("no dsl here")).toBe("no dsl here");
   });
 });
