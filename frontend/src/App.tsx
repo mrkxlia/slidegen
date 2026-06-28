@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { PURPOSES, phaseSystemPrompt, buildContextPreamble, type Phase } from "./prompts";
 import {
-  scanTags, nextPhase, extractFencedDsl, stripToDsl, trimHistory,
+  scanTags, extractFencedDsl, stripToDsl, stripReasoning, trimHistory,
   type Message,
 } from "./phases";
 import { ingest, type IngestResult } from "./ingest";
@@ -97,22 +97,25 @@ export function App() {
     setInput("");
     setBusy(true);
     try {
+      // 手動進行: AI は壁打ち中に自動で次フェーズへ進まない（タグは表示用に除去するだけ）。
+      // 進行はユーザーが「流れを作る →」「今ある情報で生成 →」を押したときだけ。
       const raw = await streamAssistant(phase, newMsgs);
-      const scan = scanTags(raw);
-      const settled = [...newMsgs, { role: "assistant", content: scan.cleaned } as Message];
-      setMessages(settled);
-      const np = nextPhase(phase, scan);
-      if (scan.readyToGenerate) {
-        await generateNow(newMsgs);
-      } else if (np !== phase) {
-        setPhase(np);
-        if (np === "outline") await autoOutline(settled);
-      }
+      setMessages([...newMsgs, { role: "assistant", content: scanTags(raw).cleaned } as Message]);
     } catch (e) { handleApiError(e); }
     finally { setBusy(false); }
   }
 
-  // 流れフェーズに入ったら、すぐ流れ案を出す。
+  // 「流れを作る →」: ユーザー操作で outline フェーズに進み、流れ案を出す。
+  async function onMakeOutline() {
+    if (busy || !modelId || messages.length === 0) return;
+    setError(null);
+    setPhase("outline");
+    setBusy(true);
+    await autoOutline(messages);
+    setBusy(false);
+  }
+
+  // outline フェーズに入ったら、すぐ流れ案を出す。
   async function autoOutline(history: Message[]) {
     try {
       const raw = await streamAssistant("outline", history, true);
@@ -158,9 +161,9 @@ export function App() {
       const user = (preamble ? preamble + "\n\n" : "") + "次のDSLをレビューしてください:\n\n" + dslText;
       const res = await api.chatStream(
         { modelId, system: phaseSystemPrompt("review"), messages: [{ role: "user", content: user }] },
-        (_d, full) => setReviewText(full),
+        (_d, full) => setReviewText(stripReasoning(full)),
       );
-      setReviewText(res.text);
+      setReviewText(stripReasoning(res.text));
     } catch (e) { handleApiError(e); }
     finally { setBusy(false); }
   }
@@ -267,6 +270,11 @@ export function App() {
               />
               <div className="composer-actions">
                 <button onClick={onSend} disabled={busy || !modelId}>{busy ? "送信中…" : "送信 (⌘/Ctrl+Enter)"}</button>
+                {phase === "hearing" && (
+                  <button className="ghost" onClick={onMakeOutline} disabled={busy || !modelId || messages.length === 0}>
+                    流れを作る →
+                  </button>
+                )}
                 <button className="ghost" onClick={() => generateNow()} disabled={busy || !modelId}>
                   今ある情報で生成 →
                 </button>

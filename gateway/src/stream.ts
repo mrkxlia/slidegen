@@ -73,7 +73,8 @@ async function* streamGemini(req: ChatRequest, env: ProviderEnv, maxTokens: numb
   if (!resp.ok) throw await httpError(resp, "gemini");
   for await (const ev of sseJson(resp)) {
     const parts = (ev as any)?.candidates?.[0]?.content?.parts ?? [];
-    for (const p of parts) if (p.text) yield p.text as string;
+    // thought パート(思考の要約)は本文に出さない。
+    for (const p of parts) if (p.text && !p.thought) yield p.text as string;
   }
 }
 

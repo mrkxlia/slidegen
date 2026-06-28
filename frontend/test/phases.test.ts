@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-  scanTags, nextPhase, extractFencedDsl, trimHistory, stripFences, stripToDsl, type Message,
+  scanTags, nextPhase, extractFencedDsl, trimHistory, stripFences, stripToDsl, stripReasoning, type Message,
 } from "../src/phases";
 
 describe("scanTags", () => {
@@ -63,5 +63,14 @@ describe("trimHistory / stripFences", () => {
   });
   it("stripToDsl: slide が無ければ全体を返す（フォールバック）", () => {
     expect(stripToDsl("no dsl here")).toBe("no dsl here");
+  });
+  it("stripReasoning: 見出し前の思考過程を捨てて ### から返す", () => {
+    const out = stripReasoning("* Plan: think...\n* Wait, reconsider.\n\n### 講評\n- 良い点\n\n### 改善後DSL\n```\nslide title\n```");
+    expect(out.startsWith("### 講評")).toBe(true);
+    expect(out).not.toContain("Plan:");
+    expect(out).toContain("### 改善後DSL");
+  });
+  it("stripReasoning: 見出しが無ければ全体を返す", () => {
+    expect(stripReasoning("ただのテキスト")).toBe("ただのテキスト");
   });
 });

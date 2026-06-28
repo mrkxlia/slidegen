@@ -199,7 +199,8 @@ async function chatGemini(req: ChatRequest, env: ProviderEnv, maxTokens: number,
   if (!resp.ok) throw await httpError(resp, "gemini");
   const data = (await resp.json()) as any;
   const parts = data?.candidates?.[0]?.content?.parts ?? [];
-  return parts.map((p: any) => p.text ?? "").join("");
+  // thought パート(思考の要約)は本文に含めない。
+  return parts.filter((p: any) => !p.thought).map((p: any) => p.text ?? "").join("");
 }
 
 // --- OpenAI 互換 (OpenRouter / OpenAI) ---
