@@ -21,9 +21,13 @@ const py = await loadPyodide();
 await py.loadPackage("micropip");
 const micropip = py.pyimport("micropip");
 
-py.FS.writeFile("/tmp/slidegen.whl", readFileSync(wheelPath));
+// micropip は basename を wheel ファイル名として解釈するため、
+// 正規の `slidegen-<ver>-py3-none-any.whl` 名で FS に置く（"slidegen.whl" 等は不可）。
+const wheelBase = wheelPath.split("/").pop();
+py.FS.mkdirTree("/wheels");
+py.FS.writeFile(`/wheels/${wheelBase}`, readFileSync(wheelPath));
 console.log("installing slidegen + deps (python-pptx → lxml/Pillow/XlsxWriter)…");
-await micropip.install("emfs:/tmp/slidegen.whl", { deps: true });
+await micropip.install(`emfs:/wheels/${wheelBase}`, { deps: true });
 
 py.globals.set("dsl_text", readFileSync(sample, "utf8"));
 const [nbytes, nslides] = (

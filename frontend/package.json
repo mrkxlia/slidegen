@@ -7,19 +7,26 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "typecheck:functions": "tsc --noEmit -p functions/tsconfig.json",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "deploy": "wrangler pages deploy dist --project-name slidegen"
   },
   "dependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241218.0",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
     "jszip": "^3.10.1",
     "typescript": "^5.7.2",
     "vite": "^6.0.5",
+    "vitest": "^2.1.8",
+    "wrangler": "^3.95.0",
     "xlsx": "^0.18.5"
   }
 }

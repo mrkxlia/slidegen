@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "claude/**"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Python tests (本体 + chart-DSL ガード)
+        run: uv run --extra dev pytest tests/ -q
+
+      - name: Build slidegen wheel (frontend/public/wheels + .env.local)
+        run: bash tools/build_wheel.sh
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Gateway — install, typecheck, test
+        working-directory: gateway
+        run: |
+          npm ci
+          npx tsc --noEmit
+          npx vitest run
+
+      - name: Frontend — install, typecheck, test, build
+        working-directory: frontend
+        run: |
+          npm ci
+          npx tsc --noEmit
+          npx vitest run
+          npm run build
+
+      # Pages Functions(/api) は gateway/src を跨いで参照するため、gateway/frontend 双方の
+      # 依存が入った後にここで型検査する（専用 tsconfig: @cloudflare/workers-types）。
+      - name: Functions — typecheck (Pages Functions)
+        working-directory: frontend
+        run: npm run typecheck:functions
+
+  # 本番デプロイ（Cloudflare Pages 一本）。main への push 時のみ、テスト成功後に実行。
+  deploy:
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Build slidegen wheel (frontend/public/wheels へ配置)
+        run: bash tools/build_wheel.sh
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # ★ Pages Functions のバンドルは gateway/src 由来の hono/jose を gateway/node_modules
+      #   から解決する。これを入れ忘れると deploy 時に限ってバンドルが失敗する。
+      - name: Gateway — install deps (Functions バンドル依存)
+        working-directory: gateway
+        run: npm ci
+
+      - name: Frontend — install & build
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: frontend
+          command: pages deploy dist --project-name slidegen

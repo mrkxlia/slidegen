@@ -1,0 +1,16 @@
+{
+  "//": "Pages Functions 専用の型検査設定。gateway/src を経由して Worker 型(KVNamespace 等)と hono を参照するため、frontend 本体 tsconfig とは分離し @cloudflare/workers-types を読む。実行: tsc --noEmit -p frontend/functions/tsconfig.json（gateway/frontend 双方 npm ci 済みの前提）。",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022"],
+    "types": ["@cloudflare/workers-types"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true
+  },
+  "include": ["."]
+}

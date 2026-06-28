@@ -11,10 +11,21 @@ export type RenderStage =
 
 type ProgressCb = (stage: RenderStage) => void;
 
+export interface TemplateFile { name: string; bytes: ArrayBuffer; byteLength: number; }
+
+export interface SlidePreview {
+  type: string;
+  headline: string;
+  kicker: string;
+  foot: string;
+  columns: string[];
+  blocks: { title: string; highlight: boolean; lines: string[]; rows: string[][] }[];
+}
+
 let worker: Worker | null = null;
 let readyPromise: Promise<void> | null = null;
 let reqId = 0;
-const pending = new Map<number, { resolve: (b: Uint8Array) => void; reject: (e: Error) => void }>();
+const pending = new Map<number, { resolve: (v: any) => void; reject: (e: Error) => void }>();
 
 export function initRenderer(onProgress?: ProgressCb): Promise<void> {
   if (readyPromise) return readyPromise;
@@ -26,12 +37,14 @@ export function initRenderer(onProgress?: ProgressCb): Promise<void> {
         case "progress": onProgress?.(msg.stage as RenderStage); break;
         case "ready": onProgress?.("ready"); resolve(); break;
         case "error": onProgress?.("error"); reject(new Error(msg.error)); break;
-        case "rendered": {
+        case "rendered":
+        case "previewed": {
           const p = pending.get(msg.id);
-          if (p) { pending.delete(msg.id); p.resolve(msg.bytes as Uint8Array); }
+          if (p) { pending.delete(msg.id); p.resolve(msg.type === "rendered" ? msg.bytes : msg.slides); }
           break;
         }
-        case "render-error": {
+        case "render-error":
+        case "preview-error": {
           const p = pending.get(msg.id);
           if (p) { pending.delete(msg.id); p.reject(new Error(msg.error)); }
           break;
@@ -44,14 +57,26 @@ export function initRenderer(onProgress?: ProgressCb): Promise<void> {
   return readyPromise;
 }
 
-// DSL → pptx bytes。失敗（parse エラー等）は reject。
-export async function renderDsl(dsl: string): Promise<Uint8Array> {
+// DSL → pptx bytes。template 指定時は会社テンプレ(.potx/.pptx)を土台にする。失敗は reject。
+export async function renderDsl(dsl: string, template?: TemplateFile): Promise<Uint8Array> {
   if (!worker || !readyPromise) await initRenderer();
   await readyPromise;
   const id = ++reqId;
   return new Promise<Uint8Array>((resolve, reject) => {
     pending.set(id, { resolve, reject });
-    worker!.postMessage({ type: "render", id, dsl });
+    // template は再利用するため転送せずコピー（サイズは小さい）。
+    worker!.postMessage({ type: "render", id, dsl, template });
+  });
+}
+
+// DSL をパースしてスライド構成を返す（構成プレビュー）。
+export async function previewDsl(dsl: string): Promise<SlidePreview[]> {
+  if (!worker || !readyPromise) await initRenderer();
+  await readyPromise;
+  const id = ++reqId;
+  return new Promise<SlidePreview[]>((resolve, reject) => {
+    pending.set(id, { resolve, reject });
+    worker!.postMessage({ type: "preview", id, dsl });
   });
 }
 
