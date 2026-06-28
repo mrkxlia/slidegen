@@ -81,10 +81,11 @@ interface ChatBody {
 }
 
 app.post("/api/chat", async (c) => {
-  // 入力サイズのサーバ強制（鍵暴走課金防止）
+  // 入力サイズのサーバ強制（鍵暴走課金防止）。
+  // マルチバイト(日本語等)で過小評価しないよう、UTF-16 長ではなく UTF-8 バイト数で判定する。
   const maxBytes = parseInt(c.env.MAX_INPUT_BYTES || "200000", 10);
   const raw = await c.req.raw.clone().text();
-  if (raw.length > maxBytes) {
+  if (new TextEncoder().encode(raw).length > maxBytes) {
     return c.json({ error: `input too large (>${maxBytes} bytes)` }, 413);
   }
 

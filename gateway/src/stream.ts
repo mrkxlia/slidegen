@@ -34,7 +34,10 @@ async function* sseJson(resp: Response): AsyncGenerator<unknown> {
 async function httpError(resp: Response, who: string): Promise<LLMError> {
   const body = await resp.text().catch(() => "");
   const retryable = resp.status === 429 || resp.status >= 500;
-  return new LLMError(`${who} ${resp.status}: ${body.slice(0, 300)}`, resp.status, retryable);
+  // 上流の生エラー本文はサーバログにのみ残し、クライアントには種別+ステータスだけ返す
+  // （上流のエラー詳細が利用者に露出するのを防ぐ）。
+  console.error(`[${who}] upstream ${resp.status}: ${body.slice(0, 500)}`);
+  return new LLMError(`${who} upstream error (${resp.status})`, resp.status, retryable);
 }
 
 // provider ごとのテキスト delta ストリーム。
