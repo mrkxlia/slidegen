@@ -1,195 +1,190 @@
-# slidegen — 記法(DSL)から編集可能なpptxを生成する仕組み
+# slidegen
 
-中間記法パターン（MNP）の考え方で、**AIにはスライドの内容（記法）だけを書かせ**、
+記法(DSL)から **PowerPoint で編集できるネイティブ .pptx** を生成する純 Python ライブラリ ＋
+それを使って **AI と壁打ちしてスライドを作る Web アプリ**。
+
+中間記法パターン(MNP)の考え方で、**AI にはスライドの内容（記法）だけを書かせ**、
 レイアウト・配色・フォントは「型カタログ」「デザイン制約」「会社テンプレ(potx)」で固定する。
-出力は **PowerPointで自由に編集できるネイティブ .pptx**（画像化しない）。
+出力は画像化しない（**後から編集できる本物の pptx**）。
 
-slidegen は **アプリのバックエンド**（import して使うライブラリ）としても、
-**単一CLI**（`slidegen` コマンド）としても使える。
+> 📋 要件 → [requirements.md](requirements.md)　／　🔧 仕様 → [spec.md](spec.md)　／　🧠 背景思想 → [docs/ppt_design_doc.md](docs/ppt_design_doc.md)
+> 🏛 設計判断(ADR) → [docs/adr/](docs/adr/)　／　🚀 デプロイ・運用 → [docs/deployment.md](docs/deployment.md)
 
-## Web アプリ（Cloudflare 無料枠）
+---
 
-AIと壁打ちしてスライドを作る Web フロント＋ゲートウェイを `frontend/` と `gateway/` に同梱。
-**全て Cloudflare 無料枠**で動く構成（pptx生成はブラウザ内Pyodideで実行＝サーバCPU制限なし）。
+## 2つの成果物
 
-- `frontend/` … React+Vite+TS（Cloudflare Pages）。チャット/DSLエディタ/ブラウザpptx生成。
-- `gateway/` … Hono/TS。Cloudflare Access 認証付きの LLM 中継。本番はフロントと**同一オリジンの
-  Pages Functions** として配信（独立 Worker はローカル開発用。理由は docs/adr/0001）。
-- LLM … テストは Gemini/OpenRouter/Workers AI（無料枠）、本番は API キーを secret 設定。
+| | 何 | 場所 | 使い方 |
+|---|---|---|---|
+| **コアライブラリ** | DSL → 編集可能 pptx（純 Python ＋ CLI） | `slidegen/` | `import slidegen` / `slidegen` コマンド |
+| **Web アプリ** | AI と壁打ちしてスライド作成（Cloudflare 無料枠） | `frontend/` ＋ `gateway/` | ブラウザ。pptx 生成はブラウザ内 Pyodide でライブラリを実行 |
 
-デプロイと運用は **[docs/deployment.md](docs/deployment.md)** を参照。
-最初に STEP0 関門（`bash tools/build_wheel.sh && node tools/pyodide_spike.mjs`）で
-ブラウザ相当のpptx生成が通ることを確認すること。
+ライブラリが中核で、Web アプリは**同じライブラリを wheel 化してブラウザ Pyodide で動かす**
+（＝サーバで pptx を作らない）。
 
-### 現在の状態
-- 実装・検証は完了。**PR #3 は main へマージ済み**。残るは実デプロイ（Cloudflare アカウント所有者の操作）のみ。
-- Python 106 / gateway vitest（API E2E 含む）/ frontend vitest、各 tsc clean・build 成功。
-- STEP0（ブラウザ相当 Pyodide での pptx 生成）実機検証済み。
-- 機能: 壁打ち（SSE ストリーミング）→ 流れ → DSL 編集 → pptx 生成/DL、添付(xlsx/csv/pptx)取込、
-  会社テンプレ(.potx)適用、構成プレビュー、AIレビュー、設定の永続化。
-- アーキテクチャ/設計メモ・ローカル開発手順は **[CLAUDE.md](CLAUDE.md)** に集約。
+## アーキテクチャ
 
-## インストール / 開発セットアップ
+要点は3つ:
 
-Python は **uv に統一**（ADR 0002）。リポジトリを clone したら:
+- **重い pptx 生成はブラウザ内 Pyodide** で実行 → 無料枠の Worker CPU 制限を回避（[ADR 0003](docs/adr/0003-browser-pyodide-rendering.md)）。
+- **LLM 中継は Pages Functions** としてフロントと**同一オリジン**配信 → Cloudflare Access の Cookie 認証が成立（[ADR 0001](docs/adr/0001-same-origin-pages-functions.md)）。
+- 認証は **Cloudflare Access**（エッジ）＋ ゲートウェイ内 JWT 検証（`aud` 必須・フェイルクローズ）の多層防御。
 
-```bash
-uv sync                              # 仮想環境 + 依存をセットアップ
-uv run --extra dev pytest tests/ -q  # 本体テスト（106 passed）
-uv run slidegen build ...            # CLI 実行
-uv build                             # wheel 化（配布物。bash tools/build_wheel.sh も同等）
+```mermaid
+flowchart TB
+  subgraph Browser["ブラウザ（ユーザー端末）"]
+    UI["React/Vite フロント<br/>壁打ち・DSL編集・ダウンロード"]
+    RW["Render Worker / Pyodide<br/>slidegen wheel を実行"]
+  end
+  subgraph Pages["Cloudflare Pages 単一オリジン"]
+    Access{{"Cloudflare Access<br/>エッジ認証"}}
+    Static["静的アセット"]
+    Fn["Pages Functions /api/*<br/>Hono ゲートウェイ"]
+  end
+  LLM["LLM プロバイダ<br/>Gemini / OpenRouter / Workers AI / OpenAI / Anthropic"]
+
+  UI -->|GET 静的| Static
+  UI -->|POST /api/chat SSE| Access
+  Access --> Fn
+  Fn -->|fetch 鍵注入・URL固定| LLM
+  LLM -.->|delta| Fn
+  Fn -.->|SSE delta/switch/done| UI
+  UI -->|DSL 文字列| RW
+  RW -->|pptx bytes サーバ不要| UI
 ```
 
-`import slidegen` と `slidegen` コマンドの両方が使える。コア依存は python-pptx のみ、
-pytest/pillow は dev extra。
+<details><summary>ASCII 版（Mermaid が描画されない環境向け）</summary>
 
-> 配布済み wheel の**利用者**側は uv 不要で `pip install slidegen-0.1.0-py3-none-any.whl` でも入る
-> （ビルド側のみ uv 統一）。
+```
+ユーザー（ブラウザ）
+  │
+  ├─ 静的配信 ───────────────▶ Cloudflare Pages（React/Vite フロント）
+  │
+  ├─ 壁打ち / DSL生成
+  │     POST /api/chat (SSE)
+  │        └─▶ Cloudflare Access（エッジ認証）
+  │              └─▶ Pages Functions /api/*（Hono ゲートウェイ）
+  │                    ・Access JWT 検証 / レート制限 / 入力上限
+  │                    ・鍵を注入して LLM へ中継（エンドポイントURL固定＝SSRF防止）
+  │                          └─▶ LLM（Gemini / OpenRouter / Workers AI / OpenAI / Anthropic）
+  │     ◀── SSE: delta / switch / done ──────┘
+  │
+  └─ pptx 生成（サーバ不要・無料枠CPU回避）
+        DSL ─▶ Render Worker（Pyodide）= slidegen wheel.render_to_bytes ─▶ pptx をダウンロード
+                 ▲ wheel は slidegen/（純Python）を uv build したもの
+```
+</details>
 
 ## クイックスタート
 
-```bash
-make test        # 第1層: 構造インバリアントの自動テスト
-make visual      # 第2層: モンタージュを生成して目視確認
-make all         # 両方
-```
-
-> Makefile は bare `python3` を呼ぶため、事前に `uv sync` で依存を入れた仮想環境を有効化
-> （`source .venv/bin/activate`）してから使う。CI/単発実行は `uv run --extra dev pytest tests/` が手軽。
-
-## 統合CLI
+### コアライブラリ / CLI（Python は **uv 統一**・[ADR 0002](docs/adr/0002-uv-for-python-packaging.md)）
 
 ```bash
-slidegen build examples/sample.slide -o out.pptx        # 記法 → pptx
-slidegen build deck.slide -o deck.pptx --template company.potx
-slidegen sync  deck.slide deck.pptx                     # 手編集の差分を表示（dry-run）
-slidegen sync  deck.slide deck.pptx --apply             # 手編集を .slide に反映
+uv sync                                            # 仮想環境＋依存
+uv run --extra dev pytest tests/ -q                # 本体テスト
+uv run slidegen build examples/sample.slide -o out.pptx
+uv build                                           # wheel 化（= bash tools/build_wheel.sh 相当）
 ```
 
-`python -m slidegen build ...` でも同じ。従来の `python -m slidegen.cli` /
-`python -m slidegen.sync` も後方互換でそのまま動く。
-（`examples/...` を使う例は repo を clone した前提。wheel には examples/docs は
-同梱しないため、`pip install` 先には examples は無い。）
+> 配布済み wheel の**利用者**側は uv 不要（`pip install slidegen-0.1.0-py3-none-any.whl` でも入る）。
+> ただし wheel に `examples/` `docs/` は同梱しないため、`pip install` 先にサンプルは無い。
+
+### Web アプリ（ローカル開発）
+
+```bash
+bash tools/build_wheel.sh                                                  # wheel を frontend/public/wheels と .env.local へ
+cd gateway && npm i && cp .dev.vars.example .dev.vars && npx wrangler dev  # :8787（.dev.vars に DEV_BYPASS_AUTH=1）
+cd frontend && npm i && npm run dev                                        # :5173（/api → :8787 を vite proxy）
+```
+
+本番デプロイ・運用・セキュリティは [docs/deployment.md](docs/deployment.md)。
+
+## CLI
+
+```bash
+slidegen build deck.slide -o deck.pptx [--template company.potx]   # 記法 → pptx
+slidegen sync  deck.slide deck.pptx [--apply]                      # 手編集の文言差分を .slide に反映
+```
+
+`python -m slidegen build ...` でも同じ。従来の `python -m slidegen.cli` / `.sync` も後方互換で動く。
 
 ## ライブラリとして使う（アプリのバックエンド）
 
-ディスクを介さず、メモリで pptx の bytes を得られる。Webバックエンドの
-レスポンスとしてそのまま返せる。
+ディスクを介さず、メモリで pptx の bytes を得られる（HTTP レスポンスにそのまま載せられる）。
 
 ```python
 import slidegen
 
-# 記法テキスト → pptx の bytes（HTTPレスポンスにそのまま載せられる）
-data = slidegen.render_to_bytes(open("deck.slide").read())
-
-# その他の入口
-prs  = slidegen.render_text(text)            # python-pptx の Presentation を返す
-path = slidegen.render_file("in.slide", "out.pptx")
+data = slidegen.render_to_bytes(open("deck.slide").read())  # → bytes
+prs  = slidegen.render_text(text)                           # → python-pptx の Presentation
+path = slidegen.render_file("in.slide", "out.pptx")         # → 保存先 Path
 ```
 
-> **将来のホスティング構成**：最終的には Cloudflare Pages（静的フロント）から
-> この Python バックエンドを呼ぶ想定。python-pptx は lxml/Pillow（Cネイティブ拡張）に
-> 依存し Cloudflare Workers では動かないため、バックエンドはコンテナ等で別途動かす。
-> （サーバー実装・Dockerfile は本リポジトリのスコープ外。今回はライブラリAPIのみ。）
+API 仕様は [spec.md](spec.md) §2。
 
-## 構成
+## ディレクトリ早見
 
 ```
-slidegen/
-  Makefile                          ★ 頻出コマンドのショートカット
-  slidegen/
-    theme.py                        デザイン制約をコードで固定
-    parser.py                       記法 → 内部データ構造
-    render.py                       共通ヘルパー + 登録表(register/register_many) + 基本3型
-    render_base_*.py (9)            9つの基底レイアウト + variant 群
-                                      (labeled/split/grid/nodes/hero/columns/band/curve/framed)
-    render_more.py                  構成型 (title/section/agenda/quote/bullets/cards/pros_cons/table)
-    render_relations.py             39パターン由来 (matrix/cycle/pyramid/tree/formula/timeline/image_left)
-    render_charts.py                ネイティブチャート型 (bar/line/stacked/clustered など)
-    render_frameworks.py / _frameworks2.py   ビジネスフレーム (swot/venn2/bmc/journey_map/pricing_tiers)
-    render_data_support.py          データ補助 (data_source_footer/waterfall)
-    render_tech.py                  技術系 (code_block/terminal/api_endpoint_table)
-    api.py                          バックエンド用 public API (render_text/render_to_bytes/render_file)
-    inspect_pptx.py                 既存pptx → 型スペック抽出
-    scaffold_type.py                型スペック → render関数雛形
-    cli.py / sync.py / __main__.py  CLI（build / sync / python -m slidegen）
-  tests/                            ★ テスト駆動の中核
-    test_invariants.py              第1層: 構造インバリアントの自動テスト (pytest)
-    test_chart_dsl.py               prompts↔renderer のチャート型一致ガード
-    visual.py                       第2層: モンタージュ生成 + 目視チェックリスト
-    new_type.py                     新型追加ワークフロー（1コマンド）
-  examples/                         サンプル記法
-  docs/
-    adr/                            設計判断の記録 (ADR)
-    ppt_design_doc.md               設計の全体像・背景思想・要件
-    system_prompt.md                記法リファレンス（設計参照。ライブアプリは frontend/src/prompts.ts）
-    type_catalog.md                 型カタログ（9基底 × variant の決定版）
-    type_authoring.md               Web/画像/pptx → 記法 or 新型 のワークフロー
-    test_driven_workflow.md         ★ テスト駆動の作業フロー
-    deployment.md                   デプロイ/ローカル開発/制約/セキュリティ
-  frontend/ , gateway/              Web アプリ（上記「Web アプリ」節）
-  type_specs/ , out/                型スペックJSON / モンタージュ出力（必要時に生成。既定では存在しない）
+slidegen/   コアライブラリ（parser / render*.py / theme / api / cli）。RENDERERS = 100 型
+gateway/    Hono LLM 中継（providers / stream / auth / ratelimit / index / pages）
+frontend/   React/Vite。App.tsx(フェーズ駆動) / render/(Pyodide) / ingest.ts / functions/(本番API)
+tools/      build_wheel.sh（wheel 化）/ pyodide_spike.mjs（STEP0 関門）
+tests/      第1層 pytest(test_invariants) ＋ chart-DSL ガード ＋ 第2層 visual.py
+examples/   サンプル記法(.slide)
+docs/       要件補助・仕様補助・ADR・設計・型カタログ・デプロイ
 ```
 
-## 対応する型（計100型）
+## ドキュメント地図
 
-型は **9つの基底レイアウト × variant（ラベル/配置/強調位置の辞書）× 中身** の3軸分解で構成し、
-個別型を量産せずに広いカタログを吸収する設計（詳細は `docs/type_catalog.md`）。現在 `RENDERERS` に
-**計100型**が登録済み（`uv run python -c "import slidegen,slidegen.render as r;print(len(r.RENDERERS))"` で確認）。
+| doc | 内容 |
+|---|---|
+| [requirements.md](requirements.md) | 要件（何を・なぜ） |
+| [spec.md](spec.md) | 仕様（どう動くか）の索引兼サマリ |
+| [docs/ppt_design_doc.md](docs/ppt_design_doc.md) | 背景思想（MNP・3層責任分界・デザイン制約・編集可能性 §2-bis） |
+| [docs/adr/](docs/adr/) | アーキテクチャ決定記録（ADR） |
+| [docs/type_catalog.md](docs/type_catalog.md) | 型カタログ（9基底 × variant の決定版） |
+| [docs/system_prompt.md](docs/system_prompt.md) | DSL/記法リファレンス（設計参照。ライブは `frontend/src/prompts.ts`） |
+| [docs/type_authoring.md](docs/type_authoring.md) | Web/画像/pptx → 記法 or 新型のワークフロー |
+| [docs/test_driven_workflow.md](docs/test_driven_workflow.md) | テスト駆動の作業フロー |
+| [docs/deployment.md](docs/deployment.md) | デプロイ / ローカル開発 / 制約 / セキュリティ |
 
-代表例（ベース／よく使う型）:
-
-### A. ベース構成
-title / section / agenda / quote / bullets
-
-### B. 内容パターン
-compare / cards / kpi / process / pros_cons / table
-
-### C. 関係図（Cone社の39パターンから取り込み）
-matrix / cycle / pyramid / tree / formula / timeline / image_left
-
-### D. 基底レイアウト（variant の土台・9種）
-labeled_blocks / split_layout / grid_2d / nodes_and_connectors / hero_canvas /
-columns_with_header / band_strip / narrative_curve / framed_canvas
-
-### E. チャート / フレーム / 技術系
-bar_chart / line_chart / stacked_bar / clustered_bar ほか・swot / venn2 / bmc /
-journey_map / pricing_tiers・code_block / terminal / api_endpoint_table
-
-> 網羅リストは `RENDERERS` が単一の真実。`docs/type_catalog.md` に各型の実装ステータスをまとめている。
-
-## テスト駆動で型を増やす（社内Claude Code向け）
-
-詳細は `docs/test_driven_workflow.md`。要点だけ：
+## 開発・テスト
 
 ```bash
-# 1. 新型の雛形を生成
-make new TYPE=mytype INTENT="この型の意図" LAYOUT=grid COUNT="3..6"
-
-# 2. examples/mytype.slide のサンプル記法を仕上げる
-# 3. slidegen/render_mytype.py のTODOを埋める
-#    規約：色はtheme経由のみ、強調はaccentのみ、座標は int(...) で包む
-
-# 4. 検証（第1層pytest + 第2層モンタージュ生成）
-make check TYPE=mytype
-
-# 5. モンタージュ out/mytype.jpg を開いて目視（第3層・人間の判断）
-# 6. system_prompt.md に新型を追記
+make test     # 第1層: 構造インバリアントの pytest（要: source .venv/bin/activate）
+make visual   # 第2層: モンタージュ生成 → 目視
+uv run --extra dev pytest tests/ -q                       # 単発はこちらが手軽
+cd gateway  && npx tsc --noEmit && npx vitest run         # ゲートウェイ
+cd frontend && npx tsc --noEmit && npx vitest run && npm run build && npm run typecheck:functions
 ```
+
+新しい型を**テスト駆動**で増やす手順は [docs/test_driven_workflow.md](docs/test_driven_workflow.md)。
+
+## 対応する型（計 100 型）
+
+「**9つの基底レイアウト × variant（ラベル/配置/強調位置）× 中身**」の3軸分解で広いカタログを吸収する設計。
+個別型を量産しない。網羅の**単一情報源は `RENDERERS`**:
+
+```bash
+uv run python -c "import slidegen, slidegen.render as r; print(len(r.RENDERERS))"   # → 100
+```
+
+代表例: `title` / `section` / `agenda` / `bullets`・`compare` / `cards` / `kpi` / `process` / `table`・
+`matrix` / `cycle` / `pyramid` / `timeline`・`bar_chart` / `line_chart` / `clustered_bar`・`swot` / `venn2` / `bmc`。
+一覧と実装ステータスは [docs/type_catalog.md](docs/type_catalog.md)。
 
 ## 設計の3層（責任分界）
 
 | 層 | 担当 | 実装箇所 |
 |---|---|---|
-| コンテンツ（記法） | AIが書く | docs/system_prompt.md |
-| 構造（どう配置） | 型カタログ | render*.py の render_<type>() |
-| 見せ方（何を禁じるか） | デザイン制約 | theme.py + テスト第1層が常時監視 |
-| ブランド書式 | potx | build(..., template=...) |
+| コンテンツ（記法） | AI が書く | `docs/system_prompt.md` / `frontend/src/prompts.ts` |
+| 構造（どう配置） | 型カタログ | `slidegen/render*.py` の `render_<type>()` |
+| 見せ方（何を禁じるか） | デザイン制約 | `slidegen/theme.py` ＋ テスト第1層が常時監視 |
+| ブランド書式 | potx | `build(..., template=...)` |
 
-## 未実装（社内Claude Codeでやること）
+## ロードマップ / 未実装
 
-1. **potx連携の本実装**：theme.pyの色をpotxテーマカラー参照に差し替え
-2. **inspect_pptxの強化**：レイアウトマスター読み取り、面積比のwarning
-3. **技術図(Mermaid)連携**：画像挿入 or 図形変換
-4. **シリアライザー**：pptx → 記法
-5. **テキストはみ出し検出を第1層に追加**：現状は境界overflowまで。テキスト量の物理測定は別途
+課題・ネクストアクションは [docs/backlog.md](docs/backlog.md) に優先度順で集約。主な項目:
+potx 本連携（theme → potx テーマ色）、技術図 Mermaid 連携、pptx → DSL シリアライザ、
+本物のサムネイル（サーバ側 LibreOffice）、テンプレの IndexedDB 永続化、i18n、
+モデルカタログの保守性、DSL 解説のドリフト対策。

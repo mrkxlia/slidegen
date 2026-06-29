@@ -6,5 +6,8 @@
 |---|---|---|---|
 | [0001](0001-same-origin-pages-functions.md) | ゲートウェイを Pages Functions として同一オリジン配信する | 採用 | 2026-06-27 |
 | [0002](0002-uv-for-python-packaging.md) | Python のパッケージ管理・ビルドを uv に統一する | 採用 | 2026-06-27 |
+| [0003](0003-browser-pyodide-rendering.md) | pptx 生成をブラウザ内 Pyodide で実行する | 採用 | 2026-06-28 |
+| [0004](0004-editable-native-pptx.md) | 出力は編集可能なネイティブ pptx とし、画像化しない | 採用 | 2026-06-28 |
+| [0005](0005-multi-provider-sse-fallback.md) | マルチプロバイダ LLM 抽象 ＋ SSE 専用 ＋ 2層フォールバック | 採用 | 2026-06-28 |
 
 新規追加: 連番 `NNNN-kebab-title.md` で作成し、この表に1行足す。

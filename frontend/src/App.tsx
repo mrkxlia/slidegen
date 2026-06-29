@@ -1,5 +1,6 @@
-// App.tsx — slidegen フロントエンドのオーケストレーション。
-// 壁打ち→流れ→DSL→生成のフェーズ駆動。LLM は gateway 経由、pptx 生成はブラウザ Pyodide。
+// App.tsx — slidegen フロントエンドのオーケストレーション（会話起点ワークスペース）。
+// 左で壁打ち、右でデッキ（構成プレビュー/DSL/レビュー）が同時に育つ2ペイン。
+// フェーズは上部の進行ステッパー。LLM は gateway 経由、pptx 生成はブラウザ Pyodide。
 import { useEffect, useRef, useState } from "react";
 import { PURPOSES, phaseSystemPrompt, buildContextPreamble, type Phase } from "./prompts";
 import {
@@ -13,7 +14,17 @@ import {
   type RenderStage, type TemplateFile, type SlidePreview,
 } from "./render/renderClient";
 import { loadSettings, saveSettings } from "./storage";
-import { PhaseBar, ChatView, Sidebar, DslPanel, RenderOverlay } from "./components";
+import {
+  TopBar, SettingsPopover, MobileTabs, ConversationPane, DeckPane, RenderOverlay,
+  type DeckTab,
+} from "./components";
+
+// オンボーディングの依頼例（クリックで入力欄へ）。
+const EXAMPLES = [
+  "来月の経営会議で、新しい監視基盤の導入承認を得たい。",
+  "先月の売上データ（添付Excel）を、役員向けに3枚で。",
+  "新機能の社内勉強会の資料を作りたい。",
+];
 
 export function App() {
   const saved = loadSettings();
@@ -37,25 +48,21 @@ export function App() {
   const [renderStage, setRenderStage] = useState<RenderStage>("idle");
   const [error, setError] = useState<string | null>(null);
   const [authExpired, setAuthExpired] = useState(false);
+  // ビュー状態（ロジックには影響しない）
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [deckTab, setDeckTab] = useState<DeckTab>("preview");
+  const [mobileView, setMobileView] = useState<"talk" | "deck">("talk");
   const contextInjected = useRef(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
-
-  // 新メッセージで内部スクロール領域を最下部へ（ページではなくチャット枠が内部スクロールするため必須）。
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages]);
 
   useEffect(() => {
     api.fetchModels()
       .then((ms) => {
         setModels(ms);
-        // 保存済みモデルが利用可能ならそれを、無ければ先頭を選ぶ
         setModelId((cur) => (ms.some((m) => m.id === cur) ? cur : ms[0]?.id ?? ""));
       })
       .catch(handleApiError);
   }, []);
 
-  // 設定の永続化
   useEffect(() => { saveSettings({ modelId, purpose }); }, [modelId, purpose]);
 
   function handleApiError(e: unknown) {
@@ -65,6 +72,8 @@ export function App() {
 
   const attachmentsSummary = () => attachments.map((a) => a.summary).join("\n\n");
   const purposeText = () => (purpose.startsWith("（") ? "" : purpose);
+  const labelOf = (id: string) => models.find((m) => m.id === id)?.label ?? id;
+  const deckCount = dslText.trim() ? (dslText.match(/^slide\s+\S+/gm)?.length ?? 0) : 0;
 
   // 現フェーズの system + (必要なら)文脈 + トリミング履歴を組み立てる。
   function prepare(p: Phase, baseMsgs: Message[], forceContext = false): { system: string; messages: Message[] } {
@@ -85,12 +94,10 @@ export function App() {
   }
 
   // ストリーミングで assistant 応答を受け取り、最後の assistant メッセージへ逐次反映。
-  // 返り値は raw 全文（タグ込み）。
   async function streamAssistant(p: Phase, baseMsgs: Message[], forceContext = false): Promise<string> {
     const { system, messages: msgs } = prepare(p, baseMsgs, forceContext);
     setMessages([...baseMsgs, { role: "assistant", content: "" }]);
     const res = await api.chatStream({ modelId, system, messages: msgs }, (_d, full) => {
-      // 残存タグは表示前に除去（生成途中で一瞬見えるのを防ぐ）
       const shown = cleanReply(full);
       setMessages([...baseMsgs, { role: "assistant", content: shown || "▍" }]);
     });
@@ -105,37 +112,29 @@ export function App() {
     setMessages(newMsgs);
     setInput("");
     setBusy(true);
+    // 会話の system は壁打ち/流れのみ。生成後(dsl/review/revise)に送られたら壁打ちとして継続。
+    const convPhase: Phase = phase === "outline" ? "outline" : "hearing";
     try {
-      // 手動進行: AI は壁打ち中に自動で次フェーズへ進まない（タグは表示用に除去するだけ）。
-      // 進行はユーザーが「流れを作る →」「今ある情報で生成 →」を押したときだけ。
-      const raw = await streamAssistant(phase, newMsgs);
+      const raw = await streamAssistant(convPhase, newMsgs);
       setMessages([...newMsgs, { role: "assistant", content: cleanReply(raw) } as Message]);
     } catch (e) { handleApiError(e); }
     finally { setBusy(false); }
   }
 
-  // 「流れを作る →」: ユーザー操作で outline フェーズに進み、流れ案を出す。
+  // 「流れを作る →」: outline フェーズに進み、流れ案を出す。
   async function onMakeOutline() {
     if (busy || !modelId || messages.length === 0) return;
     setError(null);
     setPhase("outline");
     setBusy(true);
-    await autoOutline(messages);
-    setBusy(false);
-  }
-
-  // outline フェーズに入ったら、すぐ流れ案を出す。
-  async function autoOutline(history: Message[]) {
     try {
-      const raw = await streamAssistant("outline", history, true);
-      setMessages([...history, { role: "assistant", content: cleanReply(raw) }]);
+      const raw = await streamAssistant("outline", messages, true);
+      setMessages([...messages, { role: "assistant", content: cleanReply(raw) }]);
     } catch (e) { handleApiError(e); }
+    finally { setBusy(false); }
   }
 
-  const labelOf = (id: string) => models.find((m) => m.id === id)?.label ?? id;
-
-  // DSL生成で選択モデルが無効出力（Gemma の劣化等）だったときの、信頼できる代替モデル。
-  // gemini 系を優先（構造化出力が安定）。選択中以外から1つだけ拾う。
+  // DSL生成で選択モデルが無効出力だったときの、信頼できる代替モデル。
   function dslFallbackModel(currentId: string): string | undefined {
     const others = models.filter((m) => m.id !== currentId);
     return (
@@ -146,9 +145,6 @@ export function App() {
   }
 
   // 今ある情報で生成（既存DSLがあれば revise、無ければ dsl 生成）。
-  // 生成中は「進捗のみ」表示にし、途中の生出力（劣化モデルの `}` 連発等）は見せない。
-  // 完了時に DSL として妥当か検証。無効なら信頼できる別モデルで1回だけ自動リトライし、
-  // それでも駄目なときだけ親切なエラー＋再生成導線を出す。
   async function generateNow(history?: Message[]) {
     const hist = history ?? messages;
     const hasContext = hist.length > 0 || attachments.length > 0 || purposeText() !== "";
@@ -162,6 +158,9 @@ export function App() {
     const existing = dslText.trim();
     setPhase("dsl");
     setDslText("");
+    setPreview(null);
+    setDeckTab("preview");
+    setMobileView("deck"); // モバイルでは結果（デッキ）に切替
     try {
       let system: string;
       let messages: Message[];
@@ -174,11 +173,9 @@ export function App() {
         const prep = prepare("dsl", hist, true);
         system = prep.system; messages = prep.messages;
       }
-      // 選択モデル → （無効なら）信頼できる代替モデルの順に、有効DSLが出るまで試す。
       const chain = [modelId, dslFallbackModel(modelId)].filter((id): id is string => !!id);
       let lastRaw = "";
       for (let i = 0; i < chain.length; i++) {
-        // onDelta は意図的に無視（生の途中出力をエディタに流さない）。進捗はスピナーで示す。
         const res = await api.chatStream({ modelId: chain[i], system, messages }, () => {});
         const dsl = stripToDsl(res.text);
         if (hasValidDsl(dsl)) {
@@ -186,11 +183,12 @@ export function App() {
           if (i > 0) {
             setGenNotice(`「${labelOf(modelId)}」が有効なDSLを出せなかったため、「${labelOf(chain[i])}」で生成しました。`);
           }
+          setGenRunning(false);
+          void runPreview(dsl); // 生成できたら構成プレビューを自動表示
           return;
         }
         lastRaw = res.text;
       }
-      // 全候補が無効 → 反映せず、親切なエラー＋再生成導線。
       setGenFailedRaw(lastRaw);
       setError("AIが有効なDSLを生成できませんでした。別のモデルに変えるか、もう一度生成してください。");
     } catch (e) { handleApiError(e); }
@@ -215,11 +213,10 @@ export function App() {
 
   function applyReview() {
     const dsl = extractFencedDsl(reviewText);
-    if (dsl) { setDslText(dsl); setReviewText(""); }
+    if (dsl) { setDslText(dsl); setReviewText(""); setPreview(null); setDeckTab("preview"); }
   }
 
-  // DSL が `slide <型>` で始まる体裁か。preview/render 前にここで止め、
-  // 無効テキストを Pyodide に渡して Python traceback を露出させない。
+  // DSL が `slide <型>` で始まる体裁か。preview/render 前にここで止める。
   function guardDsl(): boolean {
     if (hasValidDsl(dslText)) return true;
     setError("DSL が正しくありません。各スライドは行頭 `slide <型>`（例: slide title）から始まる必要があります。チャットで修正するか、もう一度生成してください。");
@@ -234,20 +231,29 @@ export function App() {
       const bytes = await renderDsl(dslText, template ?? undefined);
       downloadPptx(bytes);
     } catch (e) {
-      // parse エラー等: 編集して再生成できるよう、編集画面に留めてエラー表示。
       setError(`生成に失敗しました: ${(e as Error).message}\nDSLを修正して再度お試しください。`);
     } finally { setRendering(false); }
   }
 
-  async function onPreview() {
-    if (!dslText.trim() || !guardDsl()) return;
+  // 与えた DSL（無ければ現在の dslText）の構成プレビューを取得。
+  async function runPreview(dslArg?: string) {
+    const text = dslArg ?? dslText;
+    if (!text.trim() || !hasValidDsl(text)) return;
     setPreviewing(true); setError(null);
     try {
       await initRenderer(setRenderStage);
-      setPreview(await previewDsl(dslText));
+      setPreview(await previewDsl(text));
     } catch (e) {
       setError(`プレビューに失敗しました: ${(e as Error).message}`);
     } finally { setPreviewing(false); }
+  }
+
+  function onPreview() { if (guardDsl()) void runPreview(); }
+
+  // デッキのタブ切替。構成プレビューを開いた時、未取得なら自動で読み込む。
+  function onDeckTab(t: DeckTab) {
+    setDeckTab(t);
+    if (t === "preview" && !preview && !previewing && hasValidDsl(dslText)) void runPreview();
   }
 
   async function onTemplate(files: FileList | null) {
@@ -264,7 +270,7 @@ export function App() {
     const byName = new Map(attachments.map((a) => [a.name, a]));
     for (const r of results) byName.set(r.name, r);
     setAttachments(Array.from(byName.values()));
-    contextInjected.current = false; // 次回 LLM 呼び出しで添付を文脈へ
+    contextInjected.current = false;
   }
 
   function onRemoveAttachment(name: string) {
@@ -278,6 +284,7 @@ export function App() {
     setMessages([]); setPhase("hearing"); setDslText(""); setReviewText("");
     setAttachments([]); setPreview(null); setInput(""); setError(null);
     setGenFailedRaw(null); setGenRunning(false); setGenNotice(null);
+    setDeckTab("preview"); setMobileView("talk"); setSettingsOpen(false);
     contextInjected.current = false;
   }
 
@@ -286,101 +293,60 @@ export function App() {
       <div className="reauth">
         <h2>セッションが切れました</h2>
         <p>Cloudflare Access の再認証が必要です。</p>
-        <button onClick={api.triggerReauth}>再ログイン</button>
+        <button className="btn" onClick={api.triggerReauth}>再ログイン</button>
       </div>
     );
   }
 
+  const hasProdHint = !models.some((m) => m.tier === "prod");
+
   return (
-    <div className="layout">
-      <Sidebar
-        models={models} modelId={modelId} onModelChange={setModelId}
-        purposes={PURPOSES} purpose={purpose} onPurposeChange={setPurpose}
-        attachments={attachments} onFiles={onFiles}
-        onRemoveAttachment={onRemoveAttachment}
-        template={template} onTemplate={onTemplate}
-        onClearTemplate={() => setTemplate(null)}
-        onReset={onReset}
+    <div className="app" data-mobile={mobileView}>
+      <TopBar
+        phase={phase} models={models} modelId={modelId} onModelChange={setModelId}
+        settingsOpen={settingsOpen} onToggleSettings={() => setSettingsOpen((v) => !v)}
       />
-      <main className="main">
-        <header className="main-header">
-          <div className="wordmark">
-            <span className="wordmark-icon" aria-hidden="true">🪄</span>
-            <span className="wordmark-name">slidegen</span>
-            <span className="wordmark-tag">AIと壁打ちしてスライドを作る</span>
-          </div>
-          <PhaseBar phase={phase} />
-        </header>
+      {settingsOpen && (
+        <>
+          <div style={{ position: "fixed", inset: 0, zIndex: 39 }} onClick={() => setSettingsOpen(false)} />
+          <SettingsPopover
+            purposes={PURPOSES} purpose={purpose} onPurposeChange={setPurpose}
+            attachments={attachments} onFiles={onFiles} onRemoveAttachment={onRemoveAttachment}
+            template={template} onTemplate={onTemplate} onClearTemplate={() => setTemplate(null)}
+            onReset={onReset} hasProdHint={hasProdHint}
+          />
+        </>
+      )}
 
-        <div className="main-body">
-          {(phase === "hearing" || phase === "outline") && (
-            <div className="chat-pane">
-              <div className="chat-scroll">
-                {dslText.trim() && (
-                  <div className="info">✏️ 既存スライドの修正モード。直したい点を送って「今ある情報で生成」を押すと更新します。</div>
-                )}
-                <ChatView messages={messages} />
-                <div ref={chatEndRef} />
-              </div>
-              {error && <div className="error">⚠ {error}</div>}
-              <div className="composer">
-                <textarea
-                  placeholder={phase === "hearing"
-                    ? "作りたいスライドについて教えてください（例：来月の経営会議で新監視基盤の導入承認を得たい）"
-                    : "流れへの修正点や「これでOK」など"}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) onSend(); }}
-                />
-                <div className="composer-actions">
-                  <button onClick={onSend} disabled={busy || !modelId}>{busy ? "送信中…" : "送信 (⌘/Ctrl+Enter)"}</button>
-                  {phase === "hearing" && (
-                    <button className="ghost" onClick={onMakeOutline} disabled={busy || !modelId || messages.length === 0}>
-                      流れを作る →
-                    </button>
-                  )}
-                  <button className="ghost" onClick={() => generateNow()} disabled={busy || !modelId}>
-                    今ある情報で生成 →
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+      <MobileTabs view={mobileView} onView={setMobileView} deckCount={deckCount} />
 
-          {(phase === "dsl" || phase === "review" || phase === "revise") && (
-            <div className="dsl-pane">
-              {genNotice && <div className="info">ℹ️ {genNotice}</div>}
-              <DslPanel
-                dsl={dslText} onChange={onDslChange}
-                onRender={onRender} onReview={onReview}
-                onBackToChat={() => setPhase("hearing")}
-                reviewText={reviewText}
-                onApplyReview={applyReview}
-                canApplyReview={!!extractFencedDsl(reviewText)}
-                renderStage={renderStage} rendering={rendering}
-                generating={busy} dslGenerating={genRunning}
-                generatingModel={models.find((m) => m.id === modelId)?.label ?? modelId}
-                onPreview={onPreview} previewing={previewing}
-                preview={preview} hasTemplate={!!template}
-              />
-              {error && (
-                <div className="error">
-                  ⚠ {error}
-                  {genFailedRaw != null && (
-                    <div className="error-actions">
-                      <button onClick={() => generateNow()} disabled={busy || !modelId}>もう一度生成</button>
-                      <details>
-                        <summary>生成結果を表示（デバッグ）</summary>
-                        <pre>{genFailedRaw}</pre>
-                      </details>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </main>
+      {error && genFailedRaw == null && (
+        <div className="error" style={{ margin: "10px 16px" }}>⚠ {error}</div>
+      )}
+
+      <div className="workspace">
+        <ConversationPane
+          messages={messages} phase={phase}
+          input={input} onInput={setInput} onSend={onSend}
+          onMakeOutline={onMakeOutline} onGenerate={() => generateNow()}
+          busy={busy} modelId={modelId} hasDsl={!!dslText.trim()}
+          purposes={PURPOSES} purpose={purpose} onPurposeChange={setPurpose}
+          examples={EXAMPLES} onExample={(t) => setInput(t)}
+          attachments={attachments} onFiles={onFiles} onRemoveAttachment={onRemoveAttachment}
+        />
+        <DeckPane
+          tab={deckTab} onTab={onDeckTab}
+          dsl={dslText} onDslChange={onDslChange} dslValid={hasValidDsl(dslText)}
+          preview={preview} previewing={previewing} onPreview={onPreview}
+          onRender={onRender} rendering={rendering} renderStage={renderStage} hasTemplate={!!template}
+          onReview={onReview} reviewText={reviewText} onApplyReview={applyReview}
+          canApplyReview={!!extractFencedDsl(reviewText)}
+          busy={busy} genRunning={genRunning} generatingModel={labelOf(modelId)}
+          genNotice={genNotice} genFailedRaw={genFailedRaw} error={error}
+          onRegenerate={() => generateNow()} deckCount={deckCount}
+        />
+      </div>
+
       <RenderOverlay stage={renderStage} rendering={rendering} />
     </div>
   );

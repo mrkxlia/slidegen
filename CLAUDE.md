@@ -5,9 +5,10 @@ slidegen ＝ DSL から **編集可能な PowerPoint(.pptx)** を生成する純
 **Cloudflare 無料枠だけ**で動く構成を追加した。
 
 ## 現在の状態（2026-06）
-- 実装・検証完了。**PR #3 は `main` へマージ済み**。残るは実デプロイ（Cloudflare アカウント所有者の操作）。
-- 設計判断は `docs/adr/`（[0001 同一オリジン Pages Functions](docs/adr/0001-same-origin-pages-functions.md)、
-  [0002 uv 統一](docs/adr/0002-uv-for-python-packaging.md)）。
+- 実装・検証完了し、**Cloudflare 無料枠で稼働中**（デプロイ／CD 済み。手順は `docs/deployment.md`、CD は `.github/workflows/ci.yml` の deploy job）。
+- 要件/仕様は [requirements.md](requirements.md) / [spec.md](spec.md)。設計判断は `docs/adr/`
+  （0001 同一オリジン Pages Functions、0002 uv 統一、0003 ブラウザ Pyodide 生成、0004 編集可能pptx必達、
+  0005 マルチプロバイダ+SSE+フォールバック。索引は [docs/adr/README.md](docs/adr/README.md)）。
 - 検証状況:
   - Python **106 passed**（`uv run --extra dev pytest`）/ gateway vitest 23（API E2E 含む）/ frontend vitest 23、
     各 tsc clean（functions 専用 tsconfig 含む）・build 成功。Pages Functions バンドルも実機で成功。
@@ -75,6 +76,6 @@ cd frontend && npm i && npm run dev                                          # :
   `auth(Access)`・`providers.workers_ai`・Pages Functions アダプタ(`gateway/src/pages.ts`)の3点に局所化。
 
 ## 次にやること
-1. **実デプロイ**（`docs/deployment.md`）: wheel→`pages deploy`→Pages secret→Access(AUD設定)→再デプロイ。
-2. CD 用 GitHub Secrets 設定（`CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID`）。
-3. 任意: 本物サムネイル（サーバ側 LibreOffice 設計）、テンプレの IndexedDB 永続化、i18n。
+- デプロイ／CD は稼働済み（`docs/deployment.md` / `.github/workflows/ci.yml` の deploy job）。
+- 課題・ロードマップは [docs/backlog.md](docs/backlog.md) に集約。例: 本物サムネイル（サーバ側 LibreOffice）、
+  テンプレの IndexedDB 永続化、i18n、モデルカタログの保守性、DSL 解説のドリフト対策。
