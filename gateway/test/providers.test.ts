@@ -25,6 +25,12 @@ describe("availableModels", () => {
     const tiers = new Set(availableModels(env).map((m) => m.tier));
     expect(tiers.has("prod")).toBe(true);
   });
+
+  it("reliableForDsl: Gemma は false、それ以外は true（フロントのフォールバック選択用）", () => {
+    const list = availableModels({ GEMINI_API_KEY: "x" });
+    expect(list.find((m) => m.id.startsWith("gemma"))?.reliableForDsl).toBe(false);
+    expect(list.find((m) => m.id.startsWith("gemini"))?.reliableForDsl).toBe(true);
+  });
 });
 
 describe("findModel", () => {

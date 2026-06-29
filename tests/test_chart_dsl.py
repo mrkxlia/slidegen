@@ -42,6 +42,32 @@ def test_prompts_taught_types_match_taught_set():
         assert t in text, f"prompts.ts に {t} の記載が無い（リファレンス不足）"
 
 
+def _taught_types_in_prompts() -> set:
+    """prompts.ts(live プロンプト)が AI に教える型名を抽出する。
+    (a) `slide <型>` のコード例、(b) スラッシュ区切りの型カタログ列（"- a / b / c … 説明"）。
+    誤検知回避のため (b) は `^[a-z][a-z0-9_]*$` のクリーンなトークンのみ採用
+    （`swot系`・`(2〜4)`・装飾付きはスキップ）。
+    """
+    text = PROMPTS_TS.read_text(encoding="utf-8")
+    taught = set(re.findall(r'(?m)^\s*slide\s+([a-z][a-z0-9_]*)', text))
+    for line in text.splitlines():
+        if re.match(r'^\s*-\s', line) and ' / ' in line:
+            head = line.split('…')[0]
+            for raw in head.split('/'):
+                tok = re.sub(r'\([^)]*\)', '', raw).strip(' \t-')
+                if re.fullmatch(r'[a-z][a-z0-9_]*', tok):
+                    taught.add(tok)
+    return taught
+
+
+def test_prompts_taught_types_are_registered():
+    """prompts.ts が教える全型 ⊆ RENDERERS（未登録型を AI に教える＝生成DSLが描画不能、を防ぐ）。"""
+    taught = _taught_types_in_prompts()
+    assert taught, "prompts.ts から型を1つも抽出できない（抽出ロジックの破綻）"
+    missing = sorted(t for t in taught if t not in RENDERERS)
+    assert not missing, f"prompts.ts が教える未登録の型: {missing}（型を登録するか prompts.ts を修正）"
+
+
 def test_all_examples_parse_and_render():
     """全 examples が parse → render_to_bytes まで通る（回帰防止スナップショット）。"""
     assert EXAMPLES, "examples/*.slide が見つからない"

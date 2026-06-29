@@ -22,6 +22,7 @@ node_modules/
 frontend/dist/
 frontend/.env.local
 frontend/public/wheels/
+frontend/test-results/
 gateway/.wrangler/
 gateway/.dev.vars
 *.tsbuildinfo

@@ -1,5 +1,5 @@
 // phases.ts — 応答の表示用クリーニング・DSL 抽出・履歴トリミング。
-// slidegen_app.py のフェーズ制御ロジックを移植（フェーズ遷移は手動UIへ移行済み）。
+// フェーズ制御ロジックは旧 Streamlit 版 Python から移植（元 .py は現存しない）。phase は会話起点ワークスペースの進行ステッパーに反映。
 
 export type Role = "user" | "assistant";
 export interface Message { role: Role; content: string; }
@@ -62,4 +62,15 @@ export function hasValidDsl(text: string): boolean {
 export function stripReasoning(text: string): string {
   const m = text.match(/^#{1,6}[ \t]\S/m);
   return (m?.index != null ? text.slice(m.index) : text).trim();
+}
+
+// DSL が無効だったときの代替モデルを選ぶ（純関数・テスト可能）。
+// /api/models が返す順（= カタログ既定優先度）で「現行以外かつ reliableForDsl」の最初を選び、
+// 無ければ現行以外の最初を返す。特定モデルID/プロバイダ名に依存しない（カタログが単一情報源）。
+export function pickDslFallback(
+  models: { id: string; reliableForDsl?: boolean }[],
+  currentId: string,
+): string | undefined {
+  const others = models.filter((m) => m.id !== currentId);
+  return (others.find((m) => m.reliableForDsl) ?? others[0])?.id;
 }
