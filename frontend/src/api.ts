@@ -6,7 +6,7 @@ import type { Message } from "./phases";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
-export interface ModelInfo { id: string; label: string; tier: "free" | "prod"; }
+export interface ModelInfo { id: string; label: string; tier: "free" | "prod"; reliableForDsl?: boolean; }
 
 export class AuthExpiredError extends Error {}
 export class ApiError extends Error {

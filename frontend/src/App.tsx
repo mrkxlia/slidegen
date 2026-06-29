@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import { PURPOSES, phaseSystemPrompt, buildContextPreamble, type Phase } from "./prompts";
 import {
-  cleanReply, extractFencedDsl, stripToDsl, stripReasoning, hasValidDsl, trimHistory,
+  cleanReply, extractFencedDsl, stripToDsl, stripReasoning, hasValidDsl, trimHistory, pickDslFallback,
   type Message,
 } from "./phases";
 import { ingest, type IngestResult } from "./ingest";
@@ -134,16 +134,6 @@ export function App() {
     finally { setBusy(false); }
   }
 
-  // DSL生成で選択モデルが無効出力だったときの、信頼できる代替モデル。
-  function dslFallbackModel(currentId: string): string | undefined {
-    const others = models.filter((m) => m.id !== currentId);
-    return (
-      others.find((m) => m.id === "gemini-3.1-flash-lite") ??
-      others.find((m) => m.id.startsWith("gemini")) ??
-      others.find((m) => !m.id.startsWith("gemma"))
-    )?.id;
-  }
-
   // 今ある情報で生成（既存DSLがあれば revise、無ければ dsl 生成）。
   async function generateNow(history?: Message[]) {
     const hist = history ?? messages;
@@ -173,7 +163,7 @@ export function App() {
         const prep = prepare("dsl", hist, true);
         system = prep.system; messages = prep.messages;
       }
-      const chain = [modelId, dslFallbackModel(modelId)].filter((id): id is string => !!id);
+      const chain = [modelId, pickDslFallback(models, modelId)].filter((id): id is string => !!id);
       let lastRaw = "";
       for (let i = 0; i < chain.length; i++) {
         const res = await api.chatStream({ modelId: chain[i], system, messages }, () => {});

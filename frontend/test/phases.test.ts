@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-  cleanReply, extractFencedDsl, trimHistory, stripToDsl, stripReasoning, hasValidDsl, type Message,
+  cleanReply, extractFencedDsl, trimHistory, stripToDsl, stripReasoning, hasValidDsl, pickDslFallback, type Message,
 } from "../src/phases";
 
 describe("cleanReply", () => {
@@ -61,5 +61,25 @@ describe("trimHistory / stripToDsl", () => {
     expect(hasValidDsl("}\n}\n}\n}")).toBe(false);
     expect(hasValidDsl("")).toBe(false);
     expect(hasValidDsl("ただのテキスト")).toBe(false);
+  });
+});
+
+describe("pickDslFallback", () => {
+  const models = [
+    { id: "gemini-3.1-flash-lite", reliableForDsl: true },
+    { id: "gemma-4-31b", reliableForDsl: false },
+    { id: "gemini-2.5-flash", reliableForDsl: true },
+  ];
+  it("現行以外で reliableForDsl の最初をカタログ順に選ぶ", () => {
+    expect(pickDslFallback(models, "gemini-2.5-flash")).toBe("gemini-3.1-flash-lite");
+  });
+  it("現行が先頭でも次の信頼モデルを選ぶ（gemma を飛ばす）", () => {
+    expect(pickDslFallback(models, "gemini-3.1-flash-lite")).toBe("gemini-2.5-flash");
+  });
+  it("信頼モデルが無ければ現行以外の最初", () => {
+    expect(pickDslFallback([{ id: "a" }, { id: "b" }], "a")).toBe("b");
+  });
+  it("他に候補が無ければ undefined", () => {
+    expect(pickDslFallback([{ id: "only", reliableForDsl: true }], "only")).toBeUndefined();
   });
 });

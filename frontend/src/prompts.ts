@@ -1,5 +1,5 @@
 // prompts.ts — 壁打ちエージェントのシステムプロンプト群。
-// 旧 agent_prompts.py の移植。chart 記法だけは本体 render_charts.py(複数形)の
+// システムプロンプト群は旧 Streamlit 版 Python から移植（元 .py は現存しない）。chart 記法だけは本体 render_charts.py(複数形)の
 // ネイティブ型に全面書き換えしている（zip 版の単数 `chart`/`chart_type` は使わない）。
 
 // slidegen DSL リファレンス（docs/system_prompt.md 由来 + ネイティブ chart 型）

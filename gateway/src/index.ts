@@ -68,6 +68,8 @@ app.use("/api/chat", async (c, next) => {
 app.get("/api/models", (c) => {
   const models = availableModels(c.env).map((m) => ({
     id: m.id, label: m.label, tier: m.tier,
+    // DSL 無効時フォールバックの選択にフロントが使う（未指定=信頼可）。
+    reliableForDsl: m.reliableForDsl !== false,
   }));
   return c.json({ models });
 });

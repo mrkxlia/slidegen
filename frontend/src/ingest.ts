@@ -1,5 +1,5 @@
 // ingest.ts — 添付ファイルから「スライド作成に使える情報」を取り出す。
-// 旧 ingest.py の移植（pandas → SheetJS、python-pptx 読取 → JSZip）。
+// 取込ロジックは旧 Streamlit 版 Python から移植（pandas → SheetJS、python-pptx 読取 → JSZip）。元 .py は現存しない。
 // 返す summary を LLM 文脈に入れ、数値はネイティブチャート型(bar_chart 等)で反映させる。
 
 // xlsx / jszip は添付処理時のみ必要なので動的 import で別チャンク化し、初期ロードを軽くする。

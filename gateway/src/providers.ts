@@ -1,6 +1,6 @@
 // providers.ts — LLM プロバイダ横断の抽象化（全て async fetch）。
 //
-// 旧 llm_providers.py(同期SDK・Azure中心) の置き換え。Cloudflare Worker は
+// 旧 Python 版(同期SDK・Azure中心、現存しない) を置き換えた実装。Cloudflare Worker は
 // 非同期 HTTP のみ許可されるため、各プロバイダを fetch で実装する。
 //
 // セキュリティ(SSRF不変条件): エンドポイント URL は本ファイル内に固定し、
@@ -62,6 +62,10 @@ export interface ModelEntry {
   tier: Tier;
   // Gemma 等 systemInstruction 非対応モデルは true（system を先頭 user に畳む）。
   noSystemInstruction?: boolean;
+  // DSL(構造化出力)に十分信頼できるか。frontend の「DSL 無効時フォールバック」選択に使う
+  // （特定モデルIDをフロントにハードコードしないための単一情報源）。未指定=信頼可、
+  // Gemma 系は劣化で無効DSLを出しがちなので false。
+  reliableForDsl?: boolean;
 }
 
 // 表示モデル一覧。free=テスト用(無料枠) / prod=本番(要 secret)。
@@ -69,18 +73,18 @@ const CATALOG: ModelEntry[] = [
   // --- 無料枠（テスト）。並び順＝既定優先度＝実キーの RPM 大きい順。
   //     ※モデルIDは Google AI Studio の models.list で確認した正式名（2026-06時点）。
   //       gemini-2.0-flash は 2026-06-01 シャットダウン済のため不採用。
-  { id: "gemini-3.1-flash-lite", label: "Gemini 3.1 Flash-Lite (無料・最大枠)", provider: "gemini", model: "gemini-3.1-flash-lite", tier: "free" },
-  { id: "gemma-4-31b", label: "Gemma 4 31B (無料・TPM無制限)", provider: "gemini", model: "gemma-4-31b-it", tier: "free", noSystemInstruction: true },
-  { id: "gemma-4-26b", label: "Gemma 4 26B (無料・TPM無制限)", provider: "gemini", model: "gemma-4-26b-a4b-it", tier: "free", noSystemInstruction: true },
-  { id: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash-Lite (無料)", provider: "gemini", model: "gemini-2.5-flash-lite", tier: "free" },
-  { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash (無料)", provider: "gemini", model: "gemini-2.5-flash", tier: "free" },
-  { id: "gemini-3.5-flash", label: "Gemini 3.5 Flash (無料・高性能)", provider: "gemini", model: "gemini-3.5-flash", tier: "free" },
-  { id: "or-deepseek-r1", label: "OpenRouter: DeepSeek R1 (無料)", provider: "openrouter", model: "deepseek/deepseek-r1:free", tier: "free" },
-  { id: "or-llama-3.3-70b", label: "OpenRouter: Llama 3.3 70B (無料)", provider: "openrouter", model: "meta-llama/llama-3.3-70b-instruct:free", tier: "free" },
-  { id: "wai-llama-3.3-70b", label: "Workers AI: Llama 3.3 70B (無料)", provider: "workers_ai", model: "@cf/meta/llama-3.3-70b-instruct-fp8-fast", tier: "free" },
+  { id: "gemini-3.1-flash-lite", label: "Gemini 3.1 Flash-Lite (無料・最大枠)", provider: "gemini", model: "gemini-3.1-flash-lite", tier: "free", reliableForDsl: true },
+  { id: "gemma-4-31b", label: "Gemma 4 31B (無料・TPM無制限)", provider: "gemini", model: "gemma-4-31b-it", tier: "free", noSystemInstruction: true, reliableForDsl: false },
+  { id: "gemma-4-26b", label: "Gemma 4 26B (無料・TPM無制限)", provider: "gemini", model: "gemma-4-26b-a4b-it", tier: "free", noSystemInstruction: true, reliableForDsl: false },
+  { id: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash-Lite (無料)", provider: "gemini", model: "gemini-2.5-flash-lite", tier: "free", reliableForDsl: true },
+  { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash (無料)", provider: "gemini", model: "gemini-2.5-flash", tier: "free", reliableForDsl: true },
+  { id: "gemini-3.5-flash", label: "Gemini 3.5 Flash (無料・高性能)", provider: "gemini", model: "gemini-3.5-flash", tier: "free", reliableForDsl: true },
+  { id: "or-deepseek-r1", label: "OpenRouter: DeepSeek R1 (無料)", provider: "openrouter", model: "deepseek/deepseek-r1:free", tier: "free", reliableForDsl: true },
+  { id: "or-llama-3.3-70b", label: "OpenRouter: Llama 3.3 70B (無料)", provider: "openrouter", model: "meta-llama/llama-3.3-70b-instruct:free", tier: "free", reliableForDsl: true },
+  { id: "wai-llama-3.3-70b", label: "Workers AI: Llama 3.3 70B (無料)", provider: "workers_ai", model: "@cf/meta/llama-3.3-70b-instruct-fp8-fast", tier: "free", reliableForDsl: true },
   // --- 本番（要 API キー） ---
-  { id: "gpt-4o", label: "OpenAI: GPT-4o (本番)", provider: "openai", model: "gpt-4o", tier: "prod" },
-  { id: "claude-sonnet", label: "Anthropic: Claude Sonnet (本番)", provider: "anthropic", model: "claude-sonnet-4-6", tier: "prod" },
+  { id: "gpt-4o", label: "OpenAI: GPT-4o (本番)", provider: "openai", model: "gpt-4o", tier: "prod", reliableForDsl: true },
+  { id: "claude-sonnet", label: "Anthropic: Claude Sonnet (本番)", provider: "anthropic", model: "claude-sonnet-4-6", tier: "prod", reliableForDsl: true },
 ];
 
 // secret の有無で「実際に使えるモデルだけ」を返す。
