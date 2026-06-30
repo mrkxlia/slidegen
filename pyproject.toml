@@ -1,3 +1,4 @@
+# ビルドフロントは uv に統一（ADR 0002）。uv build がこの setuptools backend を呼ぶ。
 [build-system]
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"

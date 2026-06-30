@@ -5,7 +5,7 @@
 
 # 第1層：構造インバリアントの自動テスト（pytest）
 test:
-	PYTHONPATH=. python3 -m pytest tests/test_invariants.py -v
+	uv run --extra dev python -m pytest tests/test_invariants.py -v
 
 # 第2層：全サンプルのモンタージュを生成（目視確認用）
 visual:
@@ -13,7 +13,7 @@ visual:
 	@for f in examples/*.slide; do \
 		name=$$(basename $$f .slide); \
 		echo "▶ $$name"; \
-		PYTHONPATH=. python3 -m tests.visual $$f -o out/$$name.jpg; \
+		uv run --extra dev python -m tests.visual $$f -o out/$$name.jpg; \
 	done
 
 # 全部：第1層→第2層
@@ -21,11 +21,11 @@ all: test visual
 
 # 新型追加（使い方: make new TYPE=mytype INTENT="..." LAYOUT=grid COUNT="3..6"）
 new:
-	PYTHONPATH=. python3 -m tests.new_type $(TYPE) --intent "$(INTENT)" --layout $(LAYOUT) --count "$(COUNT)"
+	uv run --extra dev python -m tests.new_type $(TYPE) --intent "$(INTENT)" --layout $(LAYOUT) --count "$(COUNT)"
 
 # 新型検証（使い方: make check TYPE=mytype）
 check:
-	PYTHONPATH=. python3 -m tests.new_type $(TYPE) --check
+	uv run --extra dev python -m tests.new_type $(TYPE) --check
 
 clean:
 	rm -rf out __pycache__ */__pycache__ */*/__pycache__
