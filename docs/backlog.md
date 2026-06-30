@@ -3,7 +3,7 @@
 > 立て直しエンゲージメントで洗い出した技術的負債・課題を**優先度順**にまとめる。
 > 個人/学習プロジェクトのスコープに合わせ、過剰な作り込みは避ける方針。
 > 関連: [requirements.md](../requirements.md) / [spec.md](../spec.md) / [docs/adr/](adr/)
-> 最終更新: 2026-06-30（P1 ＋ 回帰ガード/quick-win を実施 = PR #14）
+> 最終更新: 2026-06-30（P3 軽微負債 7c/7d/7e を実施 = PR #17。P1＋一部 quick-win は PR #14）
 
 ## このエンゲージメントで解消済み
 
@@ -25,7 +25,7 @@
 | 4 | 中 | 100型のビジュアル回帰が目視のみ | 未対応 |
 | 5 | 中 | 未実装の機能バックログ | 未対応（下記） |
 | 6 | 中 | フロントのビュー層にテストが無い | ✅ 完了 (PR #14) |
-| 7 | 低 | 軽微な負債（雛形TODO・古いコメント・wheel名 等） | 🟡 一部 (PR #14: 7b コメント済) |
+| 7 | 低 | 軽微な負債（雛形TODO・古いコメント・wheel名 等） | 🟡 大半 (PR #14: 7b / PR #17: 7c・7d・7e。残: 7a は温存) |
 
 ---
 
@@ -74,8 +74,8 @@
 
 ## P3（低・軽微）
 
-- **7a.** `slidegen/scaffold_type.py` の `# TODO: レイアウト(...)に従って配置を実装`（雛形のレイアウト未実装）。
+- **7a.** `slidegen/scaffold_type.py` の `# TODO: レイアウト(...)に従って配置を実装`（雛形のレイアウト未実装）。 → 🔵 温存（新型を起こす際に人間が埋める**生成テンプレート内のガイド用プレースホルダ**であり本体の未実装ではない。消すとガイドが失われるため意図的に残す）。
 - **7b.** 移植元 python（`slidegen_app.py` / `agent_prompts.py` / `ingest.py` / `llm_providers.py`）を指すコメントが各 TS に残る（既に不在で、新規参加者に紛らわしい）。文言を「移植済み」等へ。 → ✅ 完了 (PR #14)
-- **7c.** wheel 名 `slidegen-0.1.0-py3-none-any.whl` が `frontend/src/render/renderClient.ts` の既定値と `tools/build_wheel.sh` に分散。version bump 時に複数箇所更新が要る（micropip の basename 解釈制約も絡む）。
-- **7d.** `Makefile` は bare `python3` 前提（要 venv 有効化。README に注記済み）。`uv run` ラッパに寄せると事故が減る。
-- **7e.** `build-system` は setuptools（`pyproject.toml`）。ADR 0002 は uv 統一だが、これはビルド**フロント**の話で整合（`uv build` がこの backend を呼ぶ）。誤解防止に一言コメントしてもよい。
+- **7c.** wheel 名 `slidegen-0.1.0-py3-none-any.whl` が `frontend/src/render/renderClient.ts` の既定値と `tools/build_wheel.sh` に分散。version bump 時に複数箇所更新が要る（micropip の basename 解釈制約も絡む）。 → ✅ 完了 (PR #17: `tests/test_version_sync.py` で `renderClient.ts` の既定版 ⇔ `pyproject.toml` version 一致を CI ガード。build_wheel.sh は元々動的抽出で drift せず)。
+- **7d.** `Makefile` は bare `python3` 前提（要 venv 有効化。README に注記済み）。`uv run` ラッパに寄せると事故が減る。 → ✅ 完了 (PR #17: 全ターゲットを `uv run --extra dev python` 化＝ADR 0002 統一。README の venv 注記も解消)。
+- **7e.** `build-system` は setuptools（`pyproject.toml`）。ADR 0002 は uv 統一だが、これはビルド**フロント**の話で整合（`uv build` がこの backend を呼ぶ）。誤解防止に一言コメントしてもよい。 → ✅ 完了 (PR #17: `[build-system]` に 1 行コメント追記)。
