@@ -151,7 +151,7 @@ docs/       要件補助・仕様補助・ADR・設計・型カタログ・デ�
 ## 開発・テスト
 
 ```bash
-make test     # 第1層: 構造インバリアントの pytest（要: source .venv/bin/activate）
+make test     # 第1層: 構造インバリアントの pytest（uv run 経由。venv 有効化は不要）
 make visual   # 第2層: モンタージュ生成 → 目視
 uv run --extra dev pytest tests/ -q                       # 単発はこちらが手軽
 cd gateway  && npx tsc --noEmit && npx vitest run         # ゲートウェイ
