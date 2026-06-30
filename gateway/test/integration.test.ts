@@ -115,6 +115,40 @@ describe("gateway API (E2E)", () => {
     expect(text).toContain('"done":true');
   });
 
+  it("stream: 空応答(deltaゼロ)なら次候補へ切替えて成功する", async () => {
+    let calls = 0;
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      calls++;
+      // 1回目: content.parts が空 → delta ゼロ（safety/空生成相当）
+      if (calls === 1) return new Response('data: {"candidates":[{"content":{"parts":[]}}]}\r\n\r\n', { status: 200 });
+      return new Response('data: {"candidates":[{"content":{"parts":[{"text":"A"}]}}]}\r\n\r\n', { status: 200 });
+    }));
+    const res = await app.request("/api/chat?stream=1", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ modelId: "gemini-2.5-flash", messages: [{ role: "user", content: "hi" }] }),
+    }, baseEnv);
+    const text = await res.text();
+    expect(text).toContain('"switch"');      // 空 → 別モデルへ切替
+    expect(text).toContain('"delta":"A"');    // 2モデル目で出力
+    expect(text).toContain('"done":true');
+  });
+
+  it("stream: 全候補が空応答なら error(code:empty) を返す", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response('data: {"candidates":[{"content":{"parts":[]}}]}\r\n\r\n', { status: 200 }),
+    ));
+    const res = await app.request("/api/chat?stream=1", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ modelId: "gemini-2.5-flash", messages: [{ role: "user", content: "hi" }] }),
+    }, baseEnv);
+    const text = await res.text();
+    expect(text).toContain('"error"');
+    expect(text).toContain('"code":"empty"');
+    expect(text).not.toContain('"done":true');
+  });
+
   it("Gemma は systemInstruction を付けず system を先頭 user に畳む", async () => {
     let captured: any;
     vi.stubGlobal("fetch", vi.fn(async (_url: string, init: any) => {

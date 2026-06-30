@@ -152,6 +152,7 @@ export function ConversationPane(props: {
   input: string;
   onInput: (v: string) => void;
   onSend: () => void;
+  onStop: () => void;
   onMakeOutline: () => void;
   onGenerate: () => void;
   busy: boolean;
@@ -244,9 +245,13 @@ export function ConversationPane(props: {
               <button className="btn ghost" onClick={props.onMakeOutline} disabled={props.busy || !props.modelId}>流れを作る →</button>
             )}
             <button className="btn ghost" onClick={props.onGenerate} disabled={props.busy || !props.modelId}>今ある情報で生成 →</button>
-            <button className="btn" onClick={props.onSend} disabled={!canSend}>
-              {props.busy ? "送信中…" : <>送信 <span className="kbd">⌘↵</span></>}
-            </button>
+            {props.busy ? (
+              <button className="btn" onClick={props.onStop}>停止</button>
+            ) : (
+              <button className="btn" onClick={props.onSend} disabled={!canSend}>
+                送信 <span className="kbd">⌘↵</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

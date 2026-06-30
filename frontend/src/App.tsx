@@ -19,6 +19,9 @@ import {
   type DeckTab,
 } from "./components";
 
+// AIが空応答を返したとき（全モデル空 or タグ/空白のみ）に共通で出す文言。
+const EMPTY_MSG = "AIが空の応答を返しました。モデルを変えるか、もう一度お試しください。";
+
 // オンボーディングの依頼例（クリックで入力欄へ）。
 const EXAMPLES = [
   "来月の経営会議で、新しい監視基盤の導入承認を得たい。",
@@ -53,6 +56,7 @@ export function App() {
   const [deckTab, setDeckTab] = useState<DeckTab>("preview");
   const [mobileView, setMobileView] = useState<"talk" | "deck">("talk");
   const contextInjected = useRef(false);
+  const abortRef = useRef<AbortController | null>(null); // 進行中の chatStream を停止ボタンで中断する
 
   useEffect(() => {
     api.fetchModels()
@@ -67,6 +71,8 @@ export function App() {
 
   function handleApiError(e: unknown) {
     if (e instanceof api.AuthExpiredError) { setAuthExpired(true); return; }
+    if (e instanceof api.CanceledError) { setError(null); return; } // 停止は静かに中断
+    if (e instanceof api.ApiError && e.code === "empty") { setError(EMPTY_MSG); return; }
     setError((e as Error).message);
   }
 
@@ -96,12 +102,16 @@ export function App() {
   // ストリーミングで assistant 応答を受け取り、最後の assistant メッセージへ逐次反映。
   async function streamAssistant(p: Phase, baseMsgs: Message[], forceContext = false): Promise<string> {
     const { system, messages: msgs } = prepare(p, baseMsgs, forceContext);
-    setMessages([...baseMsgs, { role: "assistant", content: "" }]);
-    const res = await api.chatStream({ modelId, system, messages: msgs }, (_d, full) => {
-      const shown = cleanReply(full);
-      setMessages([...baseMsgs, { role: "assistant", content: shown || "▍" }]);
-    });
-    return res.text;
+    const ac = new AbortController();
+    abortRef.current = ac;
+    setMessages([...baseMsgs, { role: "assistant", content: "▍" }]); // 初手で「考え中」を見せる
+    try {
+      const res = await api.chatStream({ modelId, system, messages: msgs }, (_d, full) => {
+        const shown = cleanReply(full);
+        setMessages([...baseMsgs, { role: "assistant", content: shown || "▍" }]);
+      }, { signal: ac.signal });
+      return res.text;
+    } finally { abortRef.current = null; }
   }
 
   async function onSend() {
@@ -116,8 +126,14 @@ export function App() {
     const convPhase: Phase = phase === "outline" ? "outline" : "hearing";
     try {
       const raw = await streamAssistant(convPhase, newMsgs);
-      setMessages([...newMsgs, { role: "assistant", content: cleanReply(raw) } as Message]);
-    } catch (e) { handleApiError(e); }
+      const reply = cleanReply(raw);
+      // タグ/空白のみで実質空になったら、空バブルを残さず再送を促す。
+      if (!reply) { setMessages(newMsgs); setError(EMPTY_MSG); return; }
+      setMessages([...newMsgs, { role: "assistant", content: reply } as Message]);
+    } catch (e) {
+      setMessages(newMsgs); // 失敗/中断時はプレースホルダを巻き戻す
+      handleApiError(e);
+    }
     finally { setBusy(false); }
   }
 
@@ -129,8 +145,13 @@ export function App() {
     setBusy(true);
     try {
       const raw = await streamAssistant("outline", messages, true);
-      setMessages([...messages, { role: "assistant", content: cleanReply(raw) }]);
-    } catch (e) { handleApiError(e); }
+      const reply = cleanReply(raw);
+      if (!reply) { setMessages(messages); setError(EMPTY_MSG); return; }
+      setMessages([...messages, { role: "assistant", content: reply }]);
+    } catch (e) {
+      setMessages(messages); // 失敗/中断時はプレースホルダを巻き戻す
+      handleApiError(e);
+    }
     finally { setBusy(false); }
   }
 
@@ -164,42 +185,58 @@ export function App() {
         system = prep.system; messages = prep.messages;
       }
       const chain = [modelId, pickDslFallback(models, modelId)].filter((id): id is string => !!id);
+      const ac = new AbortController();
+      abortRef.current = ac;
       let lastRaw = "";
       for (let i = 0; i < chain.length; i++) {
-        const res = await api.chatStream({ modelId: chain[i], system, messages }, () => {});
+        let res: { text: string };
+        try {
+          res = await api.chatStream({ modelId: chain[i], system, messages }, () => {}, { signal: ac.signal });
+        } catch (e) {
+          if (e instanceof api.CanceledError) throw e; // 停止は即中断（次候補を試さない）
+          handleApiError(e); // 空/タイムアウト等はバナーに反映しつつ次の reliable モデルへ
+          continue;
+        }
         const dsl = stripToDsl(res.text);
         if (hasValidDsl(dsl)) {
           setDslText(dsl);
           if (i > 0) {
             setGenNotice(`「${labelOf(modelId)}」が有効なDSLを出せなかったため、「${labelOf(chain[i])}」で生成しました。`);
           }
+          setError(null); // 途中候補の失敗で出たバナーは成功時にクリア
           setGenRunning(false);
           void runPreview(dsl); // 生成できたら構成プレビューを自動表示
           return;
         }
         lastRaw = res.text;
       }
-      setGenFailedRaw(lastRaw);
+      if (lastRaw) setGenFailedRaw(lastRaw);
       setError("AIが有効なDSLを生成できませんでした。別のモデルに変えるか、もう一度生成してください。");
     } catch (e) { handleApiError(e); }
-    finally { setGenRunning(false); setBusy(false); }
+    finally { setGenRunning(false); setBusy(false); abortRef.current = null; }
   }
 
   async function onReview() {
     if (!dslText.trim()) return;
     setBusy(true); setError(null);
     setReviewText("");
+    const ac = new AbortController();
+    abortRef.current = ac;
     try {
       const preamble = buildContextPreamble(purposeText(), attachmentsSummary());
       const user = (preamble ? preamble + "\n\n" : "") + "次のDSLをレビューしてください:\n\n" + dslText;
       const res = await api.chatStream(
         { modelId, system: phaseSystemPrompt("review"), messages: [{ role: "user", content: user }] },
         (_d, full) => setReviewText(stripReasoning(full)),
+        { signal: ac.signal },
       );
       setReviewText(stripReasoning(res.text));
     } catch (e) { handleApiError(e); }
-    finally { setBusy(false); }
+    finally { setBusy(false); abortRef.current = null; }
   }
+
+  // 進行中の生成/応答を停止する（停止ボタン）。
+  function onStop() { abortRef.current?.abort(); }
 
   function applyReview() {
     const dsl = extractFencedDsl(reviewText);
@@ -317,7 +354,7 @@ export function App() {
       <div className="workspace">
         <ConversationPane
           messages={messages} phase={phase}
-          input={input} onInput={setInput} onSend={onSend}
+          input={input} onInput={setInput} onSend={onSend} onStop={onStop}
           onMakeOutline={onMakeOutline} onGenerate={() => generateNow()}
           busy={busy} modelId={modelId} hasDsl={!!dslText.trim()}
           purposes={PURPOSES} purpose={purpose} onPurposeChange={setPurpose}

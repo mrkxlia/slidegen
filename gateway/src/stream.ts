@@ -5,6 +5,11 @@
 // index.ts はこれを `data: {"delta": "..."}` の自前 SSE にして返す。
 import { buildGeminiPayload, LLMError, type ChatRequest, type ProviderEnv } from "./providers";
 
+// 上流 LLM への 1 リクエストあたりのストールガード。接続後に無音で固まる上流に対し、
+// body reader の read() を abort で reject させ、index.ts の catch で次候補へフォールバックさせる。
+// whole-request タイムアウトなので、これを超える長考は途中で切られる（短い壁打ち/DSL では問題にならない）。
+const UPSTREAM_TIMEOUT_MS = 60_000;
+
 // fetch レスポンス body(SSE) を行単位でパースし、`data:` の JSON を yield する。
 async function* sseJson(resp: Response): AsyncGenerator<unknown> {
   if (!resp.body) return;
@@ -77,6 +82,7 @@ async function* streamGemini(req: ChatRequest, env: ProviderEnv, maxTokens: numb
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
   });
   if (!resp.ok) throw await httpError(resp, "gemini");
   for await (const ev of sseJson(resp)) {
@@ -96,6 +102,7 @@ async function* streamOpenAICompatible(
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}`, ...extraHeaders },
     body: JSON.stringify({ model: req.model, messages, max_tokens: maxTokens, temperature, stream: true }),
+    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
   });
   if (!resp.ok) throw await httpError(resp, "openai-compatible");
   for await (const ev of sseJson(resp)) {
@@ -110,6 +117,7 @@ async function* streamAnthropic(req: ChatRequest, env: ProviderEnv, maxTokens: n
     method: "POST",
     headers: { "Content-Type": "application/json", "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
     body: JSON.stringify({ model: req.model, system: req.system || undefined, max_tokens: maxTokens, temperature, messages: req.messages, stream: true }),
+    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
   });
   if (!resp.ok) throw await httpError(resp, "anthropic");
   for await (const ev of sseJson(resp)) {
@@ -121,6 +129,7 @@ async function* streamAnthropic(req: ChatRequest, env: ProviderEnv, maxTokens: n
 async function* streamWorkersAI(req: ChatRequest, env: ProviderEnv, maxTokens: number) {
   const messages = buildOpenAIMessages(req);
   if (env.AI) {
+    // バインディング経路は AbortSignal 非対応のため上流タイムアウトは付かない（CF プラットフォーム側の制限に委ねる）。
     const out = (await env.AI.run(req.model, { messages, max_tokens: maxTokens, stream: true })) as ReadableStream;
     const resp = new Response(out);
     for await (const ev of sseJson(resp)) {
@@ -135,6 +144,7 @@ async function* streamWorkersAI(req: ChatRequest, env: ProviderEnv, maxTokens: n
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${env.CF_AI_API_TOKEN}` },
       body: JSON.stringify({ messages, max_tokens: maxTokens, stream: true }),
+      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     });
     if (!resp.ok) throw await httpError(resp, "workers_ai");
     for await (const ev of sseJson(resp)) {
