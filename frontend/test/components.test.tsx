@@ -15,7 +15,7 @@ afterEach(cleanup);
 
 function convProps(over: Record<string, unknown> = {}) {
   return {
-    messages: [], phase: "hearing", input: "", onInput: vi.fn(), onSend: vi.fn(),
+    messages: [], phase: "hearing", input: "", onInput: vi.fn(), onSend: vi.fn(), onStop: vi.fn(),
     onMakeOutline: vi.fn(), onGenerate: vi.fn(), busy: false, modelId: "m1", hasDsl: false,
     purposes: ["（選択してください）", "社内報告", "承認を得る提案"], purpose: "（選択してください）",
     onPurposeChange: vi.fn(), examples: ["来月の経営会議で承認を得たい"], onExample: vi.fn(),
@@ -61,6 +61,14 @@ describe("ConversationPane（オンボーディング空状態）", () => {
     expect(onExample).toHaveBeenCalledWith("来月の経営会議で承認を得たい");
     fireEvent.click(screen.getByRole("button", { name: "承認を得る提案" }));
     expect(onPurposeChange).toHaveBeenCalledWith("承認を得る提案");
+  });
+  it("busy 中は『停止』ボタンを出し、クリックで onStop を呼ぶ", () => {
+    const onStop = vi.fn();
+    render(<ConversationPane {...convProps({ busy: true, messages: [{ role: "user", content: "hi" }], onStop })} />);
+    const stop = screen.getByRole("button", { name: "停止" });
+    fireEvent.click(stop);
+    expect(onStop).toHaveBeenCalledOnce();
+    expect(screen.queryByRole("button", { name: /送信/ })).not.toBeInTheDocument();
   });
 });
 

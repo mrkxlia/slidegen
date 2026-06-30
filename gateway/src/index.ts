@@ -120,8 +120,12 @@ app.post("/api/chat", async (c) => {
       let acc = "";
       let lastErr: LLMError | undefined;
       let okModelId: string | undefined;
+      // 直近の失敗が「空応答(delta ゼロ)」起因か。全滅時の error に code:"empty" を付けるかの判定に使う
+      // （HTTP エラー等で全滅したのに empty 扱いしてフロントが誤メッセージを出すのを防ぐ）。
+      let lastWasEmpty = false;
       for (let i = 0; i < chain.length; i++) {
         const m = chain[i];
+        const before = acc.length;
         if (i > 0) send({ switch: m.id });
         const msgs: ChatMessage[] = acc
           ? [
@@ -138,14 +142,28 @@ app.post("/api/chat", async (c) => {
             acc += delta;
             send({ delta });
           }
-          okModelId = m.id;
-          break;
         } catch (e) {
           lastErr = e instanceof LLMError ? e : new LLMError(String(e));
+          lastWasEmpty = false;
+          continue; // 途中 throw 後に下の成功判定へ落ちないよう次候補へ
         }
+        // 新たな delta を出したモデルだけ成功扱い。delta ゼロ(=safety/空生成)は失敗として次候補へ。
+        if (acc.length > before) {
+          okModelId = m.id;
+          break;
+        }
+        lastErr = new LLMError("model returned empty response", 502, true);
+        lastWasEmpty = true;
       }
-      if (okModelId) send({ done: true, model: okModelId });
-      else send({ error: lastErr?.message ?? "all models failed", status: lastErr?.status ?? 502 });
+      if (okModelId) {
+        send({ done: true, model: okModelId });
+      } else {
+        send({
+          error: lastErr?.message ?? "all models failed",
+          status: lastErr?.status ?? 502,
+          ...(lastWasEmpty ? { code: "empty" } : {}),
+        });
+      }
       ctrl.close();
     },
   });
