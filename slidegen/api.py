@@ -21,16 +21,20 @@ from pptx.presentation import Presentation as _PresentationType
 
 from .parser import parse
 from .render import build
-from .theme import Theme, DEFAULT_THEME
+from .theme import Theme
 
 
-def render_text(text: str, *, theme: Theme = DEFAULT_THEME,
+def render_text(text: str, *, theme: Theme | None = None,
                 template: str | None = None) -> _PresentationType:
-    """記法テキストを python-pptx の Presentation オブジェクトに変換して返す。"""
+    """記法テキストを python-pptx の Presentation オブジェクトに変換して返す。
+
+    theme を省略（None）した場合、template があれば potx のテーマ色を自動抽出し、
+    無ければ DEFAULT_THEME を使う（決定は build() 側）。
+    """
     return build(parse(text), theme=theme, template=template)
 
 
-def render_to_bytes(text: str, *, theme: Theme = DEFAULT_THEME,
+def render_to_bytes(text: str, *, theme: Theme | None = None,
                     template: str | None = None) -> bytes:
     """記法テキストを pptx の bytes に変換して返す（メモリ完結・ディスク不要）。
 
@@ -44,7 +48,7 @@ def render_to_bytes(text: str, *, theme: Theme = DEFAULT_THEME,
     return buf.getvalue()
 
 
-def render_file(input_path, output_path, *, theme: Theme = DEFAULT_THEME,
+def render_file(input_path, output_path, *, theme: Theme | None = None,
                 template: str | None = None) -> Path:
     """記法ファイル(.slide)を読み、pptx を output_path に保存する。保存先 Path を返す。"""
     text = Path(input_path).read_text(encoding="utf-8")

@@ -3,7 +3,7 @@
 > 立て直しエンゲージメントで洗い出した技術的負債・課題を**優先度順**にまとめる。
 > 個人/学習プロジェクトのスコープに合わせ、過剰な作り込みは避ける方針。
 > 関連: [requirements.md](../requirements.md) / [spec.md](../spec.md) / [docs/adr/](adr/)
-> 最終更新: 2026-06-30（P3 軽微負債 7c/7d/7e を実施 = PR #17。P1＋一部 quick-win は PR #14）
+> 最終更新: 2026-07-02（#4 全型ビジュアル回帰の自動化を実施。#5 の potx連携・はみ出し物理検出＋DSL静的バリデーション = `current-improvements-for-another.md` の要否判定。P3 7c/7d/7e = PR #17。P1＋一部 quick-win = PR #14）
 
 ## このエンゲージメントで解消済み
 
@@ -22,8 +22,8 @@
 | 1 | **高** | モデルカタログの陳腐化 | ✅ 完了 (PR #14) |
 | 2 | **高** | DSL 解説と実装のドリフト（chart 以外は未ガード） | ✅ 完了 (PR #14) |
 | 3 | 中 | ビュー回帰の自動ガードが無い（e2e が CI 外） | 🟡 一部 (PR #14: component+gitignore。e2e の CI 化は見送り) |
-| 4 | 中 | 100型のビジュアル回帰が目視のみ | 未対応 |
-| 5 | 中 | 未実装の機能バックログ | 未対応（下記） |
+| 4 | 中 | 100型のビジュアル回帰が目視のみ | ✅ 完了（図形ツリースナップショット・全型） |
+| 5 | 中 | 未実装の機能バックログ | 🟡 一部（potx連携・はみ出し検出 完了。下記） |
 | 6 | 中 | フロントのビュー層にテストが無い | ✅ 完了 (PR #14) |
 | 7 | 低 | 軽微な負債（雛形TODO・古いコメント・wheel名 等） | 🟡 大半 (PR #14: 7b / PR #17: 7c・7d・7e。残: 7a は温存) |
 
@@ -51,19 +51,24 @@
 - **何**: Playwright e2e はオプトイン（`@playwright/test` を devDependencies に入れず、CI 対象外）。今回 `e2e/smoke.spec.ts` の見出しセレクタが陳腐化して壊れていた（実証済み）。UI 刷新直後で、回帰を防ぐ価値が高い。
 - **対応案**: 任意 job として e2e を CI に追加（chromium キャッシュ活用）か、`@testing-library` でビューの最小結合テストを `frontend/test/` に追加。あわせて `frontend/test-results/` を `.gitignore` へ（現在未登録）。
 
-### 4. 100型のビジュアル回帰の自動化
-- **何**: 第1層 `tests/test_invariants.py`（構造）はあるが、見た目の回帰は `tests/visual.py` のモンタージュ**目視**のみ。型追加・theme 変更時のデグレを人手に依存。
-- **対応案**: 代表型のスナップショット（pptx→画像 or 図形ツリーのハッシュ）比較を任意で。重ければ「重要型のみ」に限定。
+### 4. 100型のビジュアル回帰の自動化 — ✅ 完了
+- **実施**: 案B（図形ツリースナップショット）で**全100型**を自動ガード。`tests/test_visual_regression.py` が各型を最小入力でレンダし、正規化した図形ツリー（種別・座標・塗り/線色・テキスト・フォント、表/チャート構造）を golden `tests/__snapshots__/visual_regression.json` と型ごとに比較。純Python・LibreOffice 不要・環境非依存。golden はコミット済みで Git diff で差分が読める。更新は `make snapshot-update`（=`SLIDEGEN_UPDATE_SNAPSHOTS=1`）。CI は `pytest tests/` 全体を回すため自動でガードに入る。`test_snapshot_covers_all_renderers` が golden⇔RENDERERS の増減を強制検知。
+- **案Aへのフォールバック**: 図形ツリー不変でも崩れる回帰（描画順の重なり等）を取りこぼす場合は画像スナップショット（`tests/visual.py` の LibreOffice 経路）へ移行する旨をテスト先頭 docstring に明記。
+- **何（元の課題）**: 第1層 `tests/test_invariants.py`（構造）はあったが、見た目の回帰は `tests/visual.py` のモンタージュ**目視**のみだった。
 
 ### 5. 未実装の機能バックログ
-- potx 本連携（`slidegen/theme.py` の直値 → potx テーマ色参照。ADR 0004 ルール3の本実装）。
+- ✅ potx 本連携（`slidegen/theme.py` の直値 → potx テーマ色参照。ADR 0004 ルール3の本実装）。
+  → **完了**: `theme.py` に `theme_from_potx()` を追加（accent1→main / accent2→main_2 / accent6→accent の一般 OOXML マッピング、読めなければ DEFAULT_THEME にフェイルセーフ）。`build()`/`api.py` の `theme` を None センチネル化し、template 提供かつ theme 未指定なら自動抽出（CLI・ブラウザ Pyodide 両経路で有効）。
 - pptx → DSL シリアライザ（編集の双方向化。現状 `sync` は**文言差分のみ**）。
 - 技術図 **Mermaid** 連携（設計の MNP 構想にあるが未実装）。
 - 本物のサムネイル（サーバ側 LibreOffice 等。ブラウザ単体では pptx→画像 不可のため別ホスト。ADR 0003 の代替案）。
-- テキストはみ出しの物理検出を第1層へ（現状は境界 overflow まで）。
+- ✅ テキストはみ出しの物理検出を第1層へ（現状は境界 overflow まで）。
+  → **完了**: `tests/test_invariants.py` に `S3`（TEXT_BOX の水平/垂直はみ出しヒューリスティック）を追加。word_wrap=False は横幅、折り返しは高さで判定（code_block 等の意図的 no-wrap を誤検知しない）。
 - 会社テンプレ/設定の **IndexedDB 永続化**（現状は容量/プライバシー配慮でセッション限り）。
 - i18n（現状 日本語のみ）。
 - 添付画像の**マルチモーダル**活用（現状 `frontend/src/ingest.ts` は画像をメタ情報のみで LLM に渡さない）。
+
+> 補足: 上記 potx連携 / はみ出し検出と、新規の **DSL 静的バリデーション**（`slidegen/dsl_validator.py`：未知型を build 前に検出し CLI を exit 1、誤記法/空スライドは警告）は、別レポ由来の指示書 `current-improvements-for-another.md` を当repo向けに要否判定して取り込んだもの。ハードコード型カタログ版の validator や内部リファクタ（render_common 等）は当repoの方針（真実は RENDERERS・過剰作り込み回避）に合わないため不採用。
 
 ### 6. フロントのビュー層テスト — ✅ 完了 (PR #14)
 - **実施 (PR #14)**: `frontend/test/components.test.tsx` で TopBar/ConversationPane/DeckPane を prop 駆動検証（+7、jsdom 局所化）。

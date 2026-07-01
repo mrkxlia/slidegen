@@ -6,9 +6,11 @@ cli.py — コマンドラインから記法ファイルをpptxに変換。
     python -m slidegen.cli input.slide -o output.pptx --template company.potx
 """
 import argparse
+import sys
 import slidegen   # 追加型(render_more)の登録を確実にする
 from .parser import parse
-from .render import build
+from .render import build, RENDERERS
+from .dsl_validator import validate as validate_dsl
 
 
 def main():
@@ -21,6 +23,15 @@ def main():
     with open(args.input, encoding="utf-8") as f:
         text = f.read()
     slides = parse(text)
+
+    val = validate_dsl(slides, RENDERERS)
+    for msg in val.warnings:
+        print(f"Warning: {msg}", file=sys.stderr)
+    if val.blocking_warnings:
+        for msg in val.blocking_warnings:
+            print(f"Error: {msg}", file=sys.stderr)
+        sys.exit(1)
+
     prs = build(slides, template=args.template)
     prs.save(args.output)
     print(f"生成: {args.output}（{len(slides)}枚, 型: {[s.type for s in slides]}）")

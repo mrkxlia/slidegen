@@ -18,7 +18,7 @@ from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.oxml.ns import qn
 
-from .theme import Theme, DEFAULT_THEME
+from .theme import Theme, DEFAULT_THEME, theme_from_potx
 from .parser import Slide, split_emphasis
 
 # 16:9 ワイド
@@ -278,19 +278,24 @@ def render_slide(prs, data: Slide, theme: Theme):
     return slide
 
 
-def build(slides_data, theme: Theme = DEFAULT_THEME, template: str | None = None) -> Presentation:
+def build(slides_data, theme: Theme | None = None, template: str | None = None) -> Presentation:
     """
     template: 会社の .potx/.pptx パス。指定があればそれを土台にする（§2-bis ルール2）。
               未指定なら 16:9 の白紙プレゼンを作る。
+    theme:    None（未指定）かつ template があれば potx のテーマ色を自動抽出する
+              （§2-bis ルール3）。明示的に Theme を渡した場合はそれを優先する。
     """
     if template:
         prs = Presentation(template)
+        if theme is None:
+            theme = theme_from_potx(prs)   # template 提供かつ theme 未指定 → potx から自動抽出
     else:
         prs = Presentation()
         prs.slide_width = SLIDE_W
         prs.slide_height = SLIDE_H
-    if not template:
         _strip_layout_placeholders(prs)   # 白紙テンプレ由来の枠を全除去
+    if theme is None:
+        theme = DEFAULT_THEME
     for data in slides_data:
         render_slide(prs, data, theme)
     return prs

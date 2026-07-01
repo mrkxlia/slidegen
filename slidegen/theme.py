@@ -11,9 +11,18 @@ theme.py — デザイン制約をコードで固定するレイヤー。
 potx が用意できたら、下記のRGB直値を potx のスライドマスター/テーマ参照に置き換えること。
 python-pptx では prs.slide_masters[0] のテーマ色を読めるので、そこから引く実装に変更する。
 """
+import logging
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
+
 from pptx.util import Pt
 from pptx.dml.color import RGBColor
+from pptx.oxml.ns import qn
+
+if TYPE_CHECKING:
+    from pptx.presentation import Presentation
+
+_log = logging.getLogger(__name__)
 
 
 def hex_to_rgb(h: str) -> RGBColor:
@@ -55,3 +64,68 @@ class Theme:
 
 # デフォルトテーマ（potx未提供時のフォールバック）
 DEFAULT_THEME = Theme()
+
+
+# potx テーマ → Theme のスロット対応（§2-bis ルール3）。
+# ブランド色は一般的な OOXML スロットから引く。企業テンプレによっては強調色が
+# lt2 等の別スロットに入ることがある（例: 特定社の potx はブランドレッドが lt2）。
+# その場合はここを差し替えるだけで対応できる。読めなければ DEFAULT_THEME にフォールバック。
+_POTX_SLOTS = {
+    "main":   "a:accent1",
+    "main_2": "a:accent2",
+    "accent": "a:accent6",   # ブランド強調色の一般的スロット
+}
+
+# theme part を指すリレーションシップ種別
+_THEME_REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme"
+
+
+def _is_valid_hex(val: str) -> bool:
+    return len(val) == 6 and all(c in "0123456789ABCDEF" for c in val)
+
+
+def theme_from_potx(prs: "Presentation") -> "Theme":
+    """POTX/PPTX のテーマから brand 色（main/main_2/accent）を読み取り Theme を生成する。
+
+    読み取れないフィールドは DEFAULT_THEME の値でフォールバックする（フェイルセーフ）。
+    先頭スライドマスターのテーマのみ参照する。背景色（base/base_2）と文字色（ink）は
+    可読性優先で DEFAULT_THEME を固定使用する。スロット対応は _POTX_SLOTS を参照。
+    """
+    d = DEFAULT_THEME
+    try:
+        master = prs.slide_masters[0]
+        theme_part = master.part.part_related_by(_THEME_REL)
+        from lxml import etree as _etree
+        theme_el = _etree.fromstring(theme_part.blob)
+        clr_scheme = theme_el.find(".//" + qn("a:clrScheme"))
+        if clr_scheme is None:
+            return d
+
+        def pick(tag: str):
+            el = clr_scheme.find(qn(tag))
+            if el is None:
+                return None
+            srgb = el.find(qn("a:srgbClr"))
+            if srgb is not None:
+                val = (srgb.get("val") or "").upper()
+                if _is_valid_hex(val):
+                    return val
+            sys_el = el.find(qn("a:sysClr"))
+            if sys_el is not None:
+                val = (sys_el.get("lastClr") or "").upper()
+                if _is_valid_hex(val):
+                    return val
+            return None
+
+        extracted = {name: pick(slot) for name, slot in _POTX_SLOTS.items()}
+        _log.debug("POTX テーマカラー抽出: %s", extracted)
+        return Theme(
+            main   = extracted["main"]   or d.main,
+            main_2 = extracted["main_2"] or d.main_2,
+            accent = extracted["accent"] or d.accent,
+        )
+    except (KeyError, AttributeError, ValueError, IndexError) as e:
+        _log.warning(
+            "POTX テーマカラーの抽出に失敗しました（%s）。DEFAULT_THEME を使用します。", e
+        )
+        return d
