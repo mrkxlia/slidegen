@@ -18,8 +18,9 @@ test_invariants.py — 第1層：構造インバリアントの自動テスト
   S. シェイプ常識
      S1. シェイプがスライド境界からはみ出していない
      S2. 1スライドのシェイプ数が暴走していない（< 80個）
+     S3. TEXT_BOX のテキストがフレームに収まる（物理はみ出しのヒューリスティック検出）
   F. フォント統一（§3-1）
-     F1. 使用されているフォント名が theme.font / theme.font_light 以外を含まない
+     F1. 使用されているフォント名が theme.font / theme.font_light / theme.font_mono 以外を含まない
 """
 from __future__ import annotations
 import sys, os, pathlib
@@ -28,6 +29,7 @@ from collections import Counter
 import pytest
 from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE_TYPE
+from pptx.util import Pt
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 import slidegen
@@ -193,6 +195,79 @@ class TestShapes:
         for i, slide in enumerate(prs.slides, 1):
             n = len(slide.shapes)
             assert n < 80, f"スライド{i}のシェイプ数が{n}個（暴走の疑い）"
+
+    def test_S3_text_overflow_risk_is_low(self, prs):
+        """S3: TEXT_BOX のテキストがフレームに収まる（物理はみ出しのヒューリスティック）。
+
+        折り返し設定で判定を分ける（word_wrap=False 自体は不正ではない。code_block 等が意図的に使う）:
+          - word_wrap=False（折り返さない）→ 最長行の推定幅がフレーム幅を超えないか（水平はみ出し）。
+          - それ以外（折り返す）→ 推定行数からのテキスト高さがフレーム高さを超えないか（垂直はみ出し）。
+        全角=2幅で数える。明白なはみ出しだけを拾うスモークなので TOLERANCE に余裕を持たせ誤検知を避ける。
+        """
+        import math
+
+        DEFAULT_FONT_EMU = Pt(12)
+        LINE_SPACING = 1.3
+        CHAR_W_RATIO = 0.5   # 半角1文字の幅 ≈ フォントサイズ×0.5
+        TOLERANCE = 2.0
+
+        def _visual_len(s: str) -> int:
+            return sum(2 if ord(c) > 127 else 1 for c in s)
+
+        w_offenders = []
+        h_offenders = []
+
+        for si, slide in enumerate(prs.slides, 1):
+            for shp in slide.shapes:
+                if shp.shape_type != MSO_SHAPE_TYPE.TEXT_BOX:
+                    continue
+                if not shp.has_text_frame:
+                    continue
+                tf = shp.text_frame
+                if not tf.text.strip():
+                    continue
+
+                width = getattr(shp, "width", None) or 0
+                height = getattr(shp, "height", None) or 0
+                eff_w = max(1, int(width) - (tf.margin_left or 0) - (tf.margin_right or 0))
+                eff_h = max(1, int(height) - (tf.margin_top or 0) - (tf.margin_bottom or 0))
+
+                sizes = [
+                    r.font.size for para in tf.paragraphs
+                    for r in para.runs if r.font.size
+                ]
+                avg_font = max(Pt(4), (sum(sizes) / len(sizes)) if sizes else DEFAULT_FONT_EMU)
+                char_w = avg_font * CHAR_W_RATIO
+                name = (shp.name or "")[:20]
+
+                if tf.word_wrap is False:
+                    # 折り返さない → 最長行が横にはみ出さないか
+                    max_line = max(
+                        (_visual_len(seg)
+                         for para in tf.paragraphs
+                         for seg in (para.text.splitlines() or [""])),
+                        default=0,
+                    )
+                    estimated_w = max_line * char_w
+                    if estimated_w > eff_w * TOLERANCE:
+                        w_offenders.append((si, name, int(estimated_w), int(eff_w)))
+                else:
+                    # 折り返す → 推定行数×行高がフレーム高さを超えないか
+                    chars_per_line = max(1, eff_w / char_w)
+                    total_lines = 0
+                    for para in tf.paragraphs:
+                        for seg in (para.text.splitlines() or [""]):
+                            total_lines += math.ceil(max(1, _visual_len(seg)) / chars_per_line)
+                    estimated_h = avg_font * LINE_SPACING * total_lines
+                    if estimated_h > eff_h * TOLERANCE:
+                        h_offenders.append((si, name, int(estimated_h), int(eff_h)))
+
+        messages = []
+        if w_offenders:
+            messages.append(f"テキスト幅超過の可能性(word_wrap=False): {w_offenders[:3]}")
+        if h_offenders:
+            messages.append(f"テキスト高さ超過の可能性: {h_offenders[:3]}")
+        assert not messages, "\n".join(messages)
 
 
 # ---------------------------------------------------------------------------

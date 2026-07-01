@@ -12,16 +12,27 @@ __main__.py — 統合CLI。`slidegen` コマンド／`python -m slidegen` の�
 """
 from __future__ import annotations
 import argparse
+import sys
 
 import slidegen  # 親パッケージの import で全 render_* が登録される
 from .api import render_text, render_file
+from .render import RENDERERS
+from .dsl_validator import validate as validate_dsl
 from . import sync as _sync
 
 
 def _cmd_build(args) -> None:
-    out = render_file(args.input, args.output, template=args.template)
-    # 枚数・型は API では露出しないので、メッセージ用に軽く再パースする
     slides = slidegen.parse(open(args.input, encoding="utf-8").read())
+
+    val = validate_dsl(slides, RENDERERS)
+    for msg in val.warnings:
+        print(f"Warning: {msg}", file=sys.stderr)
+    if val.blocking_warnings:
+        for msg in val.blocking_warnings:
+            print(f"Error: {msg}", file=sys.stderr)
+        raise SystemExit(1)
+
+    out = render_file(args.input, args.output, template=args.template)
     print(f"生成: {out}（{len(slides)}枚, 型: {[s.type for s in slides]}）")
 
 

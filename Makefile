@@ -1,11 +1,16 @@
 # slidegen Makefile — テスト駆動で型を増やすときのショートカット
 # 社内 Claude Code は基本これだけ覚えればよい
 
-.PHONY: test visual all clean help
+.PHONY: test visual all clean help snapshot-update
 
 # 第1層：構造インバリアントの自動テスト（pytest）
 test:
 	uv run --extra dev python -m pytest tests/test_invariants.py -v
+
+# 第2層(自動)：全型の図形ツリー・スナップショットを golden として再生成する
+# （意図した見た目変更や新型追加のあとに実行し、差分をコミットする）
+snapshot-update:
+	SLIDEGEN_UPDATE_SNAPSHOTS=1 uv run --extra dev python -m pytest tests/test_visual_regression.py -q
 
 # 第2層：全サンプルのモンタージュを生成（目視確認用）
 visual:
@@ -38,3 +43,4 @@ help:
 	@echo "                  - 新型の雛形を生成"
 	@echo "make check TYPE=mytype"
 	@echo "                  - 新型の検証（pytest+モンタージュ）"
+	@echo "make snapshot-update - 第2層(自動): 図形ツリーの golden を再生成（見た目変更/新型後）"
