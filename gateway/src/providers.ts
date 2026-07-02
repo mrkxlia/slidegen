@@ -71,15 +71,17 @@ export interface ModelEntry {
 // 表示モデル一覧。free=テスト用(無料枠) / prod=本番(要 secret)。
 const CATALOG: ModelEntry[] = [
   // --- 無料枠（テスト）。並び順＝既定優先度＝実キーの RPM 大きい順。
-  //     ※モデルIDは Google AI Studio の models.list で確認した正式名（2026-06時点）。
-  //       gemini-2.0-flash は 2026-06-01 シャットダウン済のため不採用。
+  //     ※更新手順は docs/model-catalog.md（確認日: 2026-07-03）。
+  //       gemini-2.0-flash 系は 2026-06-01 シャットダウン済のため不採用。
+  //       gemini-2.5-flash / 2.5-flash-lite は 2026-10-16 廃止予定（後継: 3.5-flash / 3.1-flash-lite）→ 期日までに削除。
+  //       deepseek/deepseek-r1:free は OpenRouter から消滅（2026-07 確認）→ gpt-oss-120b:free に置換済み。
   { id: "gemini-3.1-flash-lite", label: "Gemini 3.1 Flash-Lite (無料・最大枠)", provider: "gemini", model: "gemini-3.1-flash-lite", tier: "free", reliableForDsl: true },
   { id: "gemma-4-31b", label: "Gemma 4 31B (無料・TPM無制限)", provider: "gemini", model: "gemma-4-31b-it", tier: "free", noSystemInstruction: true, reliableForDsl: false },
   { id: "gemma-4-26b", label: "Gemma 4 26B (無料・TPM無制限)", provider: "gemini", model: "gemma-4-26b-a4b-it", tier: "free", noSystemInstruction: true, reliableForDsl: false },
-  { id: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash-Lite (無料)", provider: "gemini", model: "gemini-2.5-flash-lite", tier: "free", reliableForDsl: true },
-  { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash (無料)", provider: "gemini", model: "gemini-2.5-flash", tier: "free", reliableForDsl: true },
+  { id: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash-Lite (無料・〜2026-10)", provider: "gemini", model: "gemini-2.5-flash-lite", tier: "free", reliableForDsl: true },
+  { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash (無料・〜2026-10)", provider: "gemini", model: "gemini-2.5-flash", tier: "free", reliableForDsl: true },
   { id: "gemini-3.5-flash", label: "Gemini 3.5 Flash (無料・高性能)", provider: "gemini", model: "gemini-3.5-flash", tier: "free", reliableForDsl: true },
-  { id: "or-deepseek-r1", label: "OpenRouter: DeepSeek R1 (無料)", provider: "openrouter", model: "deepseek/deepseek-r1:free", tier: "free", reliableForDsl: true },
+  { id: "or-gpt-oss-120b", label: "OpenRouter: GPT-OSS 120B (無料)", provider: "openrouter", model: "openai/gpt-oss-120b:free", tier: "free", reliableForDsl: true },
   { id: "or-llama-3.3-70b", label: "OpenRouter: Llama 3.3 70B (無料)", provider: "openrouter", model: "meta-llama/llama-3.3-70b-instruct:free", tier: "free", reliableForDsl: true },
   { id: "wai-llama-3.3-70b", label: "Workers AI: Llama 3.3 70B (無料)", provider: "workers_ai", model: "@cf/meta/llama-3.3-70b-instruct-fp8-fast", tier: "free", reliableForDsl: true },
   // --- 本番（要 API キー） ---

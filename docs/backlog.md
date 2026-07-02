@@ -3,7 +3,7 @@
 > 立て直しエンゲージメントで洗い出した技術的負債・課題を**優先度順**にまとめる。
 > 個人/学習プロジェクトのスコープに合わせ、過剰な作り込みは避ける方針。
 > 関連: [requirements.md](../requirements.md) / [spec.md](../spec.md) / [docs/adr/](adr/)
-> 最終更新: 2026-07-02（#4 全型ビジュアル回帰の自動化を実施。#5 の potx連携・はみ出し物理検出＋DSL静的バリデーション = `current-improvements-for-another.md` の要否判定。P3 7c/7d/7e = PR #17。P1＋一部 quick-win = PR #14）
+> 最終更新: 2026-07-03（#1 カタログ棚卸し＋ [model-catalog.md](model-catalog.md) 新設。#4 全型ビジュアル回帰の自動化を実施。#5 の potx連携・はみ出し物理検出＋DSL静的バリデーション = `current-improvements-for-another.md` の要否判定。P3 7c/7d/7e = PR #17。P1＋一部 quick-win = PR #14）
 
 ## このエンゲージメントで解消済み
 
@@ -33,6 +33,7 @@
 
 ### 1. モデルカタログの陳腐化対策 — ✅ 完了 (PR #14)
 - **実施 (PR #14)**: `reliableForDsl` フラグを `providers.ts` に追加し `/api/models` で配信、frontend は純関数 `pickDslFallback`（カタログ順＋フラグ）で選ぶよう一般化し特定ID依存を撤去。残: カタログの ID/日付は手書き（動的探索は未対応）。
+- **実施 (2026-07-03)**: カタログを棚卸し（`or-deepseek-r1` は OpenRouter から消滅していたため `openai/gpt-oss-120b:free` に置換、gemini-2.5 系 2 モデルに 2026-10-16 廃止予定を注記）。手動更新を人力で回せるよう **[docs/model-catalog.md](model-catalog.md)（更新手順書）** を新設。**次回アクション: 2026-10-16 までに gemini-2.5-flash / 2.5-flash-lite をカタログと gateway/test から削除**。
 - **何**: `gateway/src/providers.ts` の `CATALOG` がモデルID・シャットダウン日をハードコード（例: 「gemini-2.0-flash は 2026-06-01 シャットダウン済」）。無料枠モデルは入れ替わりが激しく、放置すると**稼働中アプリが静かに壊れる**。`frontend/src/App.tsx` の `dslFallbackModel` も特定ID `gemini-3.1-flash-lite` に依存（軟結合）。
 - **なぜ高**: 既に本番稼働しており、モデル鮮度が運用品質に直結。
 - **対応案**: (a) カタログを設定/データ化し更新を一箇所に。(b) frontend のフォールバックを「特定ID」でなく **tier/能力**で選ぶ（`/api/models` の結果から）よう一般化（ADR 0005 の責務分界は維持）。(c) 起動時にモデル存在を軽く検証。
