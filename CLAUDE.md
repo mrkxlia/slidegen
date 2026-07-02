@@ -78,4 +78,6 @@ cd frontend && npm i && npm run dev                                          # :
 ## 次にやること
 - デプロイ／CD は稼働済み（`docs/deployment.md` / `.github/workflows/ci.yml` の deploy job）。
 - 課題・ロードマップは [docs/backlog.md](docs/backlog.md) に集約。例: 本物サムネイル（サーバ側 LibreOffice）、
-  テンプレの IndexedDB 永続化、i18n、モデルカタログの保守性、DSL 解説のドリフト対策。
+  テンプレの IndexedDB 永続化、i18n、DSL 解説のドリフト対策。
+- モデルカタログ（`gateway/src/providers.ts` の `CATALOG`）の棚卸し手順は [docs/model-catalog.md](docs/model-catalog.md)。
+  **2026-10-16 までに gemini-2.5 系 2 モデルの削除が必要**（同 doc の「既知の期日」参照）。
