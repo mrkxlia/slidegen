@@ -27,6 +27,7 @@ slidegen ＝ DSL から **編集可能な PowerPoint(.pptx)** を生成する純
 Cloudflare Pages（単一オリジン, React+Vite+TS）
   ├─ ingest: 添付解析(JS: SheetJS/JSZip)
   ├─ render: Web Worker 内 Pyodide で slidegen.render_to_bytes → pptx DL
+  ├─ import: 同 worker の inspect で既存 pptx を構造抽出(inspect_compact) → LLM が DSL 再構成
   └─ functions/api/[[path]].ts → gateway/src/pages(handle(app))
         = Hono ゲートウェイ: Access検証 → LLM中継(Gemini/OpenRouter/Workers AI/本番)
 ```

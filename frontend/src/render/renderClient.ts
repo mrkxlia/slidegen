@@ -42,13 +42,18 @@ export function initRenderer(onProgress?: ProgressCb): Promise<void> {
         case "ready": onProgress?.("ready"); resolve(); break;
         case "error": onProgress?.("error"); reject(new Error(msg.error)); break;
         case "rendered":
-        case "previewed": {
+        case "previewed":
+        case "inspected": {
           const p = pending.get(msg.id);
-          if (p) { pending.delete(msg.id); p.resolve(msg.type === "rendered" ? msg.bytes : msg.slides); }
+          if (p) {
+            pending.delete(msg.id);
+            p.resolve(msg.type === "rendered" ? msg.bytes : msg.type === "previewed" ? msg.slides : msg.spec);
+          }
           break;
         }
         case "render-error":
-        case "preview-error": {
+        case "preview-error":
+        case "inspect-error": {
           const p = pending.get(msg.id);
           if (p) { pending.delete(msg.id); p.reject(new Error(msg.error)); }
           break;
@@ -81,6 +86,18 @@ export async function previewDsl(dsl: string): Promise<SlidePreview[]> {
   return new Promise<SlidePreview[]>((resolve, reject) => {
     pending.set(id, { resolve, reject });
     worker!.postMessage({ type: "preview", id, dsl });
+  });
+}
+
+// 既存 pptx の構造スペック（LLM向けテキスト）を抽出する（デザイン取り込み用）。
+// サイズ上限（30枚・スライドあたり文字数）は Python 側 inspect_compact が保証。
+export async function inspectPptx(pptx: TemplateFile): Promise<string> {
+  if (!worker || !readyPromise) await initRenderer();
+  await readyPromise;
+  const id = ++reqId;
+  return new Promise<string>((resolve, reject) => {
+    pending.set(id, { resolve, reject });
+    worker!.postMessage({ type: "inspect", id, pptx });
   });
 }
 

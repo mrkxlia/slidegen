@@ -19,7 +19,7 @@ function convProps(over: Record<string, unknown> = {}) {
     onMakeOutline: vi.fn(), onGenerate: vi.fn(), busy: false, modelId: "m1", hasDsl: false,
     purposes: ["（選択してください）", "社内報告", "承認を得る提案"], purpose: "（選択してください）",
     onPurposeChange: vi.fn(), examples: ["来月の経営会議で承認を得たい"], onExample: vi.fn(),
-    attachments: [], onFiles: vi.fn(), onRemoveAttachment: vi.fn(), ...over,
+    attachments: [], onFiles: vi.fn(), onRemoveAttachment: vi.fn(), onImportDeck: vi.fn(), ...over,
   } as never;
 }
 
@@ -61,6 +61,20 @@ describe("ConversationPane（オンボーディング空状態）", () => {
     expect(onExample).toHaveBeenCalledWith("来月の経営会議で承認を得たい");
     fireEvent.click(screen.getByRole("button", { name: "承認を得る提案" }));
     expect(onPurposeChange).toHaveBeenCalledWith("承認を得る提案");
+  });
+  it("デザイン取り込みカードを出し、.pptx 選択で onImportDeck を呼ぶ", () => {
+    const onImportDeck = vi.fn();
+    const { container } = render(<ConversationPane {...convProps({ onImportDeck })} />);
+    const card = screen.getByRole("button", { name: /既存の pptx を取り込んで作り直す/ });
+    expect(card).toBeInTheDocument();
+    expect(screen.getByText(/型に再構成されます/)).toBeInTheDocument(); // 完全再現でない旨の注記
+    const input = container.querySelector('input[accept=".pptx"]') as HTMLInputElement;
+    fireEvent.change(input, { target: { files: [new File(["x"], "deck.pptx")] } });
+    expect(onImportDeck).toHaveBeenCalledOnce();
+  });
+  it("モデル未選択時は取り込みカードが disabled", () => {
+    render(<ConversationPane {...convProps({ modelId: "" })} />);
+    expect(screen.getByRole("button", { name: /既存の pptx を取り込んで作り直す/ })).toBeDisabled();
   });
   it("busy 中は『停止』ボタンを出し、クリックで onStop を呼ぶ", () => {
     const onStop = vi.fn();

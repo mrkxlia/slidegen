@@ -43,3 +43,15 @@ prs = Presentation(io.BytesIO(b))             # 既定テンプレ解決の確�
 const out = py.runPython("b").toJs();
 writeFileSync(join(root, "spike_out.pptx"), Buffer.from(out));
 console.log(`✔ STEP0 PASS: ${nbytes} bytes, ${nslides} slides → spike_out.pptx`);
+
+// デザイン取り込み経路: 生成した pptx を FS に置き、inspect_compact が
+// ブラウザ相当（worker の inspect メッセージと同じ呼び方）で動くことを確認。
+const specLen = await py.runPythonAsync(`
+with open("/tmp/import.pptx", "wb") as f:
+    f.write(b)
+from slidegen.inspect_pptx import inspect_compact
+spec = inspect_compact("/tmp/import.pptx")
+assert spec.startswith("deck: ") and "[S1]" in spec, spec[:80]
+len(spec)
+`);
+console.log(`✔ inspect PASS: compact spec ${specLen} chars`);

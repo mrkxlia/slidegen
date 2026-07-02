@@ -10,6 +10,7 @@
  *   {type:'init', pyodideUrl, wheelUrl}        → 'ready' | 'progress' | 'error'
  *   {type:'render', id, dsl, template?}        → 'rendered'{id, bytes} | 'render-error'{id, error}
  *   {type:'preview', id, dsl}                  → 'previewed'{id, slides} | 'preview-error'{id, error}
+ *   {type:'inspect', id, pptx}                 → 'inspected'{id, spec} | 'inspect-error'{id, error}
  */
 let pyodideReady = null;
 
@@ -88,6 +89,22 @@ json.dumps(_out, ensure_ascii=False)
   }
 }
 
+// 既存 pptx の構造スペックを抽出する（デザイン取り込み用）。
+// サイズ上限は Python 側（inspect_compact）が保証する。
+async function inspect(id, pptx) {
+  try {
+    const pyodide = await pyodideReady;
+    const path = "/tmp/import.pptx";
+    pyodide.FS.writeFile(path, new Uint8Array(pptx.bytes));
+    const spec = await pyodide.runPythonAsync(
+      `from slidegen.inspect_pptx import inspect_compact; inspect_compact("${path}")`,
+    );
+    self.postMessage({ type: "inspected", id, spec });
+  } catch (e) {
+    self.postMessage({ type: "inspect-error", id, error: String(e && e.message ? e.message : e) });
+  }
+}
+
 function post(type, extra) {
   self.postMessage({ type, ...extra });
 }
@@ -104,5 +121,7 @@ self.onmessage = async (ev) => {
     await render(msg.id, msg.dsl, msg.template);
   } else if (msg.type === "preview") {
     await preview(msg.id, msg.dsl);
+  } else if (msg.type === "inspect") {
+    await inspect(msg.id, msg.pptx);
   }
 };
