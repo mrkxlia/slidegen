@@ -166,8 +166,10 @@ export function ConversationPane(props: {
   attachments: IngestResult[];
   onFiles: (files: FileList | null) => void;
   onRemoveAttachment: (name: string) => void;
+  onImportDeck: (files: FileList | null) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const importRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   // 新メッセージでチャット枠を最下部へ（内部スクロール領域のため必須）。
   useEffect(() => {
@@ -209,6 +211,18 @@ export function ConversationPane(props: {
                 ))}
               </div>
             </>}
+            <p className="ex-label">既存の資料から</p>
+            <div className="examples">
+              <input ref={importRef} type="file" hidden accept=".pptx"
+                onChange={(e) => { props.onImportDeck(e.target.files); e.target.value = ""; }} />
+              <button className="ex-card" disabled={props.busy || !props.modelId}
+                onClick={() => importRef.current?.click()}>
+                <span className="q">📥 既存の pptx を取り込んで作り直す</span><span className="arq" aria-hidden="true">↵</span>
+              </button>
+            </div>
+            <p className="ex-label" style={{ opacity: 0.7 }}>
+              取り込んだデッキは slidegen の型に再構成されます（見た目の完全再現ではありません）
+            </p>
           </div>
         ) : (
           <ChatView messages={props.messages} />

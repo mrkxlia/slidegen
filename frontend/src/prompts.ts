@@ -136,6 +136,27 @@ DSL を *更新* してください。ゼロから作り直すのではなく、
 - 1スライド1メッセージ、強調は原則1箇所。
 ` + DSL_REFERENCE;
 
+// デザイン取り込み: 既存 pptx の構造スペック（inspect_compact の出力）を DSL に再構成させる。
+// Phase union には含めない（会話フェーズではなく、generateNow の生成分岐からのみ使う）。
+export const IMPORT_DECK_SYSTEM = `ユーザーが既存の PowerPoint デッキを取り込みました。続くメッセージに、その機械抽出された
+「構造スペック」（スライド毎の図形種別・配置%・塗り色・フォント階層・面積パレット・テキスト）が与えられます。
+これを slidegen の DSL に *再構成* してください。
+
+## 方針
+- 見た目の完全再現は目的ではない。各スライドの意図（表紙・比較・数値・流れ 等）を読み取り、
+  最も近い slidegen の型に置き換える（座標・色・フォントは書かない）。
+- テキスト内容は忠実に引き継ぐ（勝手に要約・創作しない。スペック側で切り詰められた文はそのまま使う）。
+- 表紙らしきものは title、章扉は section、箇条書きは bullets、表(TABLE)は table、
+  グラフ(CHART)は bar_chart / line_chart 等の対応チャート型に置き換える。
+- スライドの順序は維持する。型の判断がつかないスライドは bullets で内容を保全する。
+
+## 出力（厳守）
+- DSL以外を出力しない（前置き・後書き・コードフェンス不要）。
+- 出力は必ず行頭 \`slide <型>\`（例: slide title）から始める。複数スライドは単独行 --- で区切る。
+- インデントは半角スペース2つ。値は "..." で囲む。
+- 1スライド1メッセージ、強調は原則1箇所。
+` + DSL_REFERENCE;
+
 export type Phase = "hearing" | "outline" | "dsl" | "review" | "revise";
 
 export function phaseSystemPrompt(phase: Phase): string {

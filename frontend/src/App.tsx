@@ -2,7 +2,7 @@
 // 左で壁打ち、右でデッキ（構成プレビュー/DSL/レビュー）が同時に育つ2ペイン。
 // フェーズは上部の進行ステッパー。LLM は gateway 経由、pptx 生成はブラウザ Pyodide。
 import { useEffect, useRef, useState } from "react";
-import { PURPOSES, phaseSystemPrompt, buildContextPreamble, type Phase } from "./prompts";
+import { PURPOSES, phaseSystemPrompt, buildContextPreamble, IMPORT_DECK_SYSTEM, type Phase } from "./prompts";
 import {
   cleanReply, extractFencedDsl, stripToDsl, stripReasoning, hasValidDsl, trimHistory, pickDslFallback,
   type Message,
@@ -10,7 +10,7 @@ import {
 import { ingest, type IngestResult } from "./ingest";
 import * as api from "./api";
 import {
-  initRenderer, renderDsl, previewDsl, downloadPptx,
+  initRenderer, renderDsl, previewDsl, inspectPptx, downloadPptx,
   type RenderStage, type TemplateFile, type SlidePreview,
 } from "./render/renderClient";
 import { loadSettings, saveSettings } from "./storage";
@@ -38,6 +38,8 @@ export function App() {
   const [phase, setPhase] = useState<Phase>("hearing");
   const [attachments, setAttachments] = useState<IngestResult[]>([]);
   const [template, setTemplate] = useState<TemplateFile | null>(null);
+  // デザイン取り込み: 既存 pptx の構造スペック（セッション限り・永続化しない）。
+  const [importedDeck, setImportedDeck] = useState<{ name: string; spec: string } | null>(null);
   const [dslText, setDslText] = useState("");
   const [reviewText, setReviewText] = useState("");
   const [preview, setPreview] = useState<SlidePreview[] | null>(null);
@@ -155,10 +157,11 @@ export function App() {
     finally { setBusy(false); }
   }
 
-  // 今ある情報で生成（既存DSLがあれば revise、無ければ dsl 生成）。
-  async function generateNow(history?: Message[]) {
+  // 今ある情報で生成（既存DSLがあれば revise、取り込みデッキがあれば import、無ければ dsl 生成）。
+  async function generateNow(history?: Message[], deck?: { name: string; spec: string }) {
     const hist = history ?? messages;
-    const hasContext = hist.length > 0 || attachments.length > 0 || purposeText() !== "";
+    const importDeck = deck ?? importedDeck;
+    const hasContext = hist.length > 0 || attachments.length > 0 || purposeText() !== "" || !!importDeck;
     if (!hasContext) { setError("先に内容を入力するか、目的の選択・ファイル添付をしてください。"); return; }
     setBusy(true);
     setGenRunning(true);
@@ -179,6 +182,13 @@ export function App() {
         const preamble = buildContextPreamble(purposeText(), attachmentsSummary());
         const head = (preamble ? preamble + "\n\n" : "") + "【現在のDSL（これをベースに更新）】\n" + existing;
         system = phaseSystemPrompt("revise");
+        messages = [{ role: "user", content: head }, ...trimHistory(hist)];
+      } else if (importDeck) {
+        // デザイン取り込み: 構造スペックから DSL を再構成（revise と同じく user 先頭に文脈を置く）。
+        const preamble = buildContextPreamble(purposeText(), attachmentsSummary());
+        const head = (preamble ? preamble + "\n\n" : "") +
+          `【取り込んだ既存デッキ「${importDeck.name}」の構造スペック】\n` + importDeck.spec;
+        system = IMPORT_DECK_SYSTEM;
         messages = [{ role: "user", content: head }, ...trimHistory(hist)];
       } else {
         const prep = prepare("dsl", hist, true);
@@ -290,6 +300,30 @@ export function App() {
     setTemplate({ name: f.name, bytes, byteLength: bytes.byteLength });
   }
 
+  // デザイン取り込み: 既存 pptx をブラウザ内 Pyodide で構造抽出 → DSL 下書きを自動生成。
+  async function onImportDeck(files: FileList | null) {
+    const f = files?.[0];
+    if (!f || busy || !modelId) return;
+    setError(null);
+    setRendering(true); // Pyodide 初回ブートの進捗をオーバーレイで見せる
+    let deck: { name: string; spec: string };
+    try {
+      await initRenderer(setRenderStage);
+      const bytes = await f.arrayBuffer();
+      const spec = await inspectPptx({ name: f.name, bytes, byteLength: bytes.byteLength });
+      deck = { name: f.name, spec };
+    } catch (e) {
+      setError(`取り込みに失敗しました: ${(e as Error).message}`);
+      return;
+    } finally { setRendering(false); }
+    setImportedDeck(deck);
+    const notice = `「${f.name}」を取り込みました。構造を解析して DSL の下書きを生成します` +
+      "（デザインは slidegen の型への再構成になります）。";
+    const newMsgs = [...messages, { role: "assistant", content: notice } as Message];
+    setMessages(newMsgs);
+    await generateNow(newMsgs, deck);
+  }
+
   async function onFiles(files: FileList | null) {
     if (!files) return;
     const results: IngestResult[] = [];
@@ -309,7 +343,7 @@ export function App() {
 
   function onReset() {
     setMessages([]); setPhase("hearing"); setDslText(""); setReviewText("");
-    setAttachments([]); setPreview(null); setInput(""); setError(null);
+    setAttachments([]); setImportedDeck(null); setPreview(null); setInput(""); setError(null);
     setGenFailedRaw(null); setGenRunning(false); setGenNotice(null);
     setDeckTab("preview"); setMobileView("talk"); setSettingsOpen(false);
     contextInjected.current = false;
@@ -360,6 +394,7 @@ export function App() {
           purposes={PURPOSES} purpose={purpose} onPurposeChange={setPurpose}
           examples={EXAMPLES} onExample={(t) => setInput(t)}
           attachments={attachments} onFiles={onFiles} onRemoveAttachment={onRemoveAttachment}
+          onImportDeck={onImportDeck}
         />
         <DeckPane
           tab={deckTab} onTab={onDeckTab}
