@@ -38,8 +38,12 @@
 - **なぜ高**: 既に本番稼働しており、モデル鮮度が運用品質に直結。
 - **対応案**: (a) カタログを設定/データ化し更新を一箇所に。(b) frontend のフォールバックを「特定ID」でなく **tier/能力**で選ぶ（`/api/models` の結果から）よう一般化（ADR 0005 の責務分界は維持）。(c) 起動時にモデル存在を軽く検証。
 
-### 2. DSL 解説（人間向け）と実装のドリフト検知 — ✅ 完了 (PR #14)
-- **実施 (PR #14)**: (b) を採用。`test_chart_dsl.py` に「`prompts.ts` が教える全型 ⊆ RENDERERS」を追加（slide 例＋スラッシュ列のクリーン token・43型）。残: docs(system_prompt/type_catalog) 全文の生成/ガードは未対応。
+### 2. DSL 解説（人間向け）と実装のドリフト検知 — ✅ 完了 (PR #14 + docs ガード)
+- **実施 (PR #14)**: (b) を採用。`test_chart_dsl.py` に「`prompts.ts` が教える全型 ⊆ RENDERERS」を追加（slide 例＋スラッシュ列のクリーン token・43型）。
+- **実施 (2026-07-03)**: 残っていた docs 側も `tests/test_docs_drift.py` で CI ガード。
+  `system_prompt.md`（型一覧＋判断テーブル・18型）は素直に ⊆ RENDERERS、
+  `type_catalog.md` はロードマップ文書のため **✅ マーク付きセグメントのみ**抽出（行内の ✅/📋 混在に対応・70型）して ⊆ RENDERERS。
+  🔜/📋/❌ は設計上未実装なので対象外。これで backlog #2 は全面完了。
 - **何**: DSL の単一情報源は宣言済み（`docs/system_prompt.md` 冒頭＝「ライブは prompts.ts、全型の真実は RENDERERS」）。ただし `tests/test_chart_dsl.py` が機械ガードするのは **chart 型の一致＋全 examples の parse/render** のみ。**chart 以外の型一覧・記法ルールの解説**（`system_prompt.md` / `type_catalog.md` / `prompts.ts`）は `RENDERERS` と乖離しても検知されない → AI に誤った型/記法を教える事故になりうる。
 - **対応案**: (a) `RENDERERS` から型一覧/リファレンスを**生成**して docs/prompts に流す。または (b) 「`prompts.ts`・`type_catalog.md` が教える型 ⊆ `RENDERERS`」を `test_chart_dsl.py` と同様に全型へ拡張するドリフト検知テストを追加。
 
