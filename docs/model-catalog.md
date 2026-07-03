@@ -21,6 +21,7 @@
 | `tier` | `free`（無料枠）/ `prod`（要有料キー）。フォールバックは**同 tier 内のみ**。 |
 | `noSystemInstruction` | Gemma 等 systemInstruction 非対応モデルは `true`（system を先頭 user に畳む）。 |
 | `reliableForDsl` | DSL 出力を任せられるか。`false` のモデルは frontend の DSL 無効時フォールバック先から除外される（`frontend/src/phases.ts` の `pickDslFallback`）。未指定は信頼可扱い。 |
+| `vision` | 画像入力対応か。**未指定=非対応**（保守的既定）。frontend は `vision:true` のモデル選択時のみ添付画像を送り、gateway 側エンコーダも非 vision モデルには `images` を渡さない。新モデル追加時はプロバイダ公式ドキュメントで画像入力対応を確認して付与。 |
 
 ## 棚卸し手順
 

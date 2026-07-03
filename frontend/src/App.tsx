@@ -8,6 +8,7 @@ import {
   type Message,
 } from "./phases";
 import { ingest, type IngestResult } from "./ingest";
+import { MAX_IMAGES_PER_REQUEST } from "./image";
 import * as api from "./api";
 import {
   initRenderer, renderDsl, previewDsl, inspectPptx, downloadPptx,
@@ -83,6 +84,17 @@ export function App() {
   const labelOf = (id: string) => models.find((m) => m.id === id)?.label ?? id;
   const deckCount = dslText.trim() ? (dslText.match(/^slide\s+\S+/gm)?.length ?? 0) : 0;
 
+  // 選択モデルが vision 対応のときだけ、添付画像（縮小済み base64）を返す。
+  // 非対応モデルには載せない（summary テキストのみ＝従来動作）。gateway 側でも二重に防御される。
+  const visionImages = () => {
+    if (models.find((m) => m.id === modelId)?.vision !== true) return undefined;
+    const imgs = attachments
+      .filter((a) => a.imageData && a.mimeType)
+      .slice(0, MAX_IMAGES_PER_REQUEST)
+      .map((a) => ({ mimeType: a.mimeType!, data: a.imageData! }));
+    return imgs.length ? imgs : undefined;
+  };
+
   // 現フェーズの system + (必要なら)文脈 + トリミング履歴を組み立てる。
   function prepare(p: Phase, baseMsgs: Message[], forceContext = false): { system: string; messages: Message[] } {
     let system = phaseSystemPrompt(p);
@@ -95,7 +107,7 @@ export function App() {
     let msgs = trimHistory(baseMsgs);
     if (forceContext || !contextInjected.current) {
       const preamble = buildContextPreamble(purposeText(), attachmentsSummary());
-      if (preamble) msgs = [{ role: "user", content: preamble }, ...msgs];
+      if (preamble) msgs = [{ role: "user", content: preamble, images: visionImages() }, ...msgs];
       contextInjected.current = true;
     }
     return { system, messages: msgs };
@@ -182,14 +194,14 @@ export function App() {
         const preamble = buildContextPreamble(purposeText(), attachmentsSummary());
         const head = (preamble ? preamble + "\n\n" : "") + "【現在のDSL（これをベースに更新）】\n" + existing;
         system = phaseSystemPrompt("revise");
-        messages = [{ role: "user", content: head }, ...trimHistory(hist)];
+        messages = [{ role: "user", content: head, images: visionImages() }, ...trimHistory(hist)];
       } else if (importDeck) {
         // デザイン取り込み: 構造スペックから DSL を再構成（revise と同じく user 先頭に文脈を置く）。
         const preamble = buildContextPreamble(purposeText(), attachmentsSummary());
         const head = (preamble ? preamble + "\n\n" : "") +
           `【取り込んだ既存デッキ「${importDeck.name}」の構造スペック】\n` + importDeck.spec;
         system = IMPORT_DECK_SYSTEM;
-        messages = [{ role: "user", content: head }, ...trimHistory(hist)];
+        messages = [{ role: "user", content: head, images: visionImages() }, ...trimHistory(hist)];
       } else {
         const prep = prepare("dsl", hist, true);
         system = prep.system; messages = prep.messages;
@@ -236,7 +248,7 @@ export function App() {
       const preamble = buildContextPreamble(purposeText(), attachmentsSummary());
       const user = (preamble ? preamble + "\n\n" : "") + "次のDSLをレビューしてください:\n\n" + dslText;
       const res = await api.chatStream(
-        { modelId, system: phaseSystemPrompt("review"), messages: [{ role: "user", content: user }] },
+        { modelId, system: phaseSystemPrompt("review"), messages: [{ role: "user", content: user, images: visionImages() }] },
         (_d, full) => setReviewText(stripReasoning(full)),
         { signal: ac.signal },
       );

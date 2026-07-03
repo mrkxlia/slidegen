@@ -2,7 +2,10 @@
 // フェーズ制御ロジックは旧 Streamlit 版 Python から移植（元 .py は現存しない）。phase は会話起点ワークスペースの進行ステッパーに反映。
 
 export type Role = "user" | "assistant";
-export interface Message { role: Role; content: string; }
+// images: 添付画像（base64、data-URI プレフィックス無し）。vision 対応モデル選択時のみ App が付与し、
+// gateway がプロバイダ別形式（Gemini inline_data / OpenAI系 image_url / Anthropic blocks）に変換する。
+export interface MessageImage { mimeType: string; data: string; }
+export interface Message { role: Role; content: string; images?: MessageImage[]; }
 
 // 旧フェーズ遷移タグの除去用。UIは手動進行に移行したためタグでの遷移はしないが、
 // 過去履歴や移行期のモデル出力に残るタグを表示前に取り除く（安全側のクリーニング）。
