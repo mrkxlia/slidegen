@@ -149,6 +149,86 @@ describe("gateway API (E2E)", () => {
     expect(text).not.toContain('"done":true');
   });
 
+  it("GET /api/models は vision フラグを含む", async () => {
+    const res = await app.request("/api/models", {}, baseEnv);
+    const body = await res.json();
+    const flash = body.models.find((m: any) => m.id === "gemini-2.5-flash");
+    const gemma = body.models.find((m: any) => m.id === "gemma-4-31b");
+    expect(flash.vision).toBe(true);
+    expect(gemma.vision).toBe(false);
+  });
+
+  it("images: vision モデルには inline_data として上流へ渡す", async () => {
+    let captured: any;
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init: any) => {
+      captured = JSON.parse(init.body);
+      return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: "ok" }] } }] }), { status: 200 });
+    }));
+    const res = await app.request("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        modelId: "gemini-2.5-flash", allowFallback: false,
+        messages: [{ role: "user", content: "hi", images: [{ mimeType: "image/png", data: "QUJD" }] }],
+      }),
+    }, baseEnv);
+    expect(res.status).toBe(200);
+    expect(captured.contents[0].parts[0].inline_data).toEqual({ mime_type: "image/png", data: "QUJD" });
+  });
+
+  it("images: 非 vision モデル(Gemma)には剥がしてテキストのみ渡す", async () => {
+    let captured: any;
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init: any) => {
+      captured = JSON.parse(init.body);
+      return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: "ok" }] } }] }), { status: 200 });
+    }));
+    const res = await app.request("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        modelId: "gemma-4-31b", allowFallback: false,
+        messages: [{ role: "user", content: "hi", images: [{ mimeType: "image/png", data: "QUJD" }] }],
+      }),
+    }, baseEnv);
+    expect(res.status).toBe(200);
+    expect(JSON.stringify(captured)).not.toContain("inline_data");
+    expect(captured.contents[0].parts.every((p: any) => "text" in p)).toBe(true);
+  });
+
+  it("images: 未対応 mimeType は 400", async () => {
+    const res = await app.request("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        modelId: "gemini-2.5-flash",
+        messages: [{ role: "user", content: "hi", images: [{ mimeType: "image/svg+xml", data: "QUJD" }] }],
+      }),
+    }, baseEnv);
+    expect(res.status).toBe(400);
+  });
+
+  it("images: 5枚以上は 400", async () => {
+    const images = Array.from({ length: 5 }, () => ({ mimeType: "image/jpeg", data: "QUJD" }));
+    const res = await app.request("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ modelId: "gemini-2.5-flash", messages: [{ role: "user", content: "hi", images }] }),
+    }, baseEnv);
+    expect(res.status).toBe(400);
+  });
+
+  it("images: base64 が上限超なら 400（413 でなく画像検証で弾く）", async () => {
+    const res = await app.request("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        modelId: "gemini-2.5-flash",
+        messages: [{ role: "user", content: "hi", images: [{ mimeType: "image/jpeg", data: "A".repeat(300_001) }] }],
+      }),
+    }, { ...baseEnv, MAX_INPUT_BYTES: "1000000" });
+    expect(res.status).toBe(400);
+  });
+
   it("Gemma は systemInstruction を付けず system を先頭 user に畳む", async () => {
     let captured: any;
     vi.stubGlobal("fetch", vi.fn(async (_url: string, init: any) => {

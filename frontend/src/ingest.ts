@@ -9,6 +9,10 @@ export interface IngestResult {
   name: string;
   kind: Kind;
   summary: string;
+  // 画像のみ: LLM 送信用に縮小済みの base64（data-URI プレフィックス無し）。
+  // vision 対応モデル選択時に App が messages[].images として添付する。縮小失敗時は undefined（メタ情報のみ）。
+  imageData?: string;
+  mimeType?: string;
 }
 
 export async function ingest(file: File): Promise<IngestResult> {
@@ -21,14 +25,31 @@ export async function ingest(file: File): Promise<IngestResult> {
   if (ext === ".tsv") return ingestTable(name, buf, "tsv");
   if (ext === ".pptx") return ingestPptx(name, buf);
   if ([".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"].includes(ext)) {
-    return { name, kind: "image",
-      summary: `画像ファイル「${name}」（${Math.round(buf.byteLength / 1024)}KB）。参考画像として添付されました。` };
+    return ingestImage(name, buf);
   }
   if (ext === ".txt" || ext === ".md") {
     const txt = new TextDecoder("utf-8").decode(buf);
     return { name, kind: "text", summary: txt.slice(0, 4000) };
   }
   return { name, kind: "unknown", summary: `未対応の形式のファイル「${name}」が添付されました。` };
+}
+
+// 画像: LLM 送信用に縮小して base64 を保持する。縮小に失敗（未対応形式・巨大すぎ等）したら
+// 従来どおりメタ情報のみ（LLM には渡らない）にフォールバックする。
+async function ingestImage(name: string, buf: ArrayBuffer): Promise<IngestResult> {
+  const kb = Math.round(buf.byteLength / 1024);
+  try {
+    const { downscaleImage } = await import("./image");
+    const { data, mimeType } = await downscaleImage(buf);
+    return {
+      name, kind: "image", imageData: data, mimeType,
+      summary: `画像「${name}」（元${kb}KB → 送信用に縮小済み）。` +
+        `vision 対応モデルなら内容を直接参照できます。スライドの参考素材として扱ってください。`,
+    };
+  } catch {
+    return { name, kind: "image",
+      summary: `画像ファイル「${name}」（${kb}KB）。参考画像として添付されました（内容は送信されません）。` };
+  }
 }
 
 function fmt(n: number): string {

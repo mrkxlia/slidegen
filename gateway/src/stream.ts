@@ -37,8 +37,23 @@ async function* sseJson(resp: Response): AsyncGenerator<unknown> {
 }
 
 // OpenAI互換/Workers AI 共通のメッセージ配列を組み立てる（system を先頭に畳む）。
+// vision のとき images を data-URI の image_url パートに展開する（非 vision は string content のまま剥がす）。
 function buildOpenAIMessages(req: ChatRequest) {
-  return [...(req.system ? [{ role: "system", content: req.system }] : []), ...req.messages];
+  const msgs = req.messages.map((m) => {
+    const images = (req.vision && m.images) || [];
+    if (!images.length) return { role: m.role, content: m.content };
+    return {
+      role: m.role,
+      content: [
+        { type: "text", text: m.content },
+        ...images.map((im) => ({
+          type: "image_url",
+          image_url: { url: `data:${im.mimeType};base64,${im.data}` },
+        })),
+      ],
+    };
+  });
+  return [...(req.system ? [{ role: "system", content: req.system }] : []), ...msgs];
 }
 
 async function httpError(resp: Response, who: string): Promise<LLMError> {
@@ -113,10 +128,25 @@ async function* streamOpenAICompatible(
 
 async function* streamAnthropic(req: ChatRequest, env: ProviderEnv, maxTokens: number, temperature: number) {
   if (!env.ANTHROPIC_API_KEY) throw new LLMError("ANTHROPIC_API_KEY not set", 401);
+  // vision のとき images を content blocks に展開（非 vision は string content のまま剥がす）。
+  const messages = req.messages.map((m) => {
+    const images = (req.vision && m.images) || [];
+    if (!images.length) return { role: m.role, content: m.content };
+    return {
+      role: m.role,
+      content: [
+        ...images.map((im) => ({
+          type: "image",
+          source: { type: "base64", media_type: im.mimeType, data: im.data },
+        })),
+        { type: "text", text: m.content },
+      ],
+    };
+  });
   const resp = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
-    body: JSON.stringify({ model: req.model, system: req.system || undefined, max_tokens: maxTokens, temperature, messages: req.messages, stream: true }),
+    body: JSON.stringify({ model: req.model, system: req.system || undefined, max_tokens: maxTokens, temperature, messages, stream: true }),
     signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
   });
   if (!resp.ok) throw await httpError(resp, "anthropic");

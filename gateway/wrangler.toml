@@ -25,7 +25,7 @@ ACCESS_TEAM_DOMAIN = ""
 # 未設定だと auth はフェイルクローズ（全リクエスト 500）になる。
 ACCESS_AUD = ""
 # 入力サイズ上限（バイト）。本番キーの暴走課金防止のサーバ強制ガード。
-MAX_INPUT_BYTES = "200000"
+MAX_INPUT_BYTES = "1000000"
 # レート制限: 時間窓(秒)あたりの最大リクエスト数。
 RATE_WINDOW_SEC = "60"
 RATE_MAX_REQUESTS = "30"

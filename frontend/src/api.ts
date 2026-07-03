@@ -9,7 +9,7 @@ const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 // （アイドルではなく全体時間。thought 無音での誤中断を避けるためアイドル監視はしない）。
 const CHAT_TOTAL_TIMEOUT_MS = 120_000;
 
-export interface ModelInfo { id: string; label: string; tier: "free" | "prod"; reliableForDsl?: boolean; }
+export interface ModelInfo { id: string; label: string; tier: "free" | "prod"; reliableForDsl?: boolean; vision?: boolean; }
 
 export class AuthExpiredError extends Error {}
 // ユーザーが「停止」した場合に投げる。エラーバナーは出さず静かに中断するために型で区別する。

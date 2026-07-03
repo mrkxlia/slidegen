@@ -76,7 +76,12 @@
   → **完了**: `tests/test_invariants.py` に `S3`（TEXT_BOX の水平/垂直はみ出しヒューリスティック）を追加。word_wrap=False は横幅、折り返しは高さで判定（code_block 等の意図的 no-wrap を誤検知しない）。
 - 会社テンプレ/設定の **IndexedDB 永続化**（現状は容量/プライバシー配慮でセッション限り）。
 - i18n（現状 日本語のみ）。
-- 添付画像の**マルチモーダル**活用（現状 `frontend/src/ingest.ts` は画像をメタ情報のみで LLM に渡さない）。
+- ✅ 添付画像の**マルチモーダル**活用（旧: `ingest.ts` は画像をメタ情報のみで LLM に渡さない）。
+  → **完了 (2026-07-03)**: ブラウザで縮小（長辺1280px・JPEG 段階品質・base64 20万字/枚。`frontend/src/image.ts`）→
+  vision 対応モデル選択時のみ `messages[].images` で送信（`/api/models` の `vision` フラグ）。gateway が
+  プロバイダ別に変換（Gemini `inline_data` / OpenAI系 `image_url` / Anthropic content blocks）し、
+  非 vision へのフォールバック時はエンコーダが剥がして安全に劣化。サーバ検証は jpeg/png/webp・30万字/枚・4枚/リクエスト、
+  `MAX_INPUT_BYTES` 既定は 200KB→1MB（spec.md 更新済み）。
 
 > 補足: 上記 potx連携 / はみ出し検出と、新規の **DSL 静的バリデーション**（`slidegen/dsl_validator.py`：未知型を build 前に検出し CLI を exit 1、誤記法/空スライドは警告）は、別レポ由来の指示書 `current-improvements-for-another.md` を当repo向けに要否判定して取り込んだもの。ハードコード型カタログ版の validator や内部リファクタ（render_common 等）は当repoの方針（真実は RENDERERS・過剰作り込み回避）に合わないため不採用。
 

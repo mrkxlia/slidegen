@@ -70,6 +70,8 @@ app.get("/api/models", (c) => {
     id: m.id, label: m.label, tier: m.tier,
     // DSL 無効時フォールバックの選択にフロントが使う（未指定=信頼可）。
     reliableForDsl: m.reliableForDsl !== false,
+    // 画像入力対応か（未指定=非対応）。フロントは vision モデル選択時のみ添付画像を送る。
+    vision: m.vision === true,
   }));
   return c.json({ models });
 });
@@ -82,10 +84,17 @@ interface ChatBody {
   allowFallback?: boolean;
 }
 
+// 添付画像の入力検証（/api/chat）。クライアント側で縮小済みの前提だが、サーバでも強制する。
+const ALLOWED_IMAGE_MIME = new Set(["image/jpeg", "image/png", "image/webp"]);
+const MAX_IMAGE_B64_CHARS = 300_000; // base64 で約220KB 相当/枚
+const MAX_IMAGES_PER_REQUEST = 4;
+
 app.post("/api/chat", async (c) => {
   // 入力サイズのサーバ強制（鍵暴走課金防止）。
   // マルチバイト(日本語等)で過小評価しないよう、UTF-16 長ではなく UTF-8 バイト数で判定する。
-  const maxBytes = parseInt(c.env.MAX_INPUT_BYTES || "200000", 10);
+  // 既定 1MB: 添付画像(base64・最大4枚×約220KB)＋本文が収まる値。Access+レート制限下の
+  // 暴走課金ガードとしては依然有効（旧既定は 200KB＝テキストのみ時代の値）。
+  const maxBytes = parseInt(c.env.MAX_INPUT_BYTES || "1000000", 10);
   const raw = await c.req.raw.clone().text();
   if (new TextEncoder().encode(raw).length > maxBytes) {
     return c.json({ error: `input too large (>${maxBytes} bytes)` }, 413);
@@ -99,6 +108,25 @@ app.post("/api/chat", async (c) => {
   }
   if (!body.modelId || !Array.isArray(body.messages)) {
     return c.json({ error: "modelId and messages[] required" }, 400);
+  }
+
+  // 添付画像の検証（mime allowlist・1枚サイズ・総数）。
+  let imageCount = 0;
+  for (const m of body.messages) {
+    if (m.images === undefined) continue;
+    if (!Array.isArray(m.images)) return c.json({ error: "images must be an array" }, 400);
+    for (const im of m.images) {
+      imageCount++;
+      if (imageCount > MAX_IMAGES_PER_REQUEST) {
+        return c.json({ error: `too many images (>${MAX_IMAGES_PER_REQUEST})` }, 400);
+      }
+      if (!im || typeof im.mimeType !== "string" || !ALLOWED_IMAGE_MIME.has(im.mimeType)) {
+        return c.json({ error: "unsupported image mimeType" }, 400);
+      }
+      if (typeof im.data !== "string" || im.data.length === 0 || im.data.length > MAX_IMAGE_B64_CHARS) {
+        return c.json({ error: `image too large (>${MAX_IMAGE_B64_CHARS} base64 chars)` }, 400);
+      }
+    }
   }
 
   const primary = findModel(body.modelId);
@@ -136,7 +164,8 @@ app.post("/api/chat", async (c) => {
           : body.messages;
         try {
           for await (const delta of streamDeltas(
-            { provider: m.provider, model: m.model, system: body.system, messages: msgs, noSystemInstruction: m.noSystemInstruction },
+            // vision は各モデル自身のフラグを渡す（非 vision へのフォールバック時はエンコーダが images を剥がす）。
+            { provider: m.provider, model: m.model, system: body.system, messages: msgs, noSystemInstruction: m.noSystemInstruction, vision: m.vision },
             c.env,
           )) {
             acc += delta;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { availableModels, findModel, type ProviderEnv } from "../src/providers";
+import { availableModels, buildGeminiPayload, findModel, type ChatRequest, type ProviderEnv } from "../src/providers";
 
 describe("availableModels", () => {
   it("secret 未設定なら無料モデルも出ない", () => {
@@ -30,6 +30,35 @@ describe("availableModels", () => {
     const list = availableModels({ GEMINI_API_KEY: "x" });
     expect(list.find((m) => m.id.startsWith("gemma"))?.reliableForDsl).toBe(false);
     expect(list.find((m) => m.id.startsWith("gemini"))?.reliableForDsl).toBe(true);
+  });
+
+  it("vision: Gemini Flash 系は true、Gemma/Llama/GPT-OSS 系は未指定(=非対応)", () => {
+    const env: ProviderEnv = { GEMINI_API_KEY: "x", OPENROUTER_API_KEY: "y" };
+    const list = availableModels(env);
+    expect(list.find((m) => m.id === "gemini-3.5-flash")?.vision).toBe(true);
+    expect(list.find((m) => m.id.startsWith("gemma"))?.vision).toBeFalsy();
+    expect(list.find((m) => m.id === "or-gpt-oss-120b")?.vision).toBeFalsy();
+  });
+});
+
+describe("buildGeminiPayload (images)", () => {
+  const req = (vision: boolean): ChatRequest => ({
+    provider: "gemini", model: "m", system: "SYS", vision,
+    messages: [{ role: "user", content: "hi", images: [{ mimeType: "image/jpeg", data: "QUJD" }] }],
+  });
+
+  it("vision のとき inline_data パートを text の前に載せる", () => {
+    const body = buildGeminiPayload(req(true), 100, 0.4) as any;
+    const parts = body.contents[0].parts;
+    expect(parts[0].inline_data).toEqual({ mime_type: "image/jpeg", data: "QUJD" });
+    expect(parts[1].text).toBe("hi");
+  });
+
+  it("非 vision のとき images を黙って剥がす（フォールバック先が非 vision でも安全）", () => {
+    const body = buildGeminiPayload(req(false), 100, 0.4) as any;
+    const parts = body.contents[0].parts;
+    expect(parts).toHaveLength(1);
+    expect(parts[0].text).toBe("hi");
   });
 });
 
