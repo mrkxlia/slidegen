@@ -9,5 +9,6 @@
 | [0003](0003-browser-pyodide-rendering.md) | pptx 生成をブラウザ内 Pyodide で実行する | 採用 | 2026-06-28 |
 | [0004](0004-editable-native-pptx.md) | 出力は編集可能なネイティブ pptx とし、画像化しない | 採用 | 2026-06-28 |
 | [0005](0005-multi-provider-sse-fallback.md) | マルチプロバイダ LLM 抽象 ＋ SSE 専用 ＋ 2層フォールバック | 採用 | 2026-06-28 |
+| [0006](0006-provenance-roundtrip.md) | pptx↔DSL双方向化：出自不明pptxはLLM取り込み、自アプリ生成物はプロベナンス方式に責務分離 | 採用 | 2026-07-05 |
 
 新規追加: 連番 `NNNN-kebab-title.md` で作成し、この表に1行足す。
