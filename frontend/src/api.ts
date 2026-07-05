@@ -36,8 +36,13 @@ async function parseJsonOrReauth(resp: Response): Promise<any> {
   return data;
 }
 
+const FETCH_MODELS_TIMEOUT_MS = 15_000;
+
 export async function fetchModels(): Promise<ModelInfo[]> {
-  const resp = await fetch(`${API_BASE}/api/models`, { credentials: "include" });
+  const resp = await fetch(`${API_BASE}/api/models`, {
+    credentials: "include",
+    signal: AbortSignal.timeout(FETCH_MODELS_TIMEOUT_MS),
+  });
   const data = await parseJsonOrReauth(resp);
   return data.models as ModelInfo[];
 }
@@ -90,7 +95,8 @@ export async function chatStream(
         buf = buf.slice(idx + 2);
         const line = evt.split("\n").find((l) => l.startsWith("data:"));
         if (!line) continue;
-        const obj = JSON.parse(line.slice(5).trim());
+        let obj: any;
+        try { obj = JSON.parse(line.slice(5).trim()); } catch { continue; } // 不正な行はスキップして継続
         if (obj.error) {
           if (obj.status === 401) throw new AuthExpiredError(obj.error);
           throw new ApiError(obj.error, obj.status || 502, obj.code);

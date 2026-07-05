@@ -6,6 +6,7 @@ import type { IngestResult } from "./ingest";
 import type { ModelInfo } from "./api";
 import type { RenderStage, TemplateFile, SlidePreview } from "./render/renderClient";
 import { renderMarkdown } from "./md";
+import { ACCEPT_ATTR } from "./ingest";
 
 // 作成の進行ステップ（実工程の順序＝真のシーケンス）。
 const PHASE_STEPS = ["壁打ち", "流れ", "DSL生成", "PowerPoint"];
@@ -89,8 +90,8 @@ export function SettingsPopover(props: {
       <hr />
       <h3>添付ファイル</h3>
       <input type="file" multiple
-        accept=".xlsx,.xls,.csv,.tsv,.pptx,.png,.jpg,.jpeg,.txt,.md"
-        onChange={(e) => props.onFiles(e.target.files)} />
+        accept={ACCEPT_ATTR}
+        onChange={(e) => { props.onFiles(e.target.files); e.target.value = ""; }} />
       {props.attachments.map((a) => (
         <p className="attach-row" key={a.name}>
           <span>✓ {a.name} … {a.kind}</span>
@@ -171,10 +172,18 @@ export function ConversationPane(props: {
   const fileRef = useRef<HTMLInputElement>(null);
   const importRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
-  // 新メッセージでチャット枠を最下部へ（内部スクロール領域のため必須）。
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const nearBottomRef = useRef(true); // ユーザーが上にスクロールして読んでいる間は自動追尾しない
+  // 新メッセージ(ストリーミング中の毎トークン含む)でチャット枠を最下部へ追尾する。
+  // ただしユーザーが自分で上にスクロールしている間は強制的に引き戻さない。
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    if (nearBottomRef.current) endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [props.messages]);
+  function onScroll() {
+    const el = scrollRef.current;
+    if (!el) return;
+    nearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+  }
   const empty = props.messages.length === 0;
   const canSend = !props.busy && !!props.modelId && props.input.trim().length > 0;
 
@@ -187,7 +196,7 @@ export function ConversationPane(props: {
         )}
       </div>
 
-      <div className="chat-scroll">
+      <div className="chat-scroll" ref={scrollRef} onScroll={onScroll}>
         {props.hasDsl && (
           <div className="notice">✏️ 既存スライドの修正モード。直したい点を送って「今ある情報で生成」を押すと更新します。</div>
         )}
@@ -250,8 +259,8 @@ export function ConversationPane(props: {
           />
           <div className="composer-row">
             <input ref={fileRef} type="file" multiple hidden
-              accept=".xlsx,.xls,.csv,.tsv,.pptx,.png,.jpg,.jpeg,.txt,.md"
-              onChange={(e) => props.onFiles(e.target.files)} />
+              accept={ACCEPT_ATTR}
+              onChange={(e) => { props.onFiles(e.target.files); e.target.value = ""; }} />
             <button className="ghost-icon" title="ファイルを添付" aria-label="ファイルを添付"
               onClick={() => fileRef.current?.click()}>📎</button>
             <span className="grow" />
@@ -336,6 +345,7 @@ export function DeckPane(props: {
   hasTemplate: boolean;
   onReview: () => void;
   reviewText: string;
+  reviewing: boolean;
   onApplyReview: () => void;
   canApplyReview: boolean;
   busy: boolean;
@@ -429,7 +439,7 @@ export function DeckPane(props: {
         )}
 
         {props.tab === "review" && (
-          props.busy
+          props.reviewing
             ? <div className="gen-progress"><div className="spinner" /><p className="sub">AI がレビュー中…</p></div>
             : props.reviewText
               ? <div className="review">
@@ -438,7 +448,7 @@ export function DeckPane(props: {
                 </div>
               : <div className="deck-empty">
                   <p>3観点（内容・体裁・流れ）で講評し、改善後の DSL を返します。</p>
-                  <button className="btn ghost" onClick={props.onReview} disabled={!props.dslValid}>AIレビューを実行</button>
+                  <button className="btn ghost" onClick={props.onReview} disabled={!props.dslValid || props.busy}>AIレビューを実行</button>
                 </div>
         )}
       </div>
@@ -454,7 +464,9 @@ export function DeckPane(props: {
   );
 }
 
-export function RenderOverlay({ stage, rendering }: { stage: RenderStage; rendering: boolean }) {
+export function RenderOverlay(
+  { stage, rendering, onCancel }: { stage: RenderStage; rendering: boolean; onCancel: () => void },
+) {
   const loading = rendering && stage !== "ready" && stage !== "idle";
   if (!loading) return null;
   return (
@@ -462,6 +474,7 @@ export function RenderOverlay({ stage, rendering }: { stage: RenderStage; render
       <div className="overlay-card">
         <div className="spinner" />
         <p>{STAGE_LABEL[stage] || "pptx を生成中…"}</p>
+        <button className="btn ghost" onClick={onCancel}>キャンセル</button>
       </div>
     </div>
   );

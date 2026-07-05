@@ -33,4 +33,8 @@ describe("ingest text/image", () => {
     expect(r.kind).toBe("image");
     expect(r.summary).toContain("画像ファイル");
   });
+  it("拡張子なしファイル名は unknown 扱い（最後の1文字を拡張子誤認しない）", async () => {
+    const r = await ingest(new File(["hello"], "README", { type: "text/plain" }));
+    expect(r.kind).toBe("unknown");
+  });
 });

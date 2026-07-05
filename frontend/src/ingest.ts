@@ -5,6 +5,12 @@
 // xlsx / jszip は添付処理時のみ必要なので動的 import で別チャンク化し、初期ロードを軽くする。
 export type Kind = "table" | "pptx" | "image" | "text" | "unknown";
 
+// ここで対応する拡張子の単一情報源。file input の accept 属性もここから組み立てる
+// （accept 属性と実際の対応拡張子がドリフトしないように）。
+export const ACCEPTED_EXTENSIONS =
+  [".xlsx", ".xls", ".csv", ".tsv", ".pptx", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".txt", ".md"];
+export const ACCEPT_ATTR = ACCEPTED_EXTENSIONS.join(",");
+
 export interface IngestResult {
   name: string;
   kind: Kind;
@@ -17,7 +23,8 @@ export interface IngestResult {
 
 export async function ingest(file: File): Promise<IngestResult> {
   const name = file.name;
-  const ext = name.slice(name.lastIndexOf(".")).toLowerCase();
+  const dot = name.lastIndexOf(".");
+  const ext = dot === -1 ? "" : name.slice(dot).toLowerCase(); // 拡張子なしファイル名は unknown 扱いにする
   const buf = await file.arrayBuffer();
 
   if (ext === ".xlsx" || ext === ".xls") return ingestTable(name, buf, "binary");
