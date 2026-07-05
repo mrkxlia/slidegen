@@ -58,8 +58,8 @@
 
 ### 4. 100型のビジュアル回帰の自動化 — ✅ 完了
 - **実施**: 案B（図形ツリースナップショット）で**全100型**を自動ガード。`tests/test_visual_regression.py` が各型を最小入力でレンダし、正規化した図形ツリー（種別・座標・塗り/線色・テキスト・フォント、表/チャート構造）を golden `tests/__snapshots__/visual_regression.json` と型ごとに比較。純Python・LibreOffice 不要・環境非依存。golden はコミット済みで Git diff で差分が読める。更新は `make snapshot-update`（=`SLIDEGEN_UPDATE_SNAPSHOTS=1`）。CI は `pytest tests/` 全体を回すため自動でガードに入る。`test_snapshot_covers_all_renderers` が golden⇔RENDERERS の増減を強制検知。
-- **案Aへのフォールバック**: 図形ツリー不変でも崩れる回帰（描画順の重なり等）を取りこぼす場合は画像スナップショット（`tests/visual.py` の LibreOffice 経路）へ移行する旨をテスト先頭 docstring に明記。
-- **何（元の課題）**: 第1層 `tests/test_invariants.py`（構造）はあったが、見た目の回帰は `tests/visual.py` のモンタージュ**目視**のみだった。
+- **案Aへのフォールバック**: 図形ツリー不変でも崩れる回帰（描画順の重なり等）を取りこぼす場合は画像スナップショット（`tools/visual.py` の LibreOffice 経路）へ移行する旨をテスト先頭 docstring に明記。
+- **何（元の課題）**: 第1層 `tests/test_invariants.py`（構造）はあったが、見た目の回帰は `tools/visual.py` のモンタージュ**目視**のみだった。
 
 ### 5. 未実装の機能バックログ
 - ✅ potx 本連携（`slidegen/theme.py` の直値 → potx テーマ色参照。ADR 0004 ルール3の本実装）。
