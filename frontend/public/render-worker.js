@@ -13,6 +13,14 @@
  *   {type:'inspect', id, pptx}                 → 'inspected'{id, spec} | 'inspect-error'{id, error}
  */
 let pyodideReady = null;
+// render/preview/inspect は pyodide.globals（dsl_text/tpl_path）と /tmp の固定パスを共有するため、
+// 同時実行すると互いのリクエストの入力を上書きしうる。1件ずつ直列化する。
+let queue = Promise.resolve();
+function enqueue(task) {
+  const result = queue.then(task, task);
+  queue = result.then(() => {}, () => {});
+  return result;
+}
 
 async function init(pyodideUrl, wheelUrl) {
   if (pyodideReady) return pyodideReady;
@@ -118,10 +126,10 @@ self.onmessage = async (ev) => {
       post("error", { error: String(e && e.message ? e.message : e) });
     }
   } else if (msg.type === "render") {
-    await render(msg.id, msg.dsl, msg.template);
+    enqueue(() => render(msg.id, msg.dsl, msg.template));
   } else if (msg.type === "preview") {
-    await preview(msg.id, msg.dsl);
+    enqueue(() => preview(msg.id, msg.dsl));
   } else if (msg.type === "inspect") {
-    await inspect(msg.id, msg.pptx);
+    enqueue(() => inspect(msg.id, msg.pptx));
   }
 };

@@ -16,10 +16,10 @@ from pptx import Presentation
 from pptx.util import Inches, Pt, Emu
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
-from pptx.oxml.ns import qn
 
 from .theme import Theme, DEFAULT_THEME, theme_from_potx
 from .parser import Slide, split_emphasis
+from .render_util import columns_geometry, fill_shape
 
 # 16:9 ワイド
 SLIDE_W = Inches(13.333)
@@ -31,14 +31,6 @@ CONTENT_W = SLIDE_W - MARGIN * 2
 # ---------------------------------------------------------------------------
 # 低レベルヘルパー（すべて編集可能なネイティブ要素を生成）
 # ---------------------------------------------------------------------------
-def _no_line(shape):
-    shape.line.fill.background()
-
-def _fill(shape, theme, color_name):
-    shape.fill.solid()
-    shape.fill.fore_color.rgb = theme.rgb(color_name)
-    _no_line(shape)
-
 def add_rect(slide, x, y, w, h, theme, color_name, rounded=False):
     """矩形を描く。標準プリセット図形のみ使用（全環境で同一描画を保証）。
     rounded=False で直角、rounded=True で四隅角丸。
@@ -51,7 +43,7 @@ def add_rect(slide, x, y, w, h, theme, color_name, rounded=False):
             shp.adjustments[0] = 0.08
         except Exception:
             pass
-    _fill(shp, theme, color_name)
+    fill_shape(shp, theme, color_name)
     shp.shadow.inherit = False           # 影なし（§3 装飾を減らす）
     return shp
 
@@ -120,7 +112,7 @@ def render_compare(slide, data: Slide, theme: Theme):
     if n == 0:
         return
     gap = Inches(0.3)
-    col_w = (CONTENT_W - gap * (n - 1)) / n
+    col_w = columns_geometry(CONTENT_W, n, gap)
     bottom = SLIDE_H - Inches(0.7)
     col_h = bottom - top
 
@@ -166,7 +158,7 @@ def render_kpi(slide, data: Slide, theme: Theme):
     if n == 0:
         return
     gap = Inches(0.3)
-    col_w = (CONTENT_W - gap * (n - 1)) / n
+    col_w = columns_geometry(CONTENT_W, n, gap)
     bottom = SLIDE_H - Inches(0.7)
     col_h = bottom - top
     for i, blk in enumerate(data.blocks):
@@ -194,7 +186,7 @@ def render_process(slide, data: Slide, theme: Theme):
     if n == 0:
         return
     gap = Inches(0.25)
-    col_w = (CONTENT_W - gap * (n - 1)) / n
+    col_w = columns_geometry(CONTENT_W, n, gap)
     bottom = SLIDE_H - Inches(0.9)
     box_h = bottom - top
     cy = top + box_h/2
@@ -223,7 +215,7 @@ def render_process(slide, data: Slide, theme: Theme):
             tri = slide.shapes.add_shape(MSO_SHAPE.ISOSCELES_TRIANGLE, ax - Inches(0.07), cy - Inches(0.08),
                                          Inches(0.14), Inches(0.16))
             tri.rotation = 90
-            _fill(tri, theme, "muted")
+            fill_shape(tri, theme, "muted")
             tri.shadow.inherit = False
 
 

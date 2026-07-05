@@ -22,9 +22,7 @@ sync.py — 手編集同期（Hand-Edit Sync）。
   python -m slidegen.sync original.slide edited.pptx --apply -o new.slide  # 別名で保存
 """
 from __future__ import annotations
-import sys
 import argparse
-import io
 import difflib
 from pptx import Presentation
 

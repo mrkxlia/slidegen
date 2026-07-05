@@ -25,12 +25,13 @@ ACCESS_TEAM_DOMAIN = "mrxlia"
 #   未設定だと auth はフェイルクローズ（全リクエスト 500）。本番では必ず設定。
 ACCESS_AUD = "5ac4a02110059e3aa7d6031b22608224ddd987ce1202191c8cd1f66d05817c03"
 # 入力サイズ上限（バイト）。本番キーの暴走課金防止のサーバ強制ガード。
-MAX_INPUT_BYTES = "1000000"
+# 1.5MB: 添付画像(base64・最大4枚×30万字≒1.2MB)＋本文が収まる値。
+MAX_INPUT_BYTES = "1500000"
 # レート制限: 時間窓(秒)あたりの最大リクエスト数。
 RATE_WINDOW_SEC = "60"
 RATE_MAX_REQUESTS = "30"
-# 本番では認証バイパスを絶対に有効化しない（ローカルは gateway/.dev.vars 側で "1"）。
-DEV_BYPASS_AUTH = "0"
+# DEV_BYPASS_AUTH はここ(本番 wrangler.toml)には置かない。ローカル開発は
+# gateway/.dev.vars 側で "1" にする（本番デプロイ設定にバイパスが紛れ込む事故を防ぐため）。
 
 # 複数 isolate 横断のレート制限を効かせるなら KV を作成してバインド:
 #   npx wrangler kv namespace create RL

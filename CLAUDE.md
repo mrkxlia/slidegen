@@ -4,16 +4,25 @@ slidegen ＝ DSL から **編集可能な PowerPoint(.pptx)** を生成する純
 本ブランチでは、それを **AIで壁打ちしてスライドを作る Web アプリ**化し、
 **Cloudflare 無料枠だけ**で動く構成を追加した。
 
-## 現在の状態（2026-06）
+## 現在の状態（2026-07）
 - 実装・検証完了し、**Cloudflare 無料枠で稼働中**（デプロイ／CD 済み。手順は `docs/deployment.md`、CD は `.github/workflows/ci.yml` の deploy job）。
 - 要件/仕様は [requirements.md](requirements.md) / [spec.md](spec.md)。設計判断は `docs/adr/`
   （0001 同一オリジン Pages Functions、0002 uv 統一、0003 ブラウザ Pyodide 生成、0004 編集可能pptx必達、
   0005 マルチプロバイダ+SSE+フォールバック。索引は [docs/adr/README.md](docs/adr/README.md)）。
-- 検証状況:
-  - Python **106 passed**（`uv run --extra dev pytest`）/ gateway vitest 23（API E2E 含む）/ frontend vitest 23、
-    各 tsc clean（functions 専用 tsconfig 含む）・build 成功。Pages Functions バンドルも実機で成功。
-  - **STEP0（ブラウザ相当 Pyodide での pptx 生成）実機検証済み**（Node の Pyodide 0.28.3、
-    `tools/pyodide_spike.mjs`）。render / 会社テンプレ / 構成プレビューの3経路ともPASS。
+- 検証状況: Python(pytest) / gateway・frontend(vitest) / 各 tsc（functions 専用 tsconfig 含む）/ build いずれも
+  green（テスト総数は増減するため本ファイルには書かない。実数は CI 実行結果を参照）。Pages Functions バンドルも実機で成功。
+  **STEP0（ブラウザ相当 Pyodide での pptx 生成）実機検証済み**（Node の Pyodide 0.28.3、
+  `tools/pyodide_spike.mjs`）。render / 会社テンプレ / 構成プレビューの3経路ともPASS。
+- 直近の主な変更: モデルカタログ 2026-07 棚卸し（PR #20）／既存 pptx のデザイン取り込み（PR #21）／
+  docs-drift の CI ガード追加（PR #22）／添付画像マルチモーダル対応（PR #23）／
+  リポジトリ総点検（gateway のフェイルオープン・ストリームエラー誤判定・frontend の worker ハング・
+  parser の記法乖離 等の修正、CLAUDE.md/メモリ整備、リファクタ、テスト・CI 強化）／
+  **pptx→DSL 取り込みの総点検**（デザイン取り込み機能のレビューと強化。`slidegen/inspect_pptx.py` に
+  TABLE のセル値・CHART の種別/カテゴリ/系列実データ・GROUP の再帰フラット化・箇条書き階層の抽出を追加
+  （従来は表/グラフの中身が丸ごと欠落しLLMが数値を捏造しうる状態だった）。`frontend/src/prompts.ts` の
+  DSL リファレンスを RENDERERS 全100型（従来43型のみ）のカタログに拡張し、
+  `tests/test_chart_dsl.py` に「教える型 ≡ RENDERERS」の等価性 CI ガードを追加。
+  pptx↔DSL 双方向化の責務分離（LLM取り込み／プロベナンス方式）を [ADR 0006](docs/adr/0006-provenance-roundtrip.md) として記録）。
 
 ## アーキテクチャ（全無料CF）
 - **重い pptx 生成(`python-pptx`)はブラウザ内 Pyodide で実行** → 無料枠の CPU 制限を回避。
@@ -60,7 +69,8 @@ uv run --extra dev pytest tests/ -q       # 本体テスト
 cd gateway && npm i && cp .dev.vars.example .dev.vars && npx wrangler dev     # :8787
 cd frontend && npm i && npm run dev                                          # :5173 (/api→:8787 proxy)
 ```
-- ローカルは **`gateway/.dev.vars` の `DEV_BYPASS_AUTH=1`** で認証バイパス（追跡ファイルを汚さない。本番は `wrangler.toml` の `"0"`）。
+- ローカルは **`gateway/.dev.vars` の `DEV_BYPASS_AUTH=1`** で認証バイパス（追跡ファイルを汚さない）。
+  `wrangler.toml`（本番・ローカル dev 共通設定ファイル）には置かない（誤って本番に紛れ込む事故を防ぐため）。
 - シークレットは `gateway/.dev.vars`（gitignore 済み）。
 - ローカルは gateway を独立 `wrangler dev` で動かす（Pages Functions 化は本番配信用の薄いシムで dev/test に不要）。
 
@@ -78,7 +88,8 @@ cd frontend && npm i && npm run dev                                          # :
 
 ## 次にやること
 - デプロイ／CD は稼働済み（`docs/deployment.md` / `.github/workflows/ci.yml` の deploy job）。
-- 課題・ロードマップは [docs/backlog.md](docs/backlog.md) に集約。例: 本物サムネイル（サーバ側 LibreOffice）、
-  テンプレの IndexedDB 永続化、i18n、DSL 解説のドリフト対策。
+- 課題・ロードマップは [docs/backlog.md](docs/backlog.md) に集約。DSL 解説のドリフト対策は完了済み
+  （`tests/test_chart_dsl.py` / `tests/test_docs_drift.py`）。残るのは例えば本物サムネイル（サーバ側
+  LibreOffice）、テンプレの IndexedDB 永続化、i18n、Mermaid 連携（いずれも backlog.md #5 参照）。
 - モデルカタログ（`gateway/src/providers.ts` の `CATALOG`）の棚卸し手順は [docs/model-catalog.md](docs/model-catalog.md)。
   **2026-10-16 までに gemini-2.5 系 2 モデルの削除が必要**（同 doc の「既知の期日」参照）。

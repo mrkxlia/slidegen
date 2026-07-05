@@ -8,14 +8,13 @@ render_frameworks2.py — ビジネスフレーム個別型 第2弾。
 設計思想：標準図形のみ。色は theme 経由。固定の意味論を持つので専用実装。
 """
 from __future__ import annotations
-from pptx.util import Inches, Pt
+from pptx.util import Inches
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 
 from . import render as R
-from .render import (add_rect, add_text, add_hline, render_header, render_foot,
-                     SLIDE_W, SLIDE_H, MARGIN, CONTENT_W)
+from .render import add_rect, add_text, render_header, render_foot, SLIDE_H, MARGIN, CONTENT_W
 from .parser import Slide, split_emphasis
-from .render_base_labeled import _block_items, _add_items_text
+from .render_util import block_items, add_items_text, columns_geometry
 
 
 # ---------------------------------------------------------------------------
@@ -60,8 +59,8 @@ def render_bmc(slide, data: Slide, theme):
                  size=9, color_name="on_main", bold=True,
                  align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
         if idx < len(blocks):
-            items = _block_items(blocks[idx])
-            _add_items_text(slide, int(x + Inches(0.08)), int(y + hh + Inches(0.05)),
+            items = block_items(blocks[idx])
+            add_items_text(slide, int(x + Inches(0.08)), int(y + hh + Inches(0.05)),
                             int(w - Inches(0.16)), int(h - hh - Inches(0.1)), theme,
                             items, size=9, anchor=MSO_ANCHOR.TOP, bullet=(len(items) > 1))
 
@@ -91,7 +90,11 @@ def render_bmc(slide, data: Slide, theme):
 # 記法：
 #   stages "認知" "検討" "購入" "利用" "推奨"   # 横軸ステージ
 #   col "行動"        # title = 行ラベル（レーン名）
-#     "広告で知る" "比較する" "申し込む" "使う" "勧める"   # 各ステージのセル
+#     "広告で知る"     # 各ステージのセルは1行1セル（複数を1行にまとめて書かない）
+#     "比較する"
+#     "申し込む"
+#     "使う"
+#     "勧める"
 #   col "感情" emotion  # （将来：感情曲線レーン）
 # ---------------------------------------------------------------------------
 def render_journey_map(slide, data: Slide, theme):
@@ -113,7 +116,7 @@ def render_journey_map(slide, data: Slide, theme):
     gap = Inches(0.08)
     label_w = Inches(1.6)
     grid_w = CONTENT_W - label_w
-    cw = (grid_w - gap * (ncol - 1)) / ncol
+    cw = columns_geometry(grid_w, ncol, gap)
     header_h = Inches(0.5)
     nrow = len(rows)
     rh = (avail_h - header_h - gap * nrow) / nrow
@@ -167,7 +170,7 @@ def render_pricing_tiers(slide, data: Slide, theme):
     bottom = SLIDE_H - Inches(0.7)
     avail_h = bottom - top
     gap = Inches(0.3)
-    cw = (CONTENT_W - gap * (n - 1)) / n
+    cw = columns_geometry(CONTENT_W, n, gap)
 
     for i, b in enumerate(tiers):
         x = MARGIN + i * (cw + gap)
@@ -193,7 +196,7 @@ def render_pricing_tiers(slide, data: Slide, theme):
         # 残りの行（特徴）
         feats = b.lines[1:]
         if feats:
-            _add_items_text(slide, int(x + Inches(0.2)), int(y + hh + Inches(0.9)),
+            add_items_text(slide, int(x + Inches(0.2)), int(y + hh + Inches(0.9)),
                             int(cw - Inches(0.4)), int(y + ch - (y + hh + Inches(0.9)) - Inches(0.1)),
                             theme, feats, size=12, anchor=MSO_ANCHOR.TOP, bullet=True)
 

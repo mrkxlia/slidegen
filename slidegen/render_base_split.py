@@ -23,16 +23,17 @@ variant が:
   → 左ラベル"Before"/右ラベル"After"、中央に矢印、を自動付与。
 """
 from __future__ import annotations
-from pptx.util import Inches, Pt
+from pptx.util import Inches
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
 
 from . import render as R
-from .render import (add_rect, add_text, add_hline, render_header, render_foot,
-                     SLIDE_W, SLIDE_H, MARGIN, CONTENT_W)
-from .parser import Slide, split_emphasis
-from .render_base_labeled import _block_items, _add_items_text
+from .render import add_rect, add_text, render_header, render_foot, SLIDE_H, MARGIN, CONTENT_W
+from .parser import Slide
+from .render_util import block_items, add_items_text, resolve_variant
 
+_DEFAULT = {"labels": None, "colors": ["main", "main"], "ratio": (0.5, 0.5),
+            "direction": "h", "connector": False}
 
 # ---------------------------------------------------------------------------
 # variant 辞書
@@ -71,15 +72,6 @@ VARIANTS = {
 }
 
 
-def _resolve(data: Slide) -> dict:
-    name = data.props.get("variant") or data.type
-    v = VARIANTS.get(name)
-    if v:
-        return dict(v)
-    return {"labels": None, "colors": ["main", "main"], "ratio": (0.5, 0.5),
-            "direction": "h", "connector": False}
-
-
 def _panel(slide, theme, x, y, w, h, label, items, color):
     """1パネル：ヘッダー帯(あれば)＋カード地＋項目。標準図形のみ。"""
     sep = Inches(0.08)
@@ -96,7 +88,7 @@ def _panel(slide, theme, x, y, w, h, label, items, color):
         body_y, body_h = y, h
     add_rect(slide, x, body_y, w, body_h, theme, "base_2", rounded=True)
     if items:
-        _add_items_text(slide, x + Inches(0.25), body_y + Inches(0.15),
+        add_items_text(slide, x + Inches(0.25), body_y + Inches(0.15),
                         w - Inches(0.5), body_h - Inches(0.3), theme,
                         items, size=14, anchor=MSO_ANCHOR.TOP, bullet=multi)
 
@@ -104,7 +96,7 @@ def _panel(slide, theme, x, y, w, h, label, items, color):
 def render_split_layout(slide, data: Slide, theme):
     top = render_header(slide, data, theme)
     render_foot(slide, data, theme)
-    v = _resolve(data)
+    v = resolve_variant(data, VARIANTS, _DEFAULT)
     blocks = data.blocks[:2]   # 2パネル固定（Sonnet安定のため上限固定）
     if len(blocks) < 2:
         # 1個しかなければそのまま全幅
@@ -112,7 +104,7 @@ def render_split_layout(slide, data: Slide, theme):
             b = blocks[0]
             _panel(slide, theme, MARGIN, top, CONTENT_W, SLIDE_H - Inches(0.7) - top,
                    b.title or (v["labels"][0] if v["labels"] else None),
-                   _block_items(b), v["colors"][0])
+                   block_items(b), v["colors"][0])
         return
 
     bottom = SLIDE_H - Inches(0.7)
@@ -129,13 +121,13 @@ def render_split_layout(slide, data: Slide, theme):
         b0 = blocks[0]
         lab0 = labels[0] if labels else b0.title
         _panel(slide, theme, MARGIN, top, lw, avail_h, lab0,
-               _block_items(b0), "accent" if b0.highlight else colors[0])
+               block_items(b0), "accent" if b0.highlight else colors[0])
         # 右パネル
         b1 = blocks[1]
         lab1 = labels[1] if labels else b1.title
         rx = MARGIN + lw + gap
         _panel(slide, theme, rx, top, rw, avail_h, lab1,
-               _block_items(b1), "accent" if b1.highlight else colors[1])
+               block_items(b1), "accent" if b1.highlight else colors[1])
         # 中央の矢印
         if connector:
             cx = MARGIN + lw + gap / 2
@@ -153,9 +145,9 @@ def render_split_layout(slide, data: Slide, theme):
         lab0 = labels[0] if labels else b0.title
         lab1 = labels[1] if labels else b1.title
         _panel(slide, theme, MARGIN, top, CONTENT_W, th, lab0,
-               _block_items(b0), "accent" if b0.highlight else colors[0])
+               block_items(b0), "accent" if b0.highlight else colors[0])
         _panel(slide, theme, MARGIN, top + th + gap, CONTENT_W, bh, lab1,
-               _block_items(b1), "accent" if b1.highlight else colors[1])
+               block_items(b1), "accent" if b1.highlight else colors[1])
 
 
 # 登録：基底 + 全 variant

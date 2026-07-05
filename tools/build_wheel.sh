@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # build_wheel.sh — slidegen を wheel 化し、内容ハッシュ付き「ディレクトリ」へ
-# 配置して frontend/.env.wheel に URL を書き出す。
+# 配置して frontend/.env.local に VITE_WHEEL_URL を書き出す。
 #
 # なぜハッシュ付き“ディレクトリ”か（ファイル名ではなく）:
 #   micropip はファイル名からパッケージ名/版を PEP440 として解析する。版に
@@ -28,6 +28,11 @@ mkdir -p "$DEST_DIR"
 cp "$SRC_WHEEL" "$DEST_DIR/$WHEEL_BASE"
 
 URL="/wheels/$HASH/$WHEEL_BASE"
-echo "VITE_WHEEL_URL=$URL" > frontend/.env.local
+# VITE_WHEEL_URL の行だけ差し替える（開発者が .env.local に置いた他の変数
+# 例: VITE_PYODIDE_URL を上書きで消してしまわないように）。
+touch frontend/.env.local
+grep -v '^VITE_WHEEL_URL=' frontend/.env.local > frontend/.env.local.tmp || true
+mv frontend/.env.local.tmp frontend/.env.local
+echo "VITE_WHEEL_URL=$URL" >> frontend/.env.local
 echo "✔ wrote $DEST_DIR/$WHEEL_BASE"
 echo "✔ wrote frontend/.env.local (VITE_WHEEL_URL=$URL)"

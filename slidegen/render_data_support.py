@@ -7,14 +7,18 @@ render_data_support.py — データ補助の個別型。
 設計思想：標準図形のみ。色は theme 経由。
 """
 from __future__ import annotations
-from pptx.util import Inches, Pt
+import logging
+
+from pptx.util import Inches
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 
 from . import render as R
-from .render import (add_rect, add_text, add_hline, render_header, render_foot,
+from .render import (add_rect, add_text, render_header, render_foot,
                      SLIDE_W, SLIDE_H, MARGIN, CONTENT_W)
 from .parser import Slide, split_emphasis
-from .render_base_labeled import _block_items, _add_items_text
+from .render_util import block_items, add_items_text
+
+_log = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -25,8 +29,8 @@ def render_data_source_footer(slide, data: Slide, theme):
     # 本文（最初のブロックがあれば箇条書き、なければ message プロパティ）
     body_bottom = SLIDE_H - Inches(1.0)
     if data.blocks:
-        items = _block_items(data.blocks[0])
-        _add_items_text(slide, MARGIN, top + Inches(0.2), CONTENT_W,
+        items = block_items(data.blocks[0])
+        add_items_text(slide, MARGIN, top + Inches(0.2), CONTENT_W,
                         body_bottom - top - Inches(0.2), theme, items,
                         size=16, anchor=MSO_ANCHOR.TOP, bullet=(len(items) > 1))
     else:
@@ -58,21 +62,22 @@ def render_data_source_footer(slide, data: Slide, theme):
 def _num(s):
     try:
         return float(s.replace(",", "").replace("+", ""))
-    except Exception:
+    except (ValueError, AttributeError):
+        _log.warning("waterfall の数値として解釈できない値 %r を 0.0 として扱います。", s)
         return 0.0
 
 
 def render_waterfall(slide, data: Slide, theme):
     """各 col が1本のバー。
-    col "売上" → title=ラベル、line[0]=値、行頭が total 指定なら累計バー。
+    col "売上" → title=ラベル、line[0]=値、highlight 付きなら絶対値バー（開始/着地）。
     記法:
-      col "期初" base       # base 行 = 絶対値バー（開始/着地）
+      col "期初" highlight   # highlight = 絶対値バー（開始/着地）
         "100"
-      col "新規"            # 増減バー（前の累計に積む）
+      col "新規"             # 増減バー（前の累計に積む）
         "+40"
       col "解約"
         "-15"
-      col "期末" base
+      col "期末" highlight
         "125"
     """
     top = render_header(slide, data, theme)
@@ -101,7 +106,10 @@ def render_waterfall(slide, data: Slide, theme):
     vmax = max([t[1] for t in tops] + [t[0] for t in tops] + [1.0])
 
     def y_of(val):
-        return plot_top + plot_h * (1 - val / vmax)
+        # 累計が負に振れても plot 領域の下端を突き抜けないようクランプする
+        # （vmax は正の最大値のみ見ているため、val<0 だと未クランプでは範囲外に出る）。
+        y = plot_top + plot_h * (1 - val / vmax)
+        return min(y, plot_top + plot_h)
 
     for i, b in enumerate(bars):
         x = MARGIN + i * (bw + gap)

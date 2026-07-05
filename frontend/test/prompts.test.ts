@@ -15,4 +15,9 @@ describe("IMPORT_DECK_SYSTEM", () => {
   it("会話フェーズの system とは独立している（dsl フェーズと非同一）", () => {
     expect(IMPORT_DECK_SYSTEM).not.toBe(phaseSystemPrompt("dsl"));
   });
+  it("構造スペックの table=/chart= 形式を説明し、数値の捏造を明示的に禁止している", () => {
+    expect(IMPORT_DECK_SYSTEM).toContain("table=[");
+    expect(IMPORT_DECK_SYSTEM).toContain("chart=種別");
+    expect(IMPORT_DECK_SYSTEM).toContain("捏造");
+  });
 });

@@ -13,6 +13,8 @@ venv/
 
 # slidegen 生成物（モンタージュ/出力pptx）
 out/
+# tools/new_type.py が生成する型スペックJSON（ワークフロー中の一時ファイル）
+type_specs/
 
 # OS
 .DS_Store

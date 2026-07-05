@@ -7,7 +7,7 @@ cli.py — コマンドラインから記法ファイルをpptxに変換。
 """
 import argparse
 import sys
-import slidegen   # 追加型(render_more)の登録を確実にする
+import slidegen   # noqa: F401  追加型(render_more等)の登録を確実にする（未使用に見えるが副作用目的）
 from .parser import parse
 from .render import build, RENDERERS
 from .dsl_validator import validate as validate_dsl

@@ -92,10 +92,18 @@ const MAX_IMAGES_PER_REQUEST = 4;
 app.post("/api/chat", async (c) => {
   // 入力サイズのサーバ強制（鍵暴走課金防止）。
   // マルチバイト(日本語等)で過小評価しないよう、UTF-16 長ではなく UTF-8 バイト数で判定する。
-  // 既定 1MB: 添付画像(base64・最大4枚×約220KB)＋本文が収まる値。Access+レート制限下の
+  // 既定 1.5MB: 添付画像(base64・最大4枚×30万字≒1.2MB)＋本文が収まる値。Access+レート制限下の
   // 暴走課金ガードとしては依然有効（旧既定は 200KB＝テキストのみ時代の値）。
-  const maxBytes = parseInt(c.env.MAX_INPUT_BYTES || "1000000", 10);
-  const raw = await c.req.raw.clone().text();
+  const parsedMaxBytes = parseInt(c.env.MAX_INPUT_BYTES ?? "", 10);
+  const maxBytes = Number.isFinite(parsedMaxBytes) && parsedMaxBytes > 0 ? parsedMaxBytes : 1_500_000;
+
+  // Content-Length で事前に弾ける場合は body 全読みを避ける（大容量 POST のメモリ肥大防止）。
+  const contentLength = c.req.header("Content-Length");
+  if (contentLength && Number(contentLength) > maxBytes) {
+    return c.json({ error: `input too large (>${maxBytes} bytes)` }, 413);
+  }
+
+  const raw = await c.req.raw.text();
   if (new TextEncoder().encode(raw).length > maxBytes) {
     return c.json({ error: `input too large (>${maxBytes} bytes)` }, 413);
   }
@@ -106,8 +114,8 @@ app.post("/api/chat", async (c) => {
   } catch {
     return c.json({ error: "invalid JSON" }, 400);
   }
-  if (!body.modelId || !Array.isArray(body.messages)) {
-    return c.json({ error: "modelId and messages[] required" }, 400);
+  if (!body.modelId || !Array.isArray(body.messages) || body.messages.length === 0) {
+    return c.json({ error: "modelId and non-empty messages[] required" }, 400);
   }
 
   // 添付画像の検証（mime allowlist・1枚サイズ・総数）。
@@ -141,10 +149,17 @@ app.post("/api/chat", async (c) => {
   // 終了=`data:{"done":true}`、失敗=`data:{"error":"..."}`。
   // チェーンを上から試し、エラー種別を問わず候補が残れば次モデルへ続行（404/400 でも止めない）。
   // 既に出力(acc)が始まっていたら、部分出力を引き継いで別モデルに継続させる。
+  // クライアント切断(ブラウザの abort・タブ閉じ等)で cancel() が呼ばれたら上流 fetch も打ち切る
+  // （さもないと切断後もトークン消費が継続し、enqueue が失敗して unhandled rejection になる）。
+  const clientAbort = new AbortController();
   const stream = new ReadableStream<Uint8Array>({
     async start(ctrl) {
       const enc = new TextEncoder();
-      const send = (obj: unknown) => ctrl.enqueue(enc.encode(`data: ${JSON.stringify(obj)}\n\n`));
+      // cancel() 後は enqueue が例外を投げるので、既に切断済みなら何もしない。
+      const send = (obj: unknown) => {
+        if (clientAbort.signal.aborted) return;
+        try { ctrl.enqueue(enc.encode(`data: ${JSON.stringify(obj)}\n\n`)); } catch { /* 切断後の enqueue は無視 */ }
+      };
       let acc = "";
       let lastErr: LLMError | undefined;
       let okModelId: string | undefined;
@@ -167,11 +182,13 @@ app.post("/api/chat", async (c) => {
             // vision は各モデル自身のフラグを渡す（非 vision へのフォールバック時はエンコーダが images を剥がす）。
             { provider: m.provider, model: m.model, system: body.system, messages: msgs, noSystemInstruction: m.noSystemInstruction, vision: m.vision },
             c.env,
+            undefined, undefined, clientAbort.signal,
           )) {
             acc += delta;
             send({ delta });
           }
         } catch (e) {
+          if (clientAbort.signal.aborted) return; // クライアント切断: フォールバックせず即終了
           lastErr = e instanceof LLMError ? e : new LLMError(String(e));
           lastWasEmpty = false;
           continue; // 途中 throw 後に下の成功判定へ落ちないよう次候補へ
@@ -193,7 +210,12 @@ app.post("/api/chat", async (c) => {
           ...(lastWasEmpty ? { code: "empty" } : {}),
         });
       }
-      ctrl.close();
+      if (!clientAbort.signal.aborted) {
+        try { ctrl.close(); } catch { /* 既に切断済みなら無視 */ }
+      }
+    },
+    cancel(reason) {
+      clientAbort.abort(reason);
     },
   });
   return new Response(stream, {

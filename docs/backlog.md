@@ -58,18 +58,21 @@
 
 ### 4. 100型のビジュアル回帰の自動化 — ✅ 完了
 - **実施**: 案B（図形ツリースナップショット）で**全100型**を自動ガード。`tests/test_visual_regression.py` が各型を最小入力でレンダし、正規化した図形ツリー（種別・座標・塗り/線色・テキスト・フォント、表/チャート構造）を golden `tests/__snapshots__/visual_regression.json` と型ごとに比較。純Python・LibreOffice 不要・環境非依存。golden はコミット済みで Git diff で差分が読める。更新は `make snapshot-update`（=`SLIDEGEN_UPDATE_SNAPSHOTS=1`）。CI は `pytest tests/` 全体を回すため自動でガードに入る。`test_snapshot_covers_all_renderers` が golden⇔RENDERERS の増減を強制検知。
-- **案Aへのフォールバック**: 図形ツリー不変でも崩れる回帰（描画順の重なり等）を取りこぼす場合は画像スナップショット（`tests/visual.py` の LibreOffice 経路）へ移行する旨をテスト先頭 docstring に明記。
-- **何（元の課題）**: 第1層 `tests/test_invariants.py`（構造）はあったが、見た目の回帰は `tests/visual.py` のモンタージュ**目視**のみだった。
+- **案Aへのフォールバック**: 図形ツリー不変でも崩れる回帰（描画順の重なり等）を取りこぼす場合は画像スナップショット（`tools/visual.py` の LibreOffice 経路）へ移行する旨をテスト先頭 docstring に明記。
+- **何（元の課題）**: 第1層 `tests/test_invariants.py`（構造）はあったが、見た目の回帰は `tools/visual.py` のモンタージュ**目視**のみだった。
 
 ### 5. 未実装の機能バックログ
 - ✅ potx 本連携（`slidegen/theme.py` の直値 → potx テーマ色参照。ADR 0004 ルール3の本実装）。
   → **完了**: `theme.py` に `theme_from_potx()` を追加（accent1→main / accent2→main_2 / accent6→accent の一般 OOXML マッピング、読めなければ DEFAULT_THEME にフェイルセーフ）。`build()`/`api.py` の `theme` を None センチネル化し、template 提供かつ theme 未指定なら自動抽出（CLI・ブラウザ Pyodide 両経路で有効）。
 - pptx → DSL シリアライザ（編集の双方向化。現状 `sync` は**文言差分のみ**）。
-  → 🟡 **スコープ判断 (2026-07-03)**: 決定的な逆変換はレンダラが出所情報を残さない現状では不可能なため、
-  **任意 pptx の「デザイン取り込み」（LLM インポート）を採用**（`inspect_pptx.inspect_compact` で構造抽出 →
-  Pyodide worker `inspect` → `IMPORT_DECK_SYSTEM` で DSL 再構成。ヒーローの「既存の pptx から作り直す」）。
-  自アプリ生成 pptx の**決定的双方向化**は、生成時に DSL ソースを埋め込む（スライドノート等の
-  プロベナンス方式）+ 全100型ラウンドトリップ検証（`_shape_dict` 比較器を流用）として将来項に残す。
+  → 🟡 **スコープ判断 (2026-07-03) → ADR化 (2026-07-05)**: 責務分離の方針を
+  **[ADR 0006](adr/0006-provenance-roundtrip.md)** として正式化。
+  任意 pptx は「デザイン取り込み」（LLM インポート、実装済み。`inspect_pptx.inspect_compact` で
+  構造抽出 → Pyodide worker `inspect` → `IMPORT_DECK_SYSTEM` で DSL 再構成。Step2/3 で
+  TABLE/CHART/GROUP 抽出とプロンプトの型カタログを強化）。
+  自アプリ生成 pptx の**決定的双方向化**（プロベナンス方式：生成時に DSL ソースを埋め込み、
+  `test_visual_regression.py` の図形ツリー比較器を流用して差分反映 + 全100型ラウンドトリップ検証）は
+  ADR 0006 に記載の将来項として引き続き未実装。
 - 技術図 **Mermaid** 連携（設計の MNP 構想にあるが未実装）。
 - 本物のサムネイル（サーバ側 LibreOffice 等。ブラウザ単体では pptx→画像 不可のため別ホスト。ADR 0003 の代替案）。
 - ✅ テキストはみ出しの物理検出を第1層へ（現状は境界 overflow まで）。

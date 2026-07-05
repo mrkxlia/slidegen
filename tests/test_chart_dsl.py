@@ -1,7 +1,9 @@
-"""test_chart_dsl.py — prompts.ts が教える型 ⊆ 実レンダラ、を保証する CI ガード。
+"""test_chart_dsl.py — prompts.ts が教える型 ≡ 実レンダラ(RENDERERS)、を保証する CI ガード。
 
-フロント(prompts.ts)が LLM に教える chart 型と、本体 slidegen のレンダラ登録型が
-食い違うと「生成DSLが描画できない」事故になる。ここを機械的に固定する。
+フロント(prompts.ts)が LLM に教える型と、本体 slidegen のレンダラ登録型が食い違うと
+2方向の事故になる: (a) 教える型が未登録 → 生成DSLが描画できない、(b) RENDERERS にある型を
+教え忘れる → その型が永久にAIの選択肢から漏れる（デザイン取り込みでの再構成先にもならない）。
+ここを機械的に固定する（backlog #2: chart型の⊆保証を全型の⊆/⊇＝同値保証に拡張）。
 """
 from pathlib import Path
 import re
@@ -45,17 +47,17 @@ def test_prompts_taught_types_match_taught_set():
 def _taught_types_in_prompts() -> set:
     """prompts.ts(live プロンプト)が AI に教える型名を抽出する。
     (a) `slide <型>` のコード例、(b) スラッシュ区切りの型カタログ列（"- a / b / c … 説明"）。
-    誤検知回避のため (b) は `^[a-z][a-z0-9_]*$` のクリーンなトークンのみ採用
-    （`swot系`・`(2〜4)`・装飾付きはスキップ）。
+    誤検知回避のため (b) は `^[a-z0-9][a-z0-9_]*$` のクリーンなトークンのみ採用
+    （`swot系`・`(2〜4)`・装飾付きはスキップ）。先頭は数字も許容する（`5e` 型のため）。
     """
     text = PROMPTS_TS.read_text(encoding="utf-8")
-    taught = set(re.findall(r'(?m)^\s*slide\s+([a-z][a-z0-9_]*)', text))
+    taught = set(re.findall(r'(?m)^\s*slide\s+([a-z0-9][a-z0-9_]*)', text))
     for line in text.splitlines():
         if re.match(r'^\s*-\s', line) and ' / ' in line:
             head = line.split('…')[0]
             for raw in head.split('/'):
                 tok = re.sub(r'\([^)]*\)', '', raw).strip(' \t-')
-                if re.fullmatch(r'[a-z][a-z0-9_]*', tok):
+                if re.fullmatch(r'[a-z0-9][a-z0-9_]*', tok):
                     taught.add(tok)
     return taught
 
@@ -66,6 +68,17 @@ def test_prompts_taught_types_are_registered():
     assert taught, "prompts.ts から型を1つも抽出できない（抽出ロジックの破綻）"
     missing = sorted(t for t in taught if t not in RENDERERS)
     assert not missing, f"prompts.ts が教える未登録の型: {missing}（型を登録するか prompts.ts を修正）"
+
+
+def test_renderers_are_all_taught_by_prompts():
+    """RENDERERS 全型 ⊆ prompts.ts が教える型（教え忘れを防ぐ。上のテストと合わせて同値を保証）。
+
+    100型登録されていても prompts.ts のカタログに載っていなければ、AI はその型を
+    一生選ばない（新規生成でもデザイン取り込みの再構成先でも死蔵する）。
+    """
+    taught = _taught_types_in_prompts()
+    missing = sorted(t for t in RENDERERS if t not in taught)
+    assert not missing, f"RENDERERS にあるが prompts.ts が教えていない型: {missing}（型カタログに追記する）"
 
 
 def test_all_examples_parse_and_render():

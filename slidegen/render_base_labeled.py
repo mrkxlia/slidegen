@@ -27,13 +27,13 @@ render_base_labeled.py — 基底レイアウト `labeled_blocks` と、その�
     col ...
 """
 from __future__ import annotations
-from pptx.util import Inches, Pt
+from pptx.util import Inches
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 
 from . import render as R
-from .render import (add_rect, add_text, add_hline, render_header, render_foot,
-                     SLIDE_W, SLIDE_H, MARGIN, CONTENT_W)
-from .parser import Slide, split_emphasis
+from .render import add_rect, add_text, render_header, render_foot, SLIDE_H, MARGIN, CONTENT_W
+from .parser import Slide
+from .render_util import variant_name, block_items, add_items_text
 
 
 # ---------------------------------------------------------------------------
@@ -114,8 +114,7 @@ VARIANTS = {
 
 def _resolve_variant(data: Slide) -> dict:
     """型名 or props['variant'] から variant 定義を引く。無ければ汎用デフォルト。"""
-    name = data.props.get("variant") or data.type
-    v = VARIANTS.get(name)
+    v = VARIANTS.get(variant_name(data))
     if v:
         return v
     # 未知 → ブロック数から配置を自動決定、ラベルは col のtitle
@@ -129,13 +128,6 @@ def _block_label(variant: dict, i: int, blk) -> str:
     if labels and i < len(labels):
         return labels[i]
     return blk.title  # ラベル未定義なら col のtitle
-
-
-def _block_items(blk) -> list:
-    """ブロックの本文項目リスト。lines は各行が1項目。rows は 'ラベル: 値'。"""
-    parts = list(blk.lines)
-    parts += [f"{lbl}: {val}" if lbl else val for lbl, val in blk.rows]
-    return parts
 
 
 # ---------------------------------------------------------------------------
@@ -167,7 +159,7 @@ def render_labeled_blocks(slide, data: Slide, theme):
             y = top + i * (block_h + gap)
             _draw_block(slide, theme, MARGIN, y, CONTENT_W, block_h,
                         _block_label(variant, i, blk),
-                        _block_items(blk),
+                        block_items(blk),
                         accent=(i == accent_idx) or blk.highlight,
                         label_side="left")
     elif layout == "grid":
@@ -182,7 +174,7 @@ def render_labeled_blocks(slide, data: Slide, theme):
             y = top + r * (ch + gap)
             _draw_block(slide, theme, x, y, cw, ch,
                         _block_label(variant, i, blk),
-                        _block_items(blk),
+                        block_items(blk),
                         accent=(i == accent_idx) or blk.highlight,
                         label_side="top")
     else:
@@ -193,7 +185,7 @@ def render_labeled_blocks(slide, data: Slide, theme):
         chars_per_line = max(6, int(cw / Inches(0.12)))  # 1行あたり概算文字数
         max_lines = 1
         for blk in blocks:
-            max_lines = max(max_lines, _estimate_lines(_block_items(blk), chars_per_line))
+            max_lines = max(max_lines, _estimate_lines(block_items(blk), chars_per_line))
         line_h = Inches(0.30)
         content_h = head_h + Inches(0.3) + line_h * max_lines
         # スライドに収まる範囲でキャップ。最小1.6"、最大は利用可能高
@@ -202,33 +194,9 @@ def render_labeled_blocks(slide, data: Slide, theme):
             x = MARGIN + i * (cw + gap)
             _draw_block(slide, theme, x, top, cw, card_h,
                         _block_label(variant, i, blk),
-                        _block_items(blk),
+                        block_items(blk),
                         accent=(i == accent_idx) or blk.highlight,
                         label_side="top")
-
-
-def _add_items_text(slide, x, y, w, h, theme, items, *, size, anchor, bullet):
-    """複数項目を1項目=1段落で描く。bullet=Trueなら先頭に「・」。"""
-    from pptx.util import Inches as _In, Pt as _Pt
-    box = slide.shapes.add_textbox(x, y, w, h)
-    tf = box.text_frame
-    tf.word_wrap = True
-    tf.margin_left = tf.margin_right = _Pt(2)
-    tf.margin_top = tf.margin_bottom = _Pt(2)
-    tf.vertical_anchor = anchor
-    for j, item in enumerate(items):
-        p = tf.paragraphs[0] if j == 0 else tf.add_paragraph()
-        p.alignment = PP_ALIGN.LEFT
-        p.space_after = _Pt(4)
-        prefix = "・" if bullet else ""
-        for text, em in split_emphasis(prefix + item):
-            r = p.add_run()
-            r.text = text
-            r.font.size = _Pt(size)
-            r.font.name = theme.font
-            r.font.bold = em
-            r.font.color.rgb = theme.rgb("accent") if em else theme.rgb("ink")
-    return box
 
 
 def _estimate_lines(items, chars_per_line):
@@ -258,7 +226,7 @@ def _draw_block(slide, theme, x, y, w, h, label, items, *, accent, label_side):
         body_h = h - head_h - sep
         add_rect(slide, x, body_y, w, body_h, theme, "base_2", rounded=True)
         if items:
-            _add_items_text(slide, x + Inches(0.18), body_y + Inches(0.1),
+            add_items_text(slide, x + Inches(0.18), body_y + Inches(0.1),
                             w - Inches(0.36), body_h - Inches(0.2), theme,
                             items, size=13, anchor=MSO_ANCHOR.TOP, bullet=multi)
     else:  # 左ラベル帯
@@ -273,17 +241,9 @@ def _draw_block(slide, theme, x, y, w, h, label, items, *, accent, label_side):
         body_w = w - label_w - sep
         add_rect(slide, body_x, y, body_w, h, theme, "base_2", rounded=True)
         if items:
-            _add_items_text(slide, body_x + Inches(0.25), y,
+            add_items_text(slide, body_x + Inches(0.25), y,
                             body_w - Inches(0.45), h, theme,
                             items, size=14, anchor=MSO_ANCHOR.MIDDLE, bullet=multi)
-
-
-# ---------------------------------------------------------------------------
-# 薄いラッパー型：variant を固定して基底を呼ぶだけ（1型 数行）
-# ---------------------------------------------------------------------------
-def _wrap(slide, data, theme):
-    # 型名がそのまま variant 名になる(prep / kpt / kishotenketsu ...)
-    render_labeled_blocks(slide, data, theme)
 
 
 # 基底 + 全ラッパーを登録

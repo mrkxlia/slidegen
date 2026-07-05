@@ -18,4 +18,20 @@ describe("checkRateLimit (memory)", () => {
     expect((await checkRateLimit("a", env)).ok).toBe(true);
     expect((await checkRateLimit("b", env)).ok).toBe(true);
   });
+
+  it("RATE_MAX_REQUESTS が数値でなくても既定値(30)にフォールバックし無効化されない", async () => {
+    const env = { RATE_WINDOW_SEC: "3600", RATE_MAX_REQUESTS: "not-a-number" };
+    const key = `nan-${Math.random()}`;
+    for (let i = 0; i < 30; i++) {
+      expect((await checkRateLimit(key, env)).ok).toBe(true);
+    }
+    expect((await checkRateLimit(key, env)).ok).toBe(false); // 31回目でブロック（NaN でフェイルオープンしない）
+  });
+
+  it("RATE_WINDOW_SEC が数値でなくても既定値(60)にフォールバックする", async () => {
+    const env = { RATE_WINDOW_SEC: "abc", RATE_MAX_REQUESTS: "1" };
+    const key = `nan-window-${Math.random()}`;
+    expect((await checkRateLimit(key, env)).ok).toBe(true);
+    expect((await checkRateLimit(key, env)).ok).toBe(false);
+  });
 });

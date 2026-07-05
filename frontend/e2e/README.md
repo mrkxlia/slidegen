@@ -7,8 +7,7 @@ Playwright は既定の devDependencies に含めていない。実行する場�
 cd frontend
 npm i -D @playwright/test
 npx playwright install chromium
-npm run test:e2e        # package.json に下記スクリプトを追加して使用
-#   "test:e2e": "playwright test"
+npm run test:e2e        # package.json の "test:e2e": "playwright test" を使用（追加済み）
 ```
 
 - `smoke.spec.ts` は gateway を route mock するため **LLM キー/認証なし**で動く。

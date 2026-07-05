@@ -81,19 +81,21 @@ def _parse_one(text: str) -> Slide:
                 highlight=("highlight" in s.split()),
             )
             slide.blocks.append(cur_block)
-        elif key in ("kicker", "headline", "foot", "title", "subtitle", "source"):
-            vals = _strings(s)
-            slide.props[key] = vals[0] if vals else s[len(key):].strip()
         elif ind >= 4 and cur_block is not None:
-            # ブロック配下の行： `ラベル "値"`  または  `"値"`（箇条書き）
+            # ブロック配下の行： `ラベル "値"`、`"値1" "値2" ...`（箇条書き）、または `"値"`。
+            # kicker/title 等の予約キーと同名でも、ブロック内では常にブロックの内容として扱う
+            # （予約キー判定をここより先に行うと、ブロック内の同名行がスライド props に吸われてしまう）。
             vals = _strings(s)
             if len(vals) >= 1 and not s.startswith('"'):
                 label = s.split('"')[0].strip()
                 cur_block.rows.append((label, vals[0]))
             elif vals:
-                cur_block.lines.append(vals[0])
+                cur_block.lines.extend(vals)
             else:
                 cur_block.lines.append(s)
+        elif key in ("kicker", "headline", "foot", "title", "subtitle", "source"):
+            vals = _strings(s)
+            slide.props[key] = vals[0] if vals else s[len(key):].strip()
         else:
             # トップレベルのその他プロパティ： `key "値"` または `key "v1" "v2" ...`
             vals = _strings(s)

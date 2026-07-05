@@ -52,6 +52,25 @@ describe("gateway API (E2E)", () => {
     expect(res.status).toBe(413);
   });
 
+  it("MAX_INPUT_BYTES が数値でなくても既定値(1.5MB)にフォールバックし無効化されない", async () => {
+    const big = "x".repeat(1_600_000);
+    const res = await app.request("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ modelId: "gemini-2.5-flash", messages: [{ role: "user", content: big }] }),
+    }, { ...baseEnv, MAX_INPUT_BYTES: "not-a-number" });
+    expect(res.status).toBe(413);
+  });
+
+  it("空の messages[] は 400", async () => {
+    const res = await app.request("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ modelId: "gemini-2.5-flash", messages: [] }),
+    }, baseEnv);
+    expect(res.status).toBe(400);
+  });
+
   it("マルチバイトは UTF-16 長でなく UTF-8 バイト数で 413", async () => {
     // 「あ」は UTF-8 で 3 バイト。char 長(700)は上限 2000 未満だが、
     // バイト長(2100超)は上限超過 → バイト判定でなければ素通りしてしまうケース。
@@ -78,6 +97,55 @@ describe("gateway API (E2E)", () => {
   it("認証未設定(バイパス無し)はフェイルクローズ 500", async () => {
     const res = await app.request("/api/models", {}, { ALLOWED_ORIGIN: "http://localhost:5173" });
     expect(res.status).toBe(500);
+  });
+
+  it("ACCESS_AUD 設定済みなら DEV_BYPASS_AUTH=1 でもバイパスされない（多層防御）", async () => {
+    const res = await app.request("/api/models", {}, {
+      ALLOWED_ORIGIN: "http://localhost:5173",
+      DEV_BYPASS_AUTH: "1",
+      ACCESS_TEAM_DOMAIN: "team",
+      ACCESS_AUD: "aud123",
+    });
+    expect(res.status).toBe(401); // JWT 無し → フェイルクローズ側の検証に落ちる
+  });
+
+  it("stream: ストリーム途中の in-band error は次候補へフォールバックする", async () => {
+    let calls = 0;
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      calls++;
+      if (calls === 1) {
+        return new Response(
+          'data: {"candidates":[{"content":{"parts":[{"text":"途中"}]}}]}\r\n\r\n' +
+          'data: {"error":{"message":"safety block"}}\r\n\r\n',
+          { status: 200 },
+        );
+      }
+      return new Response('data: {"candidates":[{"content":{"parts":[{"text":"B"}]}}]}\r\n\r\n', { status: 200 });
+    }));
+    const res = await app.request("/api/chat?stream=1", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ modelId: "gemini-2.5-flash", messages: [{ role: "user", content: "hi" }] }),
+    }, baseEnv);
+    const text = await res.text();
+    expect(text).toContain('"switch"');      // in-band error で次候補へ切替
+    expect(text).toContain('"delta":"B"');    // 2モデル目で成功
+    expect(text).toContain('"done":true');
+    expect(text).not.toContain("safety block"); // 上流の生エラーメッセージは露出しない
+  });
+
+  it("stream: 全候補が in-band error なら error イベントで終了する（done は送らない）", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response('data: {"error":{"message":"safety block"}}\r\n\r\n', { status: 200 }),
+    ));
+    const res = await app.request("/api/chat?stream=1", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ modelId: "gemini-2.5-flash", messages: [{ role: "user", content: "hi" }] }),
+    }, baseEnv);
+    const text = await res.text();
+    expect(text).toContain('"error"');
+    expect(text).not.toContain('"done":true');
   });
 
   it("stream: 1回目429→2回目で別モデルに切替えて継続する", async () => {
@@ -227,6 +295,31 @@ describe("gateway API (E2E)", () => {
       }),
     }, { ...baseEnv, MAX_INPUT_BYTES: "1000000" });
     expect(res.status).toBe(400);
+  });
+
+  it("stream: クライアント切断(reader.cancel)で上流 fetch が中断され、フォールバックしない", async () => {
+    let calls = 0;
+    let secondCallHappened = false;
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init: any) => {
+      calls++;
+      if (calls === 1) {
+        // fetch 呼び出し側が渡した signal が中断されたら reject する非同期処理を模す。
+        return new Promise((_resolve, reject) => {
+          init.signal.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")));
+        });
+      }
+      secondCallHappened = true;
+      return new Response('data: {"candidates":[{"content":{"parts":[{"text":"B"}]}}]}\r\n\r\n', { status: 200 });
+    }));
+    const res = await app.request("/api/chat?stream=1", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ modelId: "gemini-2.5-flash", messages: [{ role: "user", content: "hi" }] }),
+    }, baseEnv);
+    const reader = res.body!.getReader();
+    await reader.cancel(); // クライアント切断を模す
+    await new Promise((r) => setTimeout(r, 10)); // abort イベント伝播を待つ
+    expect(secondCallHappened).toBe(false); // 切断後はフォールバックしない
   });
 
   it("Gemma は systemInstruction を付けず system を先頭 user に畳む", async () => {

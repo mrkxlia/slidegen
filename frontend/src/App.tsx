@@ -11,7 +11,8 @@ import { ingest, type IngestResult } from "./ingest";
 import { MAX_IMAGES_PER_REQUEST } from "./image";
 import * as api from "./api";
 import {
-  initRenderer, renderDsl, previewDsl, inspectPptx, downloadPptx,
+  initRenderer, renderDsl, previewDsl, inspectPptx, downloadPptx, terminateRenderer,
+  CanceledError as RenderCanceledError,
   type RenderStage, type TemplateFile, type SlidePreview,
 } from "./render/renderClient";
 import { loadSettings, saveSettings } from "./storage";
@@ -43,6 +44,7 @@ export function App() {
   const [importedDeck, setImportedDeck] = useState<{ name: string; spec: string } | null>(null);
   const [dslText, setDslText] = useState("");
   const [reviewText, setReviewText] = useState("");
+  const [reviewing, setReviewing] = useState(false);
   const [preview, setPreview] = useState<SlidePreview[] | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const [input, setInput] = useState("");
@@ -96,7 +98,9 @@ export function App() {
   };
 
   // 現フェーズの system + (必要なら)文脈 + トリミング履歴を組み立てる。
-  function prepare(p: Phase, baseMsgs: Message[], forceContext = false): { system: string; messages: Message[] } {
+  function prepare(
+    p: Phase, baseMsgs: Message[], forceContext = false,
+  ): { system: string; messages: Message[]; commitContext: () => void } {
     let system = phaseSystemPrompt(p);
     if ((p === "hearing" || p === "outline") && dslText.trim()) {
       system += "\n\n## 補足: すでにスライドが一度生成されています。" +
@@ -105,17 +109,20 @@ export function App() {
         "（生成へ進むかはユーザーがボタンで判断する）。";
     }
     let msgs = trimHistory(baseMsgs);
+    let injectedNow = false;
     if (forceContext || !contextInjected.current) {
       const preamble = buildContextPreamble(purposeText(), attachmentsSummary());
       if (preamble) msgs = [{ role: "user", content: preamble, images: visionImages() }, ...msgs];
-      contextInjected.current = true;
+      injectedNow = true;
     }
-    return { system, messages: msgs };
+    // 実際に送信が成功するまでは確定させない（呼び出し側が commitContext() を呼ぶ）。
+    // 送信失敗/中断時にここで true 化すると、以後プリアンブルが無言で欠落し続けるため。
+    return { system, messages: msgs, commitContext: () => { if (injectedNow) contextInjected.current = true; } };
   }
 
   // ストリーミングで assistant 応答を受け取り、最後の assistant メッセージへ逐次反映。
   async function streamAssistant(p: Phase, baseMsgs: Message[], forceContext = false): Promise<string> {
-    const { system, messages: msgs } = prepare(p, baseMsgs, forceContext);
+    const { system, messages: msgs, commitContext } = prepare(p, baseMsgs, forceContext);
     const ac = new AbortController();
     abortRef.current = ac;
     setMessages([...baseMsgs, { role: "assistant", content: "▍" }]); // 初手で「考え中」を見せる
@@ -124,6 +131,7 @@ export function App() {
         const shown = cleanReply(full);
         setMessages([...baseMsgs, { role: "assistant", content: shown || "▍" }]);
       }, { signal: ac.signal });
+      commitContext(); // 送信成功後にのみ確定（失敗/中断時は次回また文脈を注入する）
       return res.text;
     } finally { abortRef.current = null; }
   }
@@ -155,15 +163,17 @@ export function App() {
   async function onMakeOutline() {
     if (busy || !modelId || messages.length === 0) return;
     setError(null);
+    const prevPhase = phase;
     setPhase("outline");
     setBusy(true);
     try {
       const raw = await streamAssistant("outline", messages, true);
       const reply = cleanReply(raw);
-      if (!reply) { setMessages(messages); setError(EMPTY_MSG); return; }
+      if (!reply) { setMessages(messages); setPhase(prevPhase); setError(EMPTY_MSG); return; }
       setMessages([...messages, { role: "assistant", content: reply }]);
     } catch (e) {
       setMessages(messages); // 失敗/中断時はプレースホルダを巻き戻す
+      setPhase(prevPhase); // outline に進めたことも取り消す（流れ案が実際には無い状態のため）
       handleApiError(e);
     }
     finally { setBusy(false); }
@@ -190,6 +200,7 @@ export function App() {
     try {
       let system: string;
       let messages: Message[];
+      let commitContext = () => {};
       if (existing) {
         const preamble = buildContextPreamble(purposeText(), attachmentsSummary());
         const head = (preamble ? preamble + "\n\n" : "") + "【現在のDSL（これをベースに更新）】\n" + existing;
@@ -204,7 +215,7 @@ export function App() {
         messages = [{ role: "user", content: head, images: visionImages() }, ...trimHistory(hist)];
       } else {
         const prep = prepare("dsl", hist, true);
-        system = prep.system; messages = prep.messages;
+        system = prep.system; messages = prep.messages; commitContext = prep.commitContext;
       }
       const chain = [modelId, pickDslFallback(models, modelId)].filter((id): id is string => !!id);
       const ac = new AbortController();
@@ -214,6 +225,7 @@ export function App() {
         let res: { text: string };
         try {
           res = await api.chatStream({ modelId: chain[i], system, messages }, () => {}, { signal: ac.signal });
+          commitContext(); // 送信成功後にのみ確定（全候補失敗時は次回また文脈を注入する）
         } catch (e) {
           if (e instanceof api.CanceledError) throw e; // 停止は即中断（次候補を試さない）
           handleApiError(e); // 空/タイムアウト等はバナーに反映しつつ次の reliable モデルへ
@@ -240,7 +252,7 @@ export function App() {
 
   async function onReview() {
     if (!dslText.trim()) return;
-    setBusy(true); setError(null);
+    setBusy(true); setReviewing(true); setError(null);
     setReviewText("");
     const ac = new AbortController();
     abortRef.current = ac;
@@ -253,8 +265,11 @@ export function App() {
         { signal: ac.signal },
       );
       setReviewText(stripReasoning(res.text));
-    } catch (e) { handleApiError(e); }
-    finally { setBusy(false); abortRef.current = null; }
+    } catch (e) {
+      setReviewText(""); // 失敗/中断時は途中までのレビュー文を残さない（完了したかのように見えるのを防ぐ）
+      handleApiError(e);
+    }
+    finally { setBusy(false); setReviewing(false); abortRef.current = null; }
   }
 
   // 進行中の生成/応答を停止する（停止ボタン）。
@@ -280,8 +295,19 @@ export function App() {
       const bytes = await renderDsl(dslText, template ?? undefined);
       downloadPptx(bytes);
     } catch (e) {
+      // ユーザーによるキャンセルは onCancelRender 側で既にメッセージ表示済み。ここで上書きしない。
+      if (e instanceof RenderCanceledError) return;
       setError(`生成に失敗しました: ${(e as Error).message}\nDSLを修正して再度お試しください。`);
     } finally { setRendering(false); }
+  }
+
+  // レンダ/プレビュー/取り込み中のオーバーレイからのキャンセル。
+  // worker を強制終了する（renderClient 側で次回呼び出し時に自動的に作り直される）。
+  function onCancelRender() {
+    terminateRenderer("ユーザーがキャンセルしました");
+    setRendering(false);
+    setPreviewing(false);
+    setError("処理をキャンセルしました。");
   }
 
   // 与えた DSL（無ければ現在の dslText）の構成プレビューを取得。
@@ -293,11 +319,12 @@ export function App() {
       await initRenderer(setRenderStage);
       setPreview(await previewDsl(text));
     } catch (e) {
+      if (e instanceof RenderCanceledError) return;
       setError(`プレビューに失敗しました: ${(e as Error).message}`);
     } finally { setPreviewing(false); }
   }
 
-  function onPreview() { if (guardDsl()) void runPreview(); }
+  function onPreview() { if (!previewing && guardDsl()) void runPreview(); }
 
   // デッキのタブ切替。構成プレビューを開いた時、未取得なら自動で読み込む。
   function onDeckTab(t: DeckTab) {
@@ -325,6 +352,7 @@ export function App() {
       const spec = await inspectPptx({ name: f.name, bytes, byteLength: bytes.byteLength });
       deck = { name: f.name, spec };
     } catch (e) {
+      if (e instanceof RenderCanceledError) return;
       setError(`取り込みに失敗しました: ${(e as Error).message}`);
       return;
     } finally { setRendering(false); }
@@ -413,7 +441,7 @@ export function App() {
           dsl={dslText} onDslChange={onDslChange} dslValid={hasValidDsl(dslText)}
           preview={preview} previewing={previewing} onPreview={onPreview}
           onRender={onRender} rendering={rendering} renderStage={renderStage} hasTemplate={!!template}
-          onReview={onReview} reviewText={reviewText} onApplyReview={applyReview}
+          onReview={onReview} reviewText={reviewText} reviewing={reviewing} onApplyReview={applyReview}
           canApplyReview={!!extractFencedDsl(reviewText)}
           busy={busy} genRunning={genRunning} generatingModel={labelOf(modelId)}
           genNotice={genNotice} genFailedRaw={genFailedRaw} error={error}
@@ -421,7 +449,7 @@ export function App() {
         />
       </div>
 
-      <RenderOverlay stage={renderStage} rendering={rendering} />
+      <RenderOverlay stage={renderStage} rendering={rendering} onCancel={onCancelRender} />
     </div>
   );
 }

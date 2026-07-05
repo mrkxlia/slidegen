@@ -17,7 +17,7 @@ render_relations.py — 39パターン(Cone社)から、要素間の関係を示
 """
 from __future__ import annotations
 import math
-from pptx.util import Inches, Pt, Emu
+from pptx.util import Inches, Pt
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
 
@@ -25,24 +25,18 @@ from . import render as R
 from .render import (add_rect, add_text, add_hline, render_header, render_foot,
                      SLIDE_W, SLIDE_H, MARGIN, CONTENT_W)
 from .parser import Slide, split_emphasis
-
-
-def _fill(shape, theme, color_name):
-    shape.fill.solid()
-    shape.fill.fore_color.rgb = theme.rgb(color_name)
-    shape.line.fill.background()
-    shape.shadow.inherit = False
+from .render_util import columns_geometry, fill_shape
 
 
 def _add_oval(slide, x, y, w, h, theme, color_name):
     shp = slide.shapes.add_shape(MSO_SHAPE.OVAL, x, y, w, h)
-    _fill(shp, theme, color_name)
+    fill_shape(shp, theme, color_name, no_shadow=True)
     return shp
 
 
 def _add_triangle(slide, x, y, w, h, theme, color_name):
     shp = slide.shapes.add_shape(MSO_SHAPE.ISOSCELES_TRIANGLE, x, y, w, h)
-    _fill(shp, theme, color_name)
+    fill_shape(shp, theme, color_name, no_shadow=True)
     return shp
 
 
@@ -210,7 +204,7 @@ def render_tree(slide, data: Slide, theme):
     if children:
         n = len(children)
         gap = Inches(0.3)
-        cw = (CONTENT_W - gap*(n-1)) / n
+        cw = columns_geometry(CONTENT_W, n, gap)
         cy = py + node_h + Inches(0.9)
         for i, ch in enumerate(children):
             cx = MARGIN + i*(cw+gap)

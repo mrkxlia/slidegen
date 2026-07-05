@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeAll, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import { TopBar, ConversationPane, DeckPane } from "../src/components";
+import { TopBar, ConversationPane, DeckPane, RenderOverlay } from "../src/components";
 
 // jsdom は scrollIntoView 未実装（ConversationPane の useEffect が呼ぶ）。
 beforeAll(() => {
@@ -27,7 +27,7 @@ function deckProps(over: Record<string, unknown> = {}) {
   return {
     tab: "preview", onTab: vi.fn(), dsl: "", onDslChange: vi.fn(), dslValid: false,
     preview: null, previewing: false, onPreview: vi.fn(), onRender: vi.fn(), rendering: false,
-    renderStage: "idle", hasTemplate: false, onReview: vi.fn(), reviewText: "", onApplyReview: vi.fn(),
+    renderStage: "idle", hasTemplate: false, onReview: vi.fn(), reviewText: "", reviewing: false, onApplyReview: vi.fn(),
     canApplyReview: false, busy: false, genRunning: false, generatingModel: "M1", genNotice: null,
     genFailedRaw: null, error: null, onRegenerate: vi.fn(), deckCount: 0, ...over,
   } as never;
@@ -107,5 +107,27 @@ describe("DeckPane（状態分岐）", () => {
     expect(screen.getByText("重大障害を1/3")).toBeInTheDocument();      // 強調語が span 化されて存在
     expect(screen.queryByText(/\{重大障害/)).not.toBeInTheDocument();   // 波括弧は残さない
     expect(screen.getByRole("button", { name: /PowerPoint を生成/ })).toBeInTheDocument();
+  });
+  it("レビュータブのスピナーは reviewing 連動（他の busy 処理中は出さない）", () => {
+    render(<DeckPane {...deckProps({ tab: "review", dsl: "slide title", dslValid: true, busy: true, reviewing: false })} />);
+    expect(screen.queryByText("AI がレビュー中…")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "AIレビューを実行" })).toBeDisabled(); // busy 中は無効化
+  });
+  it("レビュータブは reviewing=true の時だけスピナーを出す", () => {
+    render(<DeckPane {...deckProps({ tab: "review", dsl: "slide title", dslValid: true, busy: true, reviewing: true })} />);
+    expect(screen.getByText("AI がレビュー中…")).toBeInTheDocument();
+  });
+});
+
+describe("RenderOverlay", () => {
+  it("rendering 中はキャンセルボタンを出し、クリックで onCancel を呼ぶ", () => {
+    const onCancel = vi.fn();
+    render(<RenderOverlay stage={"loading-pyodide" as never} rendering onCancel={onCancel} />);
+    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
+    expect(onCancel).toHaveBeenCalledOnce();
+  });
+  it("rendering=false では何も表示しない", () => {
+    render(<RenderOverlay stage={"idle" as never} rendering={false} onCancel={vi.fn()} />);
+    expect(screen.queryByRole("button", { name: "キャンセル" })).not.toBeInTheDocument();
   });
 });

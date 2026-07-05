@@ -12,7 +12,7 @@ from pptx.util import Inches, Pt
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 
 from . import render as R
-from .render import (add_rect, add_text, add_hline, render_header, render_foot,
+from .render import (add_rect, add_text, render_header, render_foot,
                      SLIDE_W, SLIDE_H, MARGIN, CONTENT_W)
 from .parser import Slide
 

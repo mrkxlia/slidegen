@@ -17,15 +17,17 @@ variant:
   baseline : 中央に基準線を引くか
 """
 from __future__ import annotations
-from pptx.util import Inches, Pt, Emu
+from pptx.util import Inches, Pt
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE, MSO_CONNECTOR
 
 from . import render as R
-from .render import (add_rect, add_text, add_hline, render_header, render_foot,
-                     SLIDE_W, SLIDE_H, MARGIN, CONTENT_W)
+from .render import (add_text, add_hline, render_header, render_foot,
+                     SLIDE_W, SLIDE_H, MARGIN)
 from .parser import Slide
+from .render_util import resolve_variant, parse_number
 
+_DEFAULT = {"baseline": True}
 
 VARIANTS = {
     "emotion_arc":   {"baseline": True},
@@ -35,18 +37,10 @@ VARIANTS = {
 }
 
 
-def _resolve(data: Slide) -> dict:
-    name = data.props.get("variant") or data.type
-    return dict(VARIANTS.get(name, {"baseline": True}))
-
-
 def _value(b):
-    if b.lines:
-        try:
-            return float(b.lines[0].replace("+", ""))
-        except Exception:
-            return 0.0
-    return 0.0
+    if not b.lines:
+        return 0.0
+    return parse_number(b.lines[0], context="narrative_curve")
 
 
 def _line_seg(slide, theme, x1, y1, x2, y2, color="main", weight=2.5):
@@ -61,7 +55,7 @@ def _line_seg(slide, theme, x1, y1, x2, y2, color="main", weight=2.5):
 def render_narrative_curve(slide, data: Slide, theme):
     top = render_header(slide, data, theme)
     render_foot(slide, data, theme)
-    v = _resolve(data)
+    v = resolve_variant(data, VARIANTS, _DEFAULT)
     pts = data.blocks
     n = len(pts)
     if n < 2:

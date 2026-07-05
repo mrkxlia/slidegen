@@ -11,12 +11,12 @@ Web調査（プレゼン55パターン等）で頻出かつ「レイアウト構
 from __future__ import annotations
 from pptx.util import Inches, Pt
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
-from pptx.enum.shapes import MSO_SHAPE
 
 from . import render as R
 from .render import (add_rect, add_text, add_hline, render_header, render_foot,
                      SLIDE_W, SLIDE_H, MARGIN, CONTENT_W)
 from .parser import Slide, split_emphasis
+from .render_util import columns_geometry
 
 
 # ---------------------------------------------------------------------------
@@ -24,7 +24,7 @@ from .parser import Slide, split_emphasis
 # ---------------------------------------------------------------------------
 def render_title(slide, data: Slide, theme):
     # 背景をメイン色のベタにして表紙らしく（sandwich構造の表紙側）
-    bg = add_rect(slide, 0, 0, SLIDE_W, SLIDE_H, theme, "main")
+    add_rect(slide, 0, 0, SLIDE_W, SLIDE_H, theme, "main")
     title = data.props.get("headline") or data.props.get("title") or ""
     sub = data.props.get("subtitle") or data.props.get("kicker") or ""
     add_text(slide, MARGIN, SLIDE_H/2 - Inches(1.0), CONTENT_W, Inches(1.4), theme,
@@ -68,7 +68,7 @@ def render_bullets(slide, data: Slide, theme):
         return
     bottom = SLIDE_H - Inches(0.7)
     gap = Inches(0.2)
-    row_h = (bottom - top - gap*(len(items)-1)) / len(items)
+    row_h = columns_geometry(bottom - top, len(items), gap)
     for i, blk in enumerate(items):
         y = top + i*(row_h+gap)
         # 番号バッジ
@@ -100,9 +100,9 @@ def render_cards(slide, data: Slide, theme):
     cols = 2 if n <= 4 else 3
     rows = (n + cols - 1) // cols
     gap = Inches(0.3)
-    cell_w = (CONTENT_W - gap*(cols-1)) / cols
+    cell_w = columns_geometry(CONTENT_W, cols, gap)
     bottom = SLIDE_H - Inches(0.7)
-    cell_h = (bottom - top - gap*(rows-1)) / rows
+    cell_h = columns_geometry(bottom - top, rows, gap)
     for i, blk in enumerate(data.blocks):
         r, c = divmod(i, cols)
         x = MARGIN + c*(cell_w+gap)
@@ -129,7 +129,7 @@ def render_pros_cons(slide, data: Slide, theme):
     if not blocks:
         return
     gap = Inches(0.4)
-    col_w = (CONTENT_W - gap) / 2
+    col_w = columns_geometry(CONTENT_W, 2, gap)
     bottom = SLIDE_H - Inches(0.7)
     col_h = bottom - top
     head_colors = ["main", "muted"]
@@ -164,7 +164,6 @@ def render_table(slide, data: Slide, theme):
     if not rows_data:
         return
     # 列数 = ヘッダ行のセル数（最初の行）。+1 は行ラベル列。
-    header = rows_data[0]
     ncol = 1 + max(len(b.lines) for b in rows_data)
     nrow = len(rows_data)
     bottom = SLIDE_H - Inches(0.8)

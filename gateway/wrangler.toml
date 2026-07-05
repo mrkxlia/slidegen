@@ -25,9 +25,10 @@ ACCESS_TEAM_DOMAIN = ""
 # 未設定だと auth はフェイルクローズ（全リクエスト 500）になる。
 ACCESS_AUD = ""
 # 入力サイズ上限（バイト）。本番キーの暴走課金防止のサーバ強制ガード。
-MAX_INPUT_BYTES = "1000000"
+# 1.5MB: 添付画像(base64・最大4枚×30万字≒1.2MB)＋本文が収まる値。
+MAX_INPUT_BYTES = "1500000"
 # レート制限: 時間窓(秒)あたりの最大リクエスト数。
 RATE_WINDOW_SEC = "60"
 RATE_MAX_REQUESTS = "30"
-# 開発時に Access を無効化（ローカルのみ）。"1" でバイパス。本番では絶対に設定しない。
-DEV_BYPASS_AUTH = "0"
+# 開発時に Access を無効化する場合は gateway/.dev.vars に DEV_BYPASS_AUTH=1 を書く
+# （ここ(wrangler.toml)には置かない。バイパスがデプロイ設定に紛れ込む事故を防ぐため）。

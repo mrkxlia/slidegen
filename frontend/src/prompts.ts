@@ -12,18 +12,111 @@ const DSL_REFERENCE = `
 - インデントは半角スペース2つ。値は必ず "..." で囲む。複数スライドは単独行 --- で区切る。
 - 座標・色・フォント・サイズは絶対に書かない。
 
-## 主要な型（要素数で自動レイアウト）
-- title / section / agenda / quote / bullets … ベース構成
-- compare(2〜4) / cards(2〜6) / kpi(1〜4) / process(3〜6) / pros_cons(2) / table … 内容
-- matrix / cycle / pyramid / tree / formula / timeline / image_left … 関係図
-- prep / sds / kishotenketsu / kpt / swot系 … labeled_blocks 系フレーム
-- comparison_matrix / raci / heatmap_matrix … grid_2d 系（columns で列ラベル、col 配下に記号セル）
-- before_after / problem_solution / dual_hero / image_text … split_layout 系
-- emotion_arc / story_curve … narrative_curve 系
-- section_band / sidebar / source_footer … band_strip 系
-- program / certificate / greeting … framed_canvas 系
+## 記法の基本形（大半の型に共通）
+座標・色・フォントは書かない。ほとんどの型は下記の骨格だけで書ける
+（型名を変えるだけでラベル・配置・強調色・要素数上限が自動で決まる）。
+
+slide <型名>
+  kicker "小見出し（任意）"
+  headline "主張（言い切り）"
+  foot "脚注（任意）"
+  col "見出し（型によっては省略可）" highlight   # highlight は強調したい1個だけに付ける
+    "本文/値 1行目"
+    "本文/値 2行目（型によっては複数行）"
+  col "見出し2"
+    "本文/値"
+
+型ごとの差は「col にタイトルが要るか」「col の行数」「用途」だけ。下記カタログの
+用途を見て型名を選び、中身（headline/col の文言）だけを書けばよい。
+
+## 型カタログ（RENDERERS 全100型。用途で型名を選ぶ）
+- title / section / agenda / quote / bullets … 表紙・章扉・目次・引用・箇条書き
+- compare(2〜4) / cards(2〜6) / kpi(1〜4) / process(3〜6) / pros_cons(2) / table … 比較・カード・指標・手順・メリデメ・表
+- matrix / cycle / pyramid / tree / formula / timeline / image_left … 対応表・循環・階層・樹形図・数式・年表・画像+文
+- labeled_blocks(基底) / prep / sds / desc … 話法フレーム（Point-Reason-Example-Point 等）
+- kishotenketsu / johakyu … 物語フレーム（起承転結・序破急）
+- feia / haikei … 分析・提案（Finding-Action・背景-課題-解決）
+- kpt / ssc / fourls … ふりかえり（Keep-Problem-Try・Stop-Start-Continue・4Ls）
+- brand_pillars / sipoc / what_sowhat_nowwhat … フレームワーク解説
+- 5e / kwl … 教育フレーム（5E・KWL）
+- split_layout(基底) / before_after / problem_solution / dual_hero / image_text … 左右分割：対比・課題解決・2要素並置・画像+文
+- hypothesis_prediction / limitations_future … 左右分割：仮説と予測・限界と展望
+- grid_2d(基底) / comparison_matrix / scorecard_compare / raci / heatmap_matrix / decision_matrix / plain_grid
+    … 行×列のセル（評価記号◎○△×・スコア比較・責任分担・色濃淡評価・意思決定基準・単純グリッド。書き方は下記参照）
+- nodes_and_connectors(基底) / process_flow / value_chain / cycle_loop / pdca / flow_branching / funnel_steps
+    … ノード+矢印（横並びフロー・バリューチェーン・循環・PDCA・分岐フロー・ファネル）
+- hero_canvas(基底) / big_fact / stat_trio / tagline / takahashi / ted_idea / break_slide / statement
+    … 単一フォーカス（巨大数字1つ／3つの数字並置／一言コピー／高橋メソッド／TED型メッセージ／休憩幕間／宣言文。書き方は下記参照）
+- columns_with_header(基底) / policy_3col / know_dontknow / editorial_cols / numbered_columns / data_limitations
+    … ヘッダー帯+N列（論点整理・分かっている/いないこと・編集コラム・番号付き列・データの限界注記）
+- narrative_curve(基底) / emotion_arc / story_curve / trend_line / sparkline_narrative … 折れ線+注釈ピン（感情曲線・物語曲線・トレンド線・注釈付き推移）
+- band_strip(基底) / section_band / sidebar / source_footer / chapter_band … 水平/垂直の帯（章扉・サイドバー・出典フッタ・章番号帯）
+- framed_canvas(基底) / program / greeting / certificate / announcement … 外枠+内部（式次第・挨拶状・賞状・告知）
 - bar_chart / line_chart / bar_horizontal / stacked_bar / stacked_100_bar / clustered_bar
     … 添付Excel/CSVの数値をネイティブ編集可能グラフ化（下記の書き方を厳守）
+- waterfall / swot(4象限固定) / venn2(2円) / bmc(9ブロック固定)
+    … 増減の分解＋定番ビジネスフレーム（col の数・順序が意味を持つ。下記参照）
+- journey_map / pricing_tiers … カスタマージャーニー（stages必須。下記参照）・料金プラン比較（col highlight で推奨プラン強調）
+- value_chain … バリューチェーン（nodes_and_connectors 系。上記参照）
+- code_block / terminal / api_endpoint_table
+    … ソースコード・ターミナル出力・API仕様一覧（col の行がコード/コマンド行、または title=HTTPメソッド。下記参照）
+- data_source_footer … 出典付きの主張（headline+message+source。col は使わない。下記参照）
+
+## hero_canvas 系の書き方（big_fact 等は col ではなく専用プロパティ）
+slide big_fact
+  number "3.2x"
+  caption "導入後3ヶ月の処理速度"
+  foot "※当社調べ N=42"
+
+slide stat_trio
+  col "98%"
+    "顧客継続率"
+  col "1.5億"
+    "累計取引額"
+
+slide tagline
+  headline "一言で伝えたいコピー"
+
+## table の書き方（先頭の col が見出し行になる）
+slide table
+  headline "主要3製品の早見表"
+  col "項目"          # 1つ目の col = ヘッダー行（列見出し）
+    "SalesBoost"
+    "A社"
+  col "月額"
+    "2,580円"
+    "3,980円"
+
+## data_source_footer の書き方（col を使わない）
+slide data_source_footer
+  kicker "市場規模"
+  headline "国内SaaS市場は年率18%で拡大している"
+  message "本文。{強調したい語句}は波括弧で1箇所だけ。"
+  source "出典名"
+  period "対象期間（例: 2020〜2025）"
+  n "サンプルサイズ（無ければ — ）"
+  note "補足（任意）"
+
+## journey_map の書き方（stages が必須）
+slide journey_map
+  headline "導入から定着までのジャーニー"
+  stages "認知" "検討" "導入" "活用"   # ステージ（列）
+  col "行動"                          # レーン（行）。行数=stages数
+    "広告で知る" "他社と比較" "契約" "日次で利用"
+  col "感情"
+    "半信半疑" "不安と期待" "設定が大変" "効果を実感"
+
+## code_block / terminal の書き方（col の行がそのままコード/コマンド行）
+slide code_block
+  headline "リトライ処理の実装"
+  lang "python — retry.py"
+  col
+    "def fetch_with_retry(url, n=3):"
+    "    for i in range(n):"        # 行頭スペースはそのまま保持される（インデント表現）
+
+## swot / venn2 / bmc（col の数と順序が固定）
+swot は col を4つ（強み・弱み・機会・脅威の順）、venn2 は3つ（左円・重なり・右円の順）、
+bmc は9つ（9ブロックの固定順）で書く。順序を守れば col にタイトルは不要。
 
 ## チャート型の書き方（重要・厳守）
 チャートは専用の型名そのものを slide の型に使う（"chart_type" というプロパティは存在しない）。
@@ -88,7 +181,10 @@ const PHASE_OUTLINE = `これまでのヒアリング内容をもとに、スラ
 - 全体で何を達成する流れかを2〜3文で添える。
 - 末尾に「この流れでよければ『今ある情報で生成』に進んでください。修正点があれば教えてください。」と書く。
 
-型は slidegen の対応型から選ぶ。数値データがあれば bar_chart/line_chart/kpi を積極的に使う。` + DSL_REFERENCE;
+型は slidegen の対応型から選ぶ。数値データがあれば bar_chart/line_chart/kpi を積極的に使う。
+内容がフレームワーク的（比較・分解・対比・時系列・関係図等）に当てはまるときは、bullets/cards
+だけに寄せず、下記カタログの該当する型（例: 対比なら before_after、分解なら waterfall、
+関係図なら matrix/cycle/pyramid 等）を積極的に選ぶ。` + DSL_REFERENCE;
 
 const PHASE_DSL = `これまでの会話・添付データをもとに、slidegen の DSL を *それだけ* 出力してください。
 壁打ちの途中で呼ばれることもあります。その場合は、足りない情報は常識的な前提で補い、
@@ -100,6 +196,8 @@ const PHASE_DSL = `これまでの会話・添付データをもとに、slidege
   JSON や、意味のない記号（\`}\` 等）の繰り返しは絶対に出力しない。
 - 複数スライドは単独行 --- で区切る。インデントは半角スペース2つ。値は "..." で囲む。
 - 添付Excel/CSVの数値は bar_chart / line_chart 等のネイティブチャート型で実データを反映させる。
+- 内容に合う型を下記カタログから積極的に選ぶ（対比・分解・関係図・フレームワーク等に該当する
+  専用の型があれば bullets/cards だけに寄せない）。
 - 1スライド1メッセージ、強調は原則1箇所。
 - 情報が薄いときも、最低限 表紙(title) + 本編数枚 + まとめ の構成で形にする。
 ` + DSL_REFERENCE;
@@ -142,7 +240,17 @@ export const IMPORT_DECK_SYSTEM = `ユーザーが既存の PowerPoint デッキ
 「構造スペック」（スライド毎の図形種別・配置%・塗り色・フォント階層・面積パレット・テキスト）が与えられます。
 これを slidegen の DSL に *再構成* してください。
 
-## 方針
+## 構造スペックの読み方
+- 各図形行は \`- 種別 @(x%,y% wxh%) fill=色 pt数 テキスト\` の形式。TABLE/CHART は追加情報を持つ:
+  - \`table=[セルA / セルB] ; [セルC / セルD]\`（1つ目の \`[...]\` が列見出し行）→ slidegen の table 型へ、
+    行×列の対応を保ったまま転記する（col の1つ目=見出し行、以降=データ行）。
+  - \`chart=種別 cats=[Q1 / Q2 / ...] 系列名=[数値 / 数値 / ...]\`（複数系列は系列名ごとに繰り返し）
+    → bar_chart / line_chart 等の対応チャート型へ。**cats と数値は必ずこの値をそのまま使う
+    （それらしい数値の捏造・丸め直しは禁止。根拠は機械抽出された実データのみ）**。
+  - テキストの \`- 見出し / -- サブ項目\` は箇条書きの階層（\`-\`=レベル0, \`--\`=レベル1 …）を表す。
+    見出しと本文の主従関係を読み取り、DSL の headline/col に適切に配分する。
+  - グループ化されていた図形は、グループ自体は現れず中身の図形が個別に（絶対座標へ変換済みで）
+    並んでいる。近い座標にある図形群は元は1つのまとまりだった可能性を考慮して束ねてよい。
 - 見た目の完全再現は目的ではない。各スライドの意図（表紙・比較・数値・流れ 等）を読み取り、
   最も近い slidegen の型に置き換える（座標・色・フォントは書かない）。
 - テキスト内容は忠実に引き継ぐ（勝手に要約・創作しない。スペック側で切り詰められた文はそのまま使う）。

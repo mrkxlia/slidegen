@@ -67,8 +67,8 @@ slidegen sync  <original.slide> <edited.pptx> [--apply] [-o <updated.slide>]
 | GET | `/api/models` | `{models:[{id,label,tier,reliableForDsl,vision}]}`。secret の有無で利用可能なものだけ返す |
 | POST | `/api/chat` | **SSE 専用**。LLM へ中継（鍵注入）。クライアントは `?stream=1` を付与（`frontend/src/api.ts`） |
 
-- **`/api/chat` リクエスト**: `{ modelId, system?, messages[], allowFallback? }`。入力上限 `MAX_INPUT_BYTES`（**UTF-8 バイト**、既定 1000000）超で 413。
-  `messages[].images?`（base64・mimeType）で添付画像を運べる（jpeg/png/webp、1枚 base64 30万字以内、1リクエスト最大4枚。違反は 400）。
+- **`/api/chat` リクエスト**: `{ modelId, system?, messages[], allowFallback? }`。入力上限 `MAX_INPUT_BYTES`（**UTF-8 バイト**、既定 1500000）超で 413。
+  `messages[].images?`（base64・mimeType）で添付画像を運べる（jpeg/png/webp、1枚 base64 30万字以内、1リクエスト最大4枚＝合計最大約1.2MB。違反は 400）。
   画像は vision 対応モデル（`/api/models` の `vision:true`）にのみ送られ、非 vision モデルへのフォールバック時はエンコーダが黙って剥がす。
 - **SSE イベント**（`data: <json>\n\n`）:
   - `{"delta":"…"}` 逐次トークン / `{"switch":"<id>"}` モデル切替 /
@@ -94,7 +94,7 @@ slidegen sync  <original.slide> <edited.pptx> [--apply] [-o <updated.slide>]
 
 - 固定窓カウンタ。KV(`RL`) があれば isolate 横断、無ければメモリでベストエフォート。
 - 既定: `RATE_WINDOW_SEC=60` / `RATE_MAX_REQUESTS=30`。超過で 429（`Retry-After` 付き）。
-- 入力上限 `MAX_INPUT_BYTES` 既定 1000000（UTF-8。添付画像 base64 を含むため。テキストのみ時代は 200000）。
+- 入力上限 `MAX_INPUT_BYTES` 既定 1500000（UTF-8。添付画像 base64 最大4枚≒1.2MB＋本文が収まる値。テキストのみ時代は 200000）。
 
 ## 10. レンダリングパイプライン（ブラウザ） — `frontend/src/render/`
 

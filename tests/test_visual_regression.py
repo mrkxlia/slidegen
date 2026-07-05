@@ -13,7 +13,7 @@ golden（tests/__snapshots__/visual_regression.json）はリポジトリにコ�
 本テスト（案B）は図形ツリーの比較なので、図形ツリーは不変でも崩れる回帰
 （描画順による重なり・微細なレイアウト崩れ 等）を取りこぼす可能性がある。また稀に脆すぎて
 運用が回らなくなることもある。その場合は案A＝画像スナップショットへ移行する:
-`tests/visual.py` の `slide_to_images()`（LibreOffice + pdftoppm）で代表型を画像化し、golden 画像と
+`tools/visual.py` の `slide_to_images()`（LibreOffice + pdftoppm）で代表型を画像化し、golden 画像と
 ピクセル/知覚ハッシュで比較する。LibreOffice 依存で CI が重くなるため、案A採用時は対象を重要型に絞ること。
 """
 from __future__ import annotations

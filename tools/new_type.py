@@ -3,7 +3,7 @@ new_type.py — 新しい型を1コマンドで追加するためのワークフ
 
 Claude Code が「新しい型を足す」と言われたとき、これを使う：
 
-  python -m tests.new_type pyramid_inverted \\
+  uv run --extra dev python tools/new_type.py pyramid_inverted \\
     --intent "じょうろ型ピラミッド：下位ほど規模が小" \\
     --layout columns --count "3..5"
 
@@ -15,11 +15,11 @@ Claude Code が「新しい型を足す」と言われたとき、これを使�
   5. （実装後に）モンタージュを生成
 
 ループの回し方:
-  $ python -m tests.new_type mytype --intent "..." --layout grid
+  $ uv run --extra dev python tools/new_type.py mytype --intent "..." --layout grid
    → 雛形ファイルが生成される
   $ # ここで slidegen/render_mytype.py の TODO を埋める
   $ # examples/mytype.slide のサンプル記法を仕上げる
-  $ python -m tests.new_type mytype --check
+  $ uv run --extra dev python tools/new_type.py mytype --check
    → pytest + モンタージュ生成 + チェックリスト表示
 """
 from __future__ import annotations
@@ -76,7 +76,7 @@ def step_init(args):
         print(f"  ! {render_path} が既に存在。--force で上書き")
     else:
         subprocess.run([
-            "python3", "-m", "slidegen.scaffold_type",
+            sys.executable, "-m", "slidegen.scaffold_type",
             str(spec_path), "-o", str(render_path),
         ], check=True, cwd=str(ROOT))
         print(f"  ✓ レンダラ雛形: {render_path}")
@@ -111,7 +111,7 @@ def step_init(args):
     print("次のステップ:")
     print(f"  1. {render_path} の TODO を実装")
     print(f"  2. {sample_path} のサンプル記法を仕上げる")
-    print(f"  3. python -m tests.new_type {args.name} --check で検証")
+    print(f"  3. uv run --extra dev python tools/new_type.py {args.name} --check で検証")
 
 
 def step_check(args):
@@ -126,7 +126,7 @@ def step_check(args):
     print("[ 第1層 ] 構造インバリアントの自動テスト (pytest)")
     print("=" * 60)
     r = subprocess.run(
-        ["python3", "-m", "pytest", "tests/test_invariants.py", "-q"],
+        [sys.executable, "-m", "pytest", "tests/test_invariants.py", "-q"],
         cwd=str(ROOT), env={**os.environ, "PYTHONPATH": str(ROOT)},
     )
     if r.returncode != 0:
@@ -140,7 +140,7 @@ def step_check(args):
     print("[ 第2層 ] モンタージュ生成 → 目視確認")
     print("=" * 60)
     r = subprocess.run(
-        ["python3", "-m", "tests.visual", str(sample_path),
+        [sys.executable, str(ROOT / "tools" / "visual.py"), str(sample_path),
          "-o", f"out/{args.name}.jpg"],
         cwd=str(ROOT), env={**os.environ, "PYTHONPATH": str(ROOT)},
     )

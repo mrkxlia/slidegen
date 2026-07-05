@@ -55,7 +55,8 @@ cd tools && npm i pyodide@0.28.3 && node pyodide_spike.mjs
 - `ALLOWED_ORIGIN` … 実際の Pages URL（同一オリジンなので CORS 判定には実質効かないが Hono cors に渡る）。
 - `ACCESS_TEAM_DOMAIN` … 例 `myteam`（→ `https://myteam.cloudflareaccess.com`）。手順4で設定。
 - `ACCESS_AUD` … 手順4で発行される Application Audience(AUD)。**未設定だと auth はフェイルクローズ（全リクエスト500）**。
-- `DEV_BYPASS_AUTH = "0"` … 本番では必ず 0（ローカルは `gateway/.dev.vars` 側で 1）。
+- `DEV_BYPASS_AUTH` は **`wrangler.toml` には置かない**（本番デプロイ設定にバイパスが紛れ込む事故を防ぐため）。
+  ローカル開発は `gateway/.dev.vars` 側でのみ `DEV_BYPASS_AUTH=1` を設定する。
 - レート制限を複数isolate横断にするなら KV を作成し `[[kv_namespaces]]` を有効化:
   `npx wrangler kv namespace create RL`
 
@@ -123,14 +124,15 @@ bash tools/build_wheel.sh        # uv build
 # ターミナルA: gateway（:8787）
 cd gateway && npm i
 cp .dev.vars.example .dev.vars   # GEMINI_API_KEY 等を記入
-printf '\nDEV_BYPASS_AUTH=1\n' >> .dev.vars   # 認証バイパスは .dev.vars(gitignore) 側で。本番(wrangler.toml)は "0"
+printf '\nDEV_BYPASS_AUTH=1\n' >> .dev.vars   # 認証バイパスは .dev.vars(gitignore) 側で。wrangler.toml には置かない
 npx wrangler dev
 
 # ターミナルB: frontend（:5173 → /api を :8787 へ proxy）
 cd frontend && npm i && npm run dev
 ```
 ローカルの要点:
-- 認証バイパスは **`gateway/.dev.vars` の `DEV_BYPASS_AUTH=1`**（追跡ファイルを汚さない）。本番は `wrangler.toml` の `"0"`。
+- 認証バイパスは **`gateway/.dev.vars` の `DEV_BYPASS_AUTH=1`**（追跡ファイルを汚さない）。
+  `wrangler.toml`（本番・ローカル dev 共通設定ファイル）には置かない。
 - `wrangler dev` のシークレットは `gateway/.dev.vars`（gitignore 済み）。Gemini/OpenRouter が確実
   （`env.AI`=Workers AI はローカルで使えないことがある）。
 - 初回 pptx 生成は Pyodide ロードに数秒（要ネット、以後キャッシュ）。

@@ -23,7 +23,7 @@ scaffold_type.py — 「型スペック(JSON)」から新しい render 関数の
 原則：色・フォントは theme 経由のみ。強調は accent のみ。新色を足さない。
 """
 from __future__ import annotations
-import sys, json, argparse, textwrap
+import json, argparse
 
 
 LAYOUT_HINTS = {
