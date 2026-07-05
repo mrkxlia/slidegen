@@ -31,7 +31,9 @@ from . import render as R
 from .render import (add_rect, add_text, add_hline,
                      SLIDE_W, SLIDE_H, MARGIN, CONTENT_W)
 from .parser import Slide, split_emphasis
+from .render_util import resolve_variant
 
+_DEFAULT = {"mode": "program"}
 
 VARIANTS = {
     "program":      {"mode": "program"},
@@ -39,11 +41,6 @@ VARIANTS = {
     "certificate":  {"mode": "certificate"},
     "announcement": {"mode": "announcement"},
 }
-
-
-def _resolve(data: Slide) -> dict:
-    name = data.props.get("variant") or data.type
-    return dict(VARIANTS.get(name, {"mode": "program"}))
 
 
 def _frame(slide, theme):
@@ -63,7 +60,7 @@ def _frame(slide, theme):
 
 
 def render_framed_canvas(slide, data: Slide, theme):
-    v = _resolve(data)
+    v = resolve_variant(data, VARIANTS, _DEFAULT)
     mode = v["mode"]
     _frame(slide, theme)
 

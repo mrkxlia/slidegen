@@ -2,7 +2,7 @@
 visual.py — 第2層：記法→pptx→画像化→モンタージュ生成
 
 社内 Claude Code のループはこの1コマンドで回す：
-  python -m tests.visual examples/showcase.slide --dpi 90 -o out/showcase.jpg
+  uv run --extra dev python tools/visual.py examples/showcase.slide --dpi 90 -o out/showcase.jpg
 
 何が出る？
   - 生成された pptx
@@ -14,14 +14,14 @@ visual.py — 第2層：記法→pptx→画像化→モンタージュ生成
   1. render_<新型>.py を実装
   2. examples/<新型>.slide にサンプル記法を作る
   3. pytest tests/test_invariants.py  ← 自動テスト（第1層）
-  4. python -m tests.visual examples/<新型>.slide  ← モンタージュ確認（第2層）
+  4. uv run --extra dev python tools/visual.py examples/<新型>.slide  ← モンタージュ確認（第2層）
   5. モンタージュを目で見て、意図と合っていればOK／違えば修正→2へ
 """
 from __future__ import annotations
 import sys, os, argparse, subprocess, shutil, pathlib, tempfile
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-import slidegen
+import slidegen  # noqa: F401  全 render_* の登録（parse/build 経由の render_slide 解決に必要）
 from slidegen.parser import parse
 from slidegen.render import build
 
@@ -48,11 +48,13 @@ def slide_to_images(pptx_path: pathlib.Path, out_dir: pathlib.Path, dpi: int = 9
     out_dir.mkdir(parents=True, exist_ok=True)
     # PDF経由でラスタライズ
     pdf_path = out_dir / (pptx_path.stem + ".pdf")
-    # LibreOffice 経由（pptx skill同梱のラッパーを使用）
-    soffice_script = pathlib.Path("/mnt/skills/public/pptx/scripts/office/soffice.py")
+    # LibreOffice 経由（環境依存の pptx skill 同梱ラッパー。SLIDEGEN_SOFFICE_SCRIPT で上書き可能）。
+    soffice_script = pathlib.Path(
+        os.environ.get("SLIDEGEN_SOFFICE_SCRIPT", "/mnt/skills/public/pptx/scripts/office/soffice.py")
+    )
     if soffice_script.exists():
         subprocess.run([
-            "python3", str(soffice_script),
+            sys.executable, str(soffice_script),
             "--headless", "--convert-to", "pdf",
             "--outdir", str(out_dir), str(pptx_path)
         ], check=True, capture_output=True)

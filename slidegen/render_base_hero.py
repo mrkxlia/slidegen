@@ -25,14 +25,15 @@ variant:
       "平均応答時間"
 """
 from __future__ import annotations
-from pptx.util import Inches, Pt
+from pptx.util import Inches
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 
 from . import render as R
-from .render import (add_rect, add_text, add_hline, render_foot,
-                     SLIDE_W, SLIDE_H, MARGIN, CONTENT_W)
+from .render import add_rect, add_text, render_foot, SLIDE_W, SLIDE_H, MARGIN, CONTENT_W
 from .parser import Slide, split_emphasis
+from .render_util import resolve_variant, columns_geometry
 
+_DEFAULT = {"mode": "statement", "bg": None}
 
 VARIANTS = {
     "big_fact":   {"mode": "fact",      "bg": None},
@@ -45,13 +46,8 @@ VARIANTS = {
 }
 
 
-def _resolve(data: Slide) -> dict:
-    name = data.props.get("variant") or data.type
-    return dict(VARIANTS.get(name, {"mode": "statement", "bg": None}))
-
-
 def render_hero_canvas(slide, data: Slide, theme):
-    v = _resolve(data)
+    v = resolve_variant(data, VARIANTS, _DEFAULT)
     mode = v["mode"]
     bg = v["bg"]
 
@@ -81,7 +77,7 @@ def render_hero_canvas(slide, data: Slide, theme):
             return
         n = len(items)
         gap = Inches(0.5)
-        cw = (CONTENT_W - gap * (n - 1)) / n
+        cw = columns_geometry(CONTENT_W, n, gap)
         y = SLIDE_H * 0.32
         for i, b in enumerate(items):
             x = MARGIN + i * (cw + gap)

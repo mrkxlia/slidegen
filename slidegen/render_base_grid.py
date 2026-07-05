@@ -27,14 +27,15 @@ variant:
 """
 from __future__ import annotations
 import re
-from pptx.util import Inches, Pt
+from pptx.util import Inches
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 
 from . import render as R
-from .render import (add_rect, add_text, render_header, render_foot,
-                     SLIDE_W, SLIDE_H, MARGIN, CONTENT_W)
+from .render import add_rect, add_text, render_header, render_foot, SLIDE_H, MARGIN, CONTENT_W
 from .parser import Slide, split_emphasis
+from .render_util import resolve_variant, columns_geometry
 
+_DEFAULT = {"mode": "plain", "row_label": True}
 
 VARIANTS = {
     "comparison_matrix": {"mode": "symbol", "row_label": True},
@@ -50,11 +51,6 @@ _SYMBOL_RANK = {"◎": 1.0, "○": 0.66, "△": 0.33, "×": 0.0,
                 "●": 1.0, "◐": 0.5, "◯": 0.0, "✓": 1.0, "✗": 0.0}
 # RACI 1文字 → 色名
 _RAG_LETTER = {"R": "accent", "A": "main", "C": "base_2", "I": "base_2"}
-
-
-def _resolve(data: Slide) -> dict:
-    name = data.props.get("variant") or data.type
-    return dict(VARIANTS.get(name, {"mode": "plain", "row_label": True}))
 
 
 def _cell_color(mode, value):
@@ -77,7 +73,7 @@ def _cell_color(mode, value):
 def render_grid_2d(slide, data: Slide, theme):
     top = render_header(slide, data, theme)
     render_foot(slide, data, theme)
-    v = _resolve(data)
+    v = resolve_variant(data, VARIANTS, _DEFAULT)
     mode = v["mode"]
 
     # 列見出し：props["columns_list"]（多値）優先、無ければ columns 単値、それも無ければ自動
@@ -101,7 +97,7 @@ def render_grid_2d(slide, data: Slide, theme):
     # 列幅：行ラベル列はやや広め
     label_w = Inches(2.2) if has_rowlabel else Inches(0)
     grid_w = CONTENT_W - label_w
-    cw = (grid_w - gap * (ncol - 1)) / ncol if ncol else grid_w
+    cw = columns_geometry(grid_w, ncol, gap)
 
     header_h = Inches(0.5)
     rh = (avail_h - header_h - gap * nrow) / nrow if nrow else avail_h
@@ -137,12 +133,6 @@ def render_grid_2d(slide, data: Slide, theme):
             add_text(slide, x, y, cw, rh, theme, split_emphasis(val),
                      size=13, color_name=txt_color,
                      align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
-
-
-def _split_quoted(s: str):
-    """'"a" "b" "c"' → ['a','b','c']。クォート無しはスペース分割。"""
-    found = re.findall(r'"([^"]*)"', s)
-    return found if found else s.split()
 
 
 R.register_many(["grid_2d", *VARIANTS], render_grid_2d)

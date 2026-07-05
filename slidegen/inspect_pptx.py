@@ -19,10 +19,9 @@ inspect_compact() はブラウザ（Pyodide worker）のデザイン取り込み
 サイズ上限（スライド数・スライドあたり文字数）を関数側で保証する。
 """
 from __future__ import annotations
-import sys, json, argparse
+import json, argparse
 from collections import Counter
 from pptx import Presentation
-from pptx.util import Emu
 
 
 def _emu_to_pct(v, total):

@@ -22,15 +22,15 @@ variant:
     note "解約・無料分を除外"
 """
 from __future__ import annotations
-from pptx.util import Inches, Pt
+from pptx.util import Inches
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 
 from . import render as R
-from .render import (add_rect, add_text, add_hline, render_header, render_foot,
-                     SLIDE_W, SLIDE_H, MARGIN, CONTENT_W)
+from .render import add_rect, add_text, render_header, SLIDE_W, SLIDE_H, MARGIN, CONTENT_W
 from .parser import Slide, split_emphasis
-from .render_base_labeled import _block_items, _add_items_text
+from .render_util import block_items, add_items_text, resolve_variant
 
+_DEFAULT = {"mode": "section"}
 
 VARIANTS = {
     "section_band": {"mode": "section"},
@@ -40,13 +40,8 @@ VARIANTS = {
 }
 
 
-def _resolve(data: Slide) -> dict:
-    name = data.props.get("variant") or data.type
-    return dict(VARIANTS.get(name, {"mode": "section"}))
-
-
 def render_band_strip(slide, data: Slide, theme):
-    v = _resolve(data)
+    v = resolve_variant(data, VARIANTS, _DEFAULT)
     mode = v["mode"]
 
     if mode == "section":
@@ -89,8 +84,8 @@ def render_band_strip(slide, data: Slide, theme):
         bx = MARGIN + sb_w + Inches(0.5)
         bw = SLIDE_W - bx - MARGIN
         if data.blocks:
-            items = _block_items(data.blocks[0])
-            _add_items_text(slide, int(bx), SLIDE_H * 0.28, int(bw), SLIDE_H * 0.5,
+            items = block_items(data.blocks[0])
+            add_items_text(slide, int(bx), SLIDE_H * 0.28, int(bw), SLIDE_H * 0.5,
                             theme, items, size=16, anchor=MSO_ANCHOR.TOP,
                             bullet=(len(items) > 1))
 
@@ -98,8 +93,8 @@ def render_band_strip(slide, data: Slide, theme):
         top = render_header(slide, data, theme)
         # 本文（あればブロック、なければ空）
         if data.blocks:
-            items = _block_items(data.blocks[0])
-            _add_items_text(slide, MARGIN, top + Inches(0.2), CONTENT_W,
+            items = block_items(data.blocks[0])
+            add_items_text(slide, MARGIN, top + Inches(0.2), CONTENT_W,
                             SLIDE_H - top - Inches(1.4), theme, items,
                             size=16, anchor=MSO_ANCHOR.TOP, bullet=(len(items) > 1))
         # 下部の出典帯

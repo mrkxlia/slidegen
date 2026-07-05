@@ -30,14 +30,17 @@ DSL（既存パーサで書ける形）:
   clustered_bar    : クラスター縦棒（明示）
 """
 from __future__ import annotations
+import logging
+
 from pptx.util import Inches, Pt
 from pptx.chart.data import CategoryChartData
 from pptx.enum.chart import XL_CHART_TYPE, XL_LEGEND_POSITION
 
 from . import render as R
-from .render import (add_text, render_header, render_foot,
-                     SLIDE_W, SLIDE_H, MARGIN, CONTENT_W)
+from .render import add_text, render_header, render_foot, SLIDE_H, MARGIN, CONTENT_W
 from .parser import Slide
+
+_log = logging.getLogger(__name__)
 
 
 CHART_TYPES = {
@@ -58,7 +61,8 @@ def _nums(lines):
     for s in lines:
         try:
             out.append(float(s.replace(",", "").replace("+", "")))
-        except Exception:
+        except (ValueError, AttributeError):
+            _log.warning("チャートの数値として解釈できない値 %r を 0.0 として扱います。", s)
             out.append(0.0)
     return out
 
@@ -130,8 +134,8 @@ def render_chart(slide, data: Slide, theme):
             plot.data_labels.font.name = theme.font
             plot.data_labels.number_format = '#,##0'
             plot.data_labels.number_format_is_linked = False
-    except Exception:
-        pass
+    except (AttributeError, IndexError, KeyError) as e:
+        _log.warning("チャートのデータラベル設定に失敗しました（%s）。ラベル無しで続行します。", e)
 
     # 軸フォント・単位
     try:
@@ -142,8 +146,8 @@ def render_chart(slide, data: Slide, theme):
         vax.tick_labels.font.size = Pt(10)
         vax.tick_labels.font.name = theme.font
         vax.has_major_gridlines = True
-    except Exception:
-        pass
+    except (AttributeError, ValueError) as e:
+        _log.warning("チャートの軸スタイル設定に失敗しました（%s）。既定の軸表示で続行します。", e)
 
     # 単位ラベル（右上に小さく）
     unit = data.props.get("unit")

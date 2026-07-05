@@ -12,10 +12,9 @@ potx が用意できたら、下記のRGB直値を potx のスライドマスタ
 python-pptx では prs.slide_masters[0] のテーマ色を読めるので、そこから引く実装に変更する。
 """
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from pptx.util import Pt
 from pptx.dml.color import RGBColor
 from pptx.oxml.ns import qn
 

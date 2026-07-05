@@ -21,16 +21,17 @@ layout モードで見た目が変わる：
   → 横一列＋間に矢印を自動。
 """
 from __future__ import annotations
-from pptx.util import Inches, Pt
+from pptx.util import Inches
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
 import math
 
 from . import render as R
-from .render import (add_rect, add_text, render_header, render_foot,
-                     SLIDE_W, SLIDE_H, MARGIN, CONTENT_W)
+from .render import add_rect, add_text, render_header, render_foot, SLIDE_H, MARGIN, CONTENT_W
 from .parser import Slide, split_emphasis
+from .render_util import resolve_variant
 
+_DEFAULT = {"layout": "linear", "labels": None}
 
 VARIANTS = {
     "process_flow":  {"layout": "linear",   "labels": None},
@@ -40,11 +41,6 @@ VARIANTS = {
     "flow_branching":{"layout": "branching","labels": None},
     "funnel_steps":  {"layout": "funnel",   "labels": None},
 }
-
-
-def _resolve(data: Slide) -> dict:
-    name = data.props.get("variant") or data.type
-    return dict(VARIANTS.get(name, {"layout": "linear", "labels": None}))
 
 
 def _node_box(slide, theme, x, y, w, h, title, desc, accent):
@@ -74,7 +70,7 @@ def _arrow(slide, theme, x, y, w, h, direction="right"):
 def render_nodes_and_connectors(slide, data: Slide, theme):
     top = render_header(slide, data, theme)
     render_foot(slide, data, theme)
-    v = _resolve(data)
+    v = resolve_variant(data, VARIANTS, _DEFAULT)
     layout = v["layout"]
     labels = v["labels"]
     nodes = data.blocks

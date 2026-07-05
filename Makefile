@@ -18,7 +18,7 @@ visual:
 	@for f in examples/*.slide; do \
 		name=$$(basename $$f .slide); \
 		echo "▶ $$name"; \
-		uv run --extra dev python -m tests.visual $$f -o out/$$name.jpg; \
+		uv run --extra dev python tools/visual.py $$f -o out/$$name.jpg; \
 	done
 
 # 全部：第1層→第2層
@@ -26,14 +26,14 @@ all: test visual
 
 # 新型追加（使い方: make new TYPE=mytype INTENT="..." LAYOUT=grid COUNT="3..6"）
 new:
-	uv run --extra dev python -m tests.new_type $(TYPE) --intent "$(INTENT)" --layout $(LAYOUT) --count "$(COUNT)"
+	uv run --extra dev python tools/new_type.py $(TYPE) --intent "$(INTENT)" --layout $(LAYOUT) --count "$(COUNT)"
 
 # 新型検証（使い方: make check TYPE=mytype）
 check:
-	uv run --extra dev python -m tests.new_type $(TYPE) --check
+	uv run --extra dev python tools/new_type.py $(TYPE) --check
 
 clean:
-	rm -rf out __pycache__ */__pycache__ */*/__pycache__
+	rm -rf out build dist *.egg-info __pycache__ */__pycache__ */*/__pycache__
 
 help:
 	@echo "make test         - 第1層: pytestで構造インバリアントを確認"

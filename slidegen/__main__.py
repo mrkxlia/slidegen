@@ -15,14 +15,16 @@ import argparse
 import sys
 
 import slidegen  # 親パッケージの import で全 render_* が登録される
-from .api import render_text, render_file
+from .api import render_file
 from .render import RENDERERS
 from .dsl_validator import validate as validate_dsl
 from . import sync as _sync
 
 
 def _cmd_build(args) -> None:
-    slides = slidegen.parse(open(args.input, encoding="utf-8").read())
+    with open(args.input, encoding="utf-8") as f:
+        text = f.read()
+    slides = slidegen.parse(text)
 
     val = validate_dsl(slides, RENDERERS)
     for msg in val.warnings:
@@ -32,6 +34,8 @@ def _cmd_build(args) -> None:
             print(f"Error: {msg}", file=sys.stderr)
         raise SystemExit(1)
 
+    # render_file は入力ファイルを自身でも再読み込み・再パースする（public API 安定のため
+    # 事前パース結果を渡す口は無い）。ここでの parse() は事前バリデーション専用。
     out = render_file(args.input, args.output, template=args.template)
     print(f"生成: {out}（{len(slides)}枚, 型: {[s.type for s in slides]}）")
 

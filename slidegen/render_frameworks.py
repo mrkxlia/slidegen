@@ -16,8 +16,8 @@ from pptx.enum.shapes import MSO_SHAPE
 from . import render as R
 from .render import (add_rect, add_text, render_header, render_foot,
                      SLIDE_W, SLIDE_H, MARGIN, CONTENT_W)
-from .parser import Slide, split_emphasis
-from .render_base_labeled import _block_items, _add_items_text
+from .parser import Slide
+from .render_util import block_items, add_items_text
 
 
 # ---------------------------------------------------------------------------
@@ -56,8 +56,8 @@ def render_swot(slide, data: Slide, theme):
                  align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
         # 中身
         if i < len(blocks):
-            items = _block_items(blocks[i])
-            _add_items_text(slide, x + Inches(0.18), y + head_h + Inches(0.12),
+            items = block_items(blocks[i])
+            add_items_text(slide, x + Inches(0.18), y + head_h + Inches(0.12),
                             cw - Inches(0.36), ch - head_h - Inches(0.24), theme,
                             items, size=13, anchor=MSO_ANCHOR.TOP,
                             bullet=(len(items) > 1))
