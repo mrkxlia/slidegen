@@ -16,7 +16,13 @@ slidegen ＝ DSL から **編集可能な PowerPoint(.pptx)** を生成する純
 - 直近の主な変更: モデルカタログ 2026-07 棚卸し（PR #20）／既存 pptx のデザイン取り込み（PR #21）／
   docs-drift の CI ガード追加（PR #22）／添付画像マルチモーダル対応（PR #23）／
   リポジトリ総点検（gateway のフェイルオープン・ストリームエラー誤判定・frontend の worker ハング・
-  parser の記法乖離 等の修正、CLAUDE.md/メモリ整備、リファクタ、テスト・CI 強化）。
+  parser の記法乖離 等の修正、CLAUDE.md/メモリ整備、リファクタ、テスト・CI 強化）／
+  **pptx→DSL 取り込みの総点検**（デザイン取り込み機能のレビューと強化。`slidegen/inspect_pptx.py` に
+  TABLE のセル値・CHART の種別/カテゴリ/系列実データ・GROUP の再帰フラット化・箇条書き階層の抽出を追加
+  （従来は表/グラフの中身が丸ごと欠落しLLMが数値を捏造しうる状態だった）。`frontend/src/prompts.ts` の
+  DSL リファレンスを RENDERERS 全100型（従来43型のみ）のカタログに拡張し、
+  `tests/test_chart_dsl.py` に「教える型 ≡ RENDERERS」の等価性 CI ガードを追加。
+  pptx↔DSL 双方向化の責務分離（LLM取り込み／プロベナンス方式）を [ADR 0006](docs/adr/0006-provenance-roundtrip.md) として記録）。
 
 ## アーキテクチャ（全無料CF）
 - **重い pptx 生成(`python-pptx`)はブラウザ内 Pyodide で実行** → 無料枠の CPU 制限を回避。
