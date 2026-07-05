@@ -35,8 +35,6 @@ export interface ChatRequest {
   model: string;
   system?: string;
   messages: ChatMessage[];
-  maxTokens?: number;
-  temperature?: number;
   // Gemma 等 systemInstruction 非対応モデル: system を先頭 user に畳む。
   noSystemInstruction?: boolean;
   // vision 対応モデルか。false のとき各エンコーダは messages[].images を黙って剥がす
@@ -138,6 +136,13 @@ export function fallbackChain(primaryId: string, env: ProviderEnv): ModelEntry[]
   return [primary, ...rest];
 }
 
+// vision 対応モデルのときだけ実際に画像を使う。非 vision へのフォールバック時は
+// エンコーダ側で黙って剥がす（従来のテキストのみ動作に安全に劣化させるため）。
+// 3プロバイダ(Gemini/OpenAI互換/Anthropic)のエンコーダで共通の最初の一歩。
+export function imagesFor(req: ChatRequest, m: ChatMessage): ImagePart[] {
+  return (req.vision && m.images) || [];
+}
+
 // Gemini(generativelanguage) 用リクエスト body を組み立てる。
 // noSystemInstruction(=Gemma) の場合は systemInstruction を使わず、
 // system を先頭 user メッセージに前置して畳み込む。
@@ -148,7 +153,7 @@ export function buildGeminiPayload(
   const msgs = req.messages.map((m) => ({
     role: m.role === "assistant" ? "model" : "user",
     text: m.content,
-    images: (req.vision && m.images) || [],
+    images: imagesFor(req, m),
   }));
   if (req.noSystemInstruction && req.system) {
     // systemInstruction 非対応 → 先頭 user に前置（先頭が user でなければ user を挿入）。

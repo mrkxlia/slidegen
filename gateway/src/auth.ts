@@ -40,7 +40,9 @@ function getJWKS(teamDomain: string) {
 
 export async function verifyAccess(req: Request, env: AuthEnv): Promise<AuthResult> {
   // ローカル開発専用バイパス（本番では DEV_BYPASS_AUTH を設定しない）。
-  if (env.DEV_BYPASS_AUTH === "1") {
+  // ACCESS_AUD が設定済み(=本番相当の Access 設定が入っている)なら、誤って
+  // DEV_BYPASS_AUTH が有効化されていてもバイパスを拒否する（多層防御・設定ミス対策）。
+  if (env.DEV_BYPASS_AUTH === "1" && !env.ACCESS_AUD) {
     return { ok: true, status: 200, email: "dev@localhost" };
   }
 
@@ -67,10 +69,14 @@ export async function verifyAccess(req: Request, env: AuthEnv): Promise<AuthResu
     const { payload } = await jwtVerify(token, jwks, {
       issuer,
       audience: env.ACCESS_AUD, // aud 完全一致を必須検証
+      algorithms: ["RS256"], // Cloudflare Access は RS256 固定発行。alg confusion 対策で明示ピン留め。
     });
     return { ok: true, status: 200, email: (payload.email as string) || undefined };
   } catch (e) {
-    return { ok: false, status: 401, error: `Invalid Access JWT: ${(e as Error).message}` };
+    // jose の詳細メッセージ(鍵/クレーム内部情報を含みうる)はサーバログにのみ残し、
+    // クライアントには種別情報を露出しない。
+    console.error(`[auth] JWT verification failed: ${(e as Error).message}`);
+    return { ok: false, status: 401, error: "Invalid Access JWT" };
   }
 }
 

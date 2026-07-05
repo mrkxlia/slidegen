@@ -2,6 +2,8 @@
 //
 // KV があれば固定窓カウンタ（複数 isolate 横断）、無ければ isolate ローカルの
 // メモリ窓でベストエフォート。単一ユーザー用途なので厳密性より「青天井防止」を優先。
+// KV 経路は read-modify-write のレースを許容（同時アクセスが稀な個人用途のため、
+// 上限を多少超えても Durable Objects 等の厳密化コストは割に合わない・意図的判断）。
 export interface RateLimitEnv {
   RL?: KVNamespace;
   RATE_WINDOW_SEC?: string;
@@ -10,9 +12,14 @@ export interface RateLimitEnv {
 
 const memWindows = new Map<string, { count: number; resetAt: number }>();
 
+function parsePositiveInt(value: string | undefined, fallback: number): number {
+  const n = parseInt(value ?? "", 10);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
 export async function checkRateLimit(key: string, env: RateLimitEnv): Promise<{ ok: boolean; retryAfter?: number }> {
-  const windowSec = parseInt(env.RATE_WINDOW_SEC || "60", 10);
-  const max = parseInt(env.RATE_MAX_REQUESTS || "30", 10);
+  const windowSec = parsePositiveInt(env.RATE_WINDOW_SEC, 60);
+  const max = parsePositiveInt(env.RATE_MAX_REQUESTS, 30);
   const now = Date.now();
   const bucket = Math.floor(now / 1000 / windowSec);
   const rlKey = `rl:${key}:${bucket}`;
