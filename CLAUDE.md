@@ -10,13 +10,17 @@ slidegen ＝ DSL から **編集可能な PowerPoint(.pptx)** を生成する純
 Claude Code に限らず各 AI エージェントから利用可能にする方針転換を進めている。
 正となる実行計画は [docs/plans/2026-08-agent-skills-transition.md](docs/plans/2026-08-agent-skills-transition.md)
 （S1: Cloudflare 撤去＋DSLリファレンス移設＝**完了**。S2: Agent Skill＋両対応プラグイン化＝**完了**。
-S3 以降＝未着手）。**リポジトリは S2 で public 化した**（履歴のシークレット監査済み・クリーン。
+S3: tsundoku 知識抽出＋デザインガイドライン＝**完了**。S4 以降＝未着手）。
+**リポジトリは S2 で public 化した**（履歴のシークレット監査済み・クリーン。
 詳細は実行計画 S2 セクションの実施時補足）。
 
 - Web アプリが LLM に渡していたプロンプト資産（DSL リファレンス・壁打ちフェーズの各システムプロンプト・
   pptx 取り込み用プロンプト）は `skills/slidegen/references/` へ移設済み（`dsl-reference.md` /
   `phase-prompts.md` / `import-deck-prompt.md`）。壁打ちフローの要点は `skills/slidegen/SKILL.md`
   本文に編み込み済み（`phase-prompts.md` は出自保存用に残置、SKILL.md からは参照しない）。
+- S3 で tsundoku（記事クリップ Vault）のノウハウ記事から知識抽出した
+  `references/design-guidelines.md`（デザイン原則）・`references/type-selection-guide.md`
+  （内容に応じた型の逆引き）を追加済み。SKILL.md から参照している。
 - `skills/slidegen/` は Agent Skills オープン仕様に準拠したスキル本体（`SKILL.md` /
   `scripts/slidegen.sh` レンダラッパー / `references/`）。ルートの `plugin.json`
   （Agent Plugins 1.0）と `.claude-plugin/plugin.json` + `marketplace.json`（Claude Code）が
@@ -47,7 +51,10 @@ S3 以降＝未着手）。**リポジトリは S2 で public 化した**（履�
   **型名は列挙しない** — `tests/test_plugin_manifests.py` が機械ガード）、`scripts/slidegen.sh`
   （リポジトリ内外どちらでも動くレンダラッパー。内: `uv run slidegen`、外: `uvx --from git+...`）、
   `references/`（**DSL リファレンスの正本は `dsl-reference.md`**、CI ガード
-  `tests/test_dsl_reference.py` の対象。`phase-prompts.md`・`import-deck-prompt.md` も同居）。
+  `tests/test_dsl_reference.py` の対象。`phase-prompts.md`・`import-deck-prompt.md` に加え、
+  S3 で追加した `design-guidelines.md`・`type-selection-guide.md` も同居。両ファイルが SKILL.md から
+  参照されていることと、`type-selection-guide.md` の型名 ⊆ `RENDERERS` は
+  `tests/test_plugin_manifests.py` が機械ガードする）。
 - ルート `plugin.json`（Agent Plugins 1.0）・`.claude-plugin/plugin.json` +
   `marketplace.json`（Claude Code）… プラグインマニフェスト。version は `pyproject.toml` と
   `tests/test_plugin_manifests.py` で同期保証。
@@ -86,4 +93,4 @@ make validate-skill   # Agent Skill/プラグインマニフェスト検証（sk
 
 課題・ロードマップは [docs/backlog.md](docs/backlog.md) に集約。方針転換の進捗は
 [docs/plans/2026-08-agent-skills-transition.md](docs/plans/2026-08-agent-skills-transition.md)
-（次は S3: tsundoku 知識抽出 → デザインガイドライン）。
+（次は S4: 🔜 5型の実装）。

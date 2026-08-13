@@ -100,7 +100,8 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 ✅ waterfall（増減分解・実装済み）
 📋 bullet（ゲージ代替。目標vs実績）
 📋 harvey_ball_table（定性比較●◐○。tableに円shape）
-📋 marimekko / sankey / funnel / scatter / bubble / treemap / football_field
+📋 funnel / scatter / bubble（S3, 2026-08: tsundokuのグラフ36枚実例分析で頻出度が高く優先度を引き上げ。
+  根拠は design-guidelines.md §4） / marimekko / sankey / treemap / football_field
 ❌ 円グラフ・ゲージ・3D（設計思想で非推奨。stacked_100_bar/bulletで代替）
 
 ### ビジネスフレーム（①③調査）
@@ -134,6 +135,31 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 ### 個人・イベント・ライフ（③調査）
 ✅ pricing_tiers ／ 📋 elevator_pitch / event_timetable / okr / maturity_model
 📋 recipe_step / travel_itinerary / smart_goal
+
+### tsundoku 知見由来の新規候補（S3, 2026-08）
+
+tsundoku library の資料作成ノウハウ記事5本（詳細出典は
+[design-guidelines.md](../skills/slidegen/references/design-guidelines.md) 末尾の出典表を参照）から
+新たに浮かび上がった候補。39パターンのうち並列/比較/マトリクス/ベン図/ツリー/数式/フロー/サイクル/
+ピラミッド/ビフォーアフター等は、既存の matrix/venn2/tree/formula/process/cycle/pyramid/before_after
+等の実装済み型で対応済みのため追記不要（詳細な対応表は
+[type-selection-guide.md](../skills/slidegen/references/type-selection-guide.md) を参照）。
+
+📋 area_chart（累積面グラフ。line_chart系ネイティブチャートの追加候補）
+📋 pictogram_array（人型ピクトグラム配列＝ISOTYPE chart。grid_2d variant候補）
+📋 dot_matrix_chart（10×10等のドットマトリクスで割合を面的に示す。grid_2d variant候補）
+📋 org_chart（多段階層の組織図。nodes_and_connectors/tree variant候補。既存 tree は親+フラットな
+  子1段のみのため、多段の報告ラインを示す型として現行未収録の穴）
+📋 ranking_list（ランキング表。labeled_blocks/table variant候補）
+📋 faq_qa（Q&A。labeled_blocks variant候補）
+📋 mission_vision_values（MVV提示。labeled_blocks variant候補。既存 brand_pillars に近い3固定ロール版）
+
+❌ キャプチャ画像の羅列・拠点の地図表示・導入実績のロゴ壁
+   （画像依存が強く「ネイティブ図形のみ・画像化しない」設計思想＝§6 と不整合の可能性が高い）
+
+円グラフ(C1-C5)を採用しなかった既存の判断（「❌ 円グラフ・ゲージ・3D」）は、グラフテンプレ36枚の
+実例分析（Cleveland & McGillの読み取り精度知見）によっても裏付けられる。詳細は design-guidelines.md
+§4 に引用済み。
 
 ---
 
@@ -172,6 +198,8 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 - デザイン論: duarte.com, garrreynolds.com, presentationzen
 - 教育/学術: prisma-statement.org, theteachertoolkit.com
 - 日本: cone-c-slide.com, rubato.co, note.com/powerpoint_jp
+- tsundoku: mrkxlia/tsundoku の資料作成ノウハウ記事5本（詳細URLは
+  [design-guidelines.md](../skills/slidegen/references/design-guidelines.md) 末尾の出典表を参照）
 
 
 ## 運用機能（型ではないが重要）
