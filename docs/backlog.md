@@ -24,12 +24,11 @@ S5系列（📋約50型・分野別バッチ）の順で、1セッション=1PR�
     削除が含まれておらず追跡漏れだったところ、ユーザー指摘で発覚・対応。
     Pages プロジェクト `slidegen`（slidegen-ezt.pages.dev）と GitHub secrets
     `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID` は**削除済み**。Worker/KV は元々未作成と確認。
+    Zero Trust Access アプリ（チーム `mrxlia`、AUD `5ac4a021…17c03`）も**ユーザー作業で削除済み**。
     残作業は下記「🟡 ユーザー作業（Cloudflare ダッシュボード）」を参照。
 - S2 以降: 未着手。
 
 **🟡 ユーザー作業（Cloudflare ダッシュボード。Claude からは操作不可・未実施）:**
-- Zero Trust チーム `mrxlia`（`mrxlia.cloudflareaccess.com`）の Access アプリ削除
-  （旧 Pages プロジェクト向け、AUD `5ac4a021…17c03`）とそのポリシー。
 - 旧 GitHub secrets に入れていた Cloudflare API トークン本体の失効
   （dash.cloudflare.com → My Profile → API Tokens。Pages:Edit スコープ）。
 - LLM API キー（GEMINI_API_KEY / OPENROUTER_API_KEY、任意で OPENAI/ANTHROPIC）のローテーション検討
