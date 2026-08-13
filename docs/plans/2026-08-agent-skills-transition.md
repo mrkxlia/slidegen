@@ -1,0 +1,193 @@
+# 方針転換ロードマップ: Web アプリ → Agent Skills/Plugin 化（2026-08）
+
+> このドキュメントは方針転換の「正」となる実行計画。各セッション着手時はこのファイルを読み、
+> 完了したら本ファイルの該当セクションにステータスを追記すること。
+> 起点となった検討記録: `/home/kota/.claude/plans/1-agent-skills-ai-agent-logical-globe.md`（ローカル、リポジトリ外）。
+> 関連: [backlog.md](../backlog.md) / [adr/](../adr/)
+
+## 背景・目的
+
+slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋「Cloudflare 無料枠で動く壁打ち Web アプリ」の
+2階建て構成。方針を転換し、次の4点を進める。
+
+1. スライド作成ロジックを **Agent Skills（オープン仕様）＋プラグイン**として一般化し、Claude Code に限らず
+   Codex/Cursor 等の各 AI エージェントから利用可能にする。
+2. 未実装の型（`docs/type_catalog.md` の 🔜/📋）の実装を進める。
+3. [tsundoku](https://github.com/mrkxlia/tsundoku)（記事クリップ Vault）に蓄積されたスライド作成ノウハウを
+   知識抽出し、スキルに反映する。
+4. **Cloudflare 関連構成（`frontend/` `gateway/` と CD）を削除**し、純Python ライブラリ＋スキルの構成に戻す。
+
+トークン消費とレビュー粒度の都合上、**1セッション=1PR**を目安に以下へ分割して実行する。
+
+## 決定事項
+
+- CF 関連: **完全削除＋アーカイブタグ**（削除直前のコミットに `archive/cloudflare-webapp` タグを付与し、
+  いつでも参照・復元できるようにする）。
+- スキル形態: slidegen リポジトリ内で **plugin 化**。Claude Code 専用にせず、新標準
+  **Agent Plugins 1.0**（2026-08-06 公開、OpenAI/AWS/Cursor/GitHub/VS Code/Vercel 策定）にも準拠し両対応とする。
+- 型実装: 🔜 5型を先に実装 → 📋 約50型を分野別バッチで進める。
+- tsundoku: ツールとしては使わず、`library/` のノウハウ記事を知識抽出してスキルの `references/` に反映する。
+
+## 仕様調査で確定した事実（2026-08 時点、実装時の参照用）
+
+- **Agent Skills オープン仕様**（agentskills.io/specification）: SKILL.md の frontmatter は
+  `name`（必須・親ディレクトリ名と一致）/ `description`（必須）/ `license` / `compatibility` / `metadata` /
+  `allowed-tools` の**6フィールドのみ**。Claude Code 拡張フィールド（`argument-hint` 等）を混ぜると
+  claude.ai へのアップロードや Skills API 配布でハードエラーになる → **6フィールド限定で書く**。
+  構造は `skill-name/SKILL.md` + `scripts/` + `references/` + `assets/`。本文は 500 行以内推奨（progressive
+  disclosure）。検証コマンド: `skills-ref validate ./skill-dir`（github.com/agentskills/agentskills）。
+- **Agent Plugins 1.0**（agent-plugins.org、2026-08-06 発表）: リポジトリルートに `plugin.json`
+  （必須フィールドは `$schema`="https://agent-plugins.org/schemas/1.0.0/plugin.schema.json" と `name` のみ、
+  `additionalProperties: false`）＋ `skills/<name>/SKILL.md` ＋（任意）`mcp.json`。ChatGPT/Codex/Cursor/
+  GitHub Copilot/Kiro/VS Code がネイティブ対応。Claude Code へは `npx plugins add` CLI 経由で導入可能。
+- **Claude Code plugin**（code.claude.com/docs/en/plugins）: `.claude-plugin/plugin.json`（`name` 必須）＋
+  ルート直下 `skills/`。marketplace はルートの `.claude-plugin/marketplace.json`。検証: `claude plugin validate`。
+  ローカルテスト: `claude --plugin-dir .`。
+- **両形式は同居可能**: ルートの `plugin.json`（Agent Plugins）と `.claude-plugin/plugin.json`（Claude Code）が
+  同じ `skills/` ディレクトリを共有できる。参照実装は `github.com/anthropics/skills` の公式 `pptx` スキル
+  （SKILL.md 本文＋`scripts/` に Python ヘルパー同梱という構成）。
+
+## リポジトリ調査で確定した事実
+
+- 「教えているのに変換ロジックが無い型」は CI ガード（`tests/test_chart_dsl.py` の
+  「`frontend/src/prompts.ts` が教える型 ≡ `RENDERERS`」同値検証）により**存在しない**。
+  実装待ちは `docs/type_catalog.md` の **🔜 5型**（priority_matrix_2x2 / quiz_mcq / mandala_chart / sdg_grid /
+  conjugation_table — いずれも `grid_2d` の variant として実装可能な設計）と **📋 約50型**（分野別）。
+- Cloudflare 削除に対する逆方向依存は2点のみ:
+  - `tests/test_chart_dsl.py` — `frontend/src/prompts.ts` を読んで型一致を検証
+  - `tests/test_version_sync.py` — `frontend/src/render/renderClient.ts` の既定 wheel URL 版と
+    `pyproject.toml` version の一致を検証
+  - `slidegen/` 本体・`Makefile`・`pyproject.toml` に frontend/gateway への参照はない。
+- `frontend/src/prompts.ts` の DSL リファレンス（全100型カタログ）と `frontend/src/phases.ts` の対話フローが、
+  スキルへ移設すべき中核コンテンツ。
+- 純Python 時代の「きれいな姿」の原型は初期コミット `592e098`（Web 化は次の PR #2 `9e7fe3d` から）。
+- tsundoku はスライド生成ツールではなく記事クリップ Vault。`library/` に「パワポデザインパターン39選」
+  「グラフテンプレ10種36枚」「コンサル流スライド構成術」「ロジックツリー活用法」「Claude Skill 設計術」等の
+  ノウハウ記事が frontmatter（tags/summary）＋OCR済み本文の形で蓄積されており機械抽出しやすい。
+
+## セッション分割
+
+各セッションはこのファイルの該当セクションに `状況: 未着手/進行中/完了 (PR #xx)` を追記して更新すること。
+
+### S1: Cloudflare 撤去 ＋ DSL リファレンス移設【状況: 完了】
+
+**最優先。他セッションの土台となるため必ず最初に実施。**
+
+> **実施時の訂正**（下記 手順2 の記載誤り）: 「`frontend/src/phases.ts` の対話フロー・
+> `IMPORT_DECK_SYSTEM`」とあるが、実際には対話フロー（`PHASE_HEARING`/`PHASE_OUTLINE`/
+> `PHASE_DSL`/`PHASE_REVIEW`/`PHASE_REVISE`）も `IMPORT_DECK_SYSTEM` も、すべて
+> `frontend/src/prompts.ts` 側にあった（`phases.ts` は応答クリーニング等のユーティリティで、
+> 移設すべきプロンプト資産は無かった）。移設は `phase-prompts.md`（対話フロー）と
+> `import-deck-prompt.md`（IMPORT_DECK_SYSTEM）に分けて実施した。
+>
+> **アーカイブタグの付与位置**: 「削除直前のコミット」ではなく、**移設コミット**（Web アプリ・旧
+> CI・旧テストが無傷で、かつ `skills/` への移設物とも共存する唯一の時点）に付与した。
+> ユーザー承認済みの判断（詳細は [ADR 0007](../adr/0007-retire-webapp-agent-skills.md)）。
+
+1. 削除直前のコミットに Git タグ `archive/cloudflare-webapp` を付与する。
+2. 削除より先に移設する:
+   - `frontend/src/prompts.ts` の DSL リファレンス全文 → `skills/slidegen/references/dsl-reference.md`
+     （S2 の最終配置に直接置いてよい）
+   - `frontend/src/phases.ts` の対話フロー・`IMPORT_DECK_SYSTEM` 等 → `skills/slidegen/references/` 配下
+     （S2 で SKILL.md 本文に編み込む素材として保存）
+   - `tests/test_chart_dsl.py` の CI ガードを `dsl-reference.md` 読み取りに付け替える
+     （「教える型 ≡ RENDERERS」の同値検証というテスト目的は維持する）。
+     純Python 部分のテスト（`test_all_examples_parse_and_render` / `test_default_template_resolves`）は
+     `tests/test_examples.py` 等へ救出する。
+3. 削除対象:
+   - `frontend/` `gateway/` 丸ごと
+   - `tools/build_wheel.sh` `tools/pyodide_spike.mjs` `tools/package.json`（+lock）
+   - `tests/test_version_sync.py`
+   - `docs/deployment.md` `docs/model-catalog.md`
+   - ※ `tools/new_type.py` `tools/visual.py` `slidegen/inspect_pptx.py` は純Python のライブラリ機能なので残す。
+4. CI: `.github/workflows/ci.yml` を「`uv build` + `pytest`」中心に縮小し、`deploy` job を削除する。
+5. docs 追従:
+   - `README.md` / `CLAUDE.md`（プロジェクト側）はほぼ全面書き換え。
+   - `requirements.md` の Web アプリ関連セクション（FR-APP/NFR-APP 等）、`spec.md` の §5〜§12
+     （Web フロー/ゲートウェイAPI/プロバイダ/認証/配信構成）を刈り込む。
+   - ADR は削除ではなく **新規 ADR 0007（Web アプリ撤去と Agent Skills 転換）を追加し、
+     0001/0003/0005 を Superseded** にする（`docs/adr/README.md` の「ADR は書き換えない」運用に従う）。
+     0006 は `frontend/src/prompts.ts` への参照箇所だけ新配置に修正して存続させる。
+   - `docs/backlog.md` を刈り込む（#1 モデルカタログの期日タスク等、Web アプリ前提の項目を Closed 化）。
+6. 後片付け（実行前に一覧提示してユーザー確認 — グローバル CLAUDE.md の一時ファイル運用に従う）:
+   - 未追跡生成物: 各 `node_modules/`、`frontend/dist/`、`frontend/public/wheels/`、`frontend/.env.local`、
+     `frontend/.wrangler/`
+   - リポジトリ外: Cloudflare Pages プロジェクト・Access アプリ・Pages secrets、GitHub リポジトリ secrets
+     （`CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`）はユーザー作業として案内する（Claude からは操作不可）。
+7. **完了条件**: `uv run --extra dev pytest tests/ -q` が green、CI が green、
+   リポジトリ内に CF/Node への現行参照が残らない（docs の歴史的記述・ADR 除く）。
+
+### S2: Agent Skill ＋ 両対応プラグイン化【状況: 未着手】
+
+1. `skills/slidegen/SKILL.md` を作成する。**オープン仕様6フィールドのみ**を使う
+   （`compatibility` に "Requires Python 3.10+ and uv" 等を記載）。
+   本文には壁打ち→構成提案→DSL記述→レンダの手順（`phases.ts` 由来のフローを編み込む）を書き、
+   `references/dsl-reference.md` へは progressive disclosure で誘導する。本文は 500 行以内に収める。
+2. `skills/slidegen/scripts/`: レンダ用スクリプトを同梱する。リポジトリ内では `uv run slidegen`、
+   リポジトリ外からは `uvx --from git+https://github.com/mrkxlia/slidegen slidegen` で動く自己完結ラッパーとする
+   （PyPI 公開は将来のバックログ候補）。
+3. プラグイン両対応:
+   - ルートに `plugin.json`（Agent Plugins 1.0 形式: `$schema` + `name` + 任意メタデータ）を置く。
+     → Codex/Cursor/Copilot 等からは `npx plugins add mrkxlia/slidegen` で導入可能になる。
+   - `.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` を置く。
+     → Claude Code からは `/plugin marketplace add mrkxlia/slidegen` で導入可能になる。
+   - 両者は同じ `skills/` ディレクトリを共有する。
+4. 検証: `skills-ref validate` と `claude plugin validate` の両方、`claude --plugin-dir .` での実動作確認、
+   最低1つの実 pptx 生成 E2E。CI にスキル検証ステップを追加する。
+5. `README.md` にエージェント別の導入手順を追記する。
+6. **完了条件**: Claude Code から skill 経由で pptx 生成に成功し、両方の validate が green。
+
+### S3: tsundoku 知識抽出 → デザインガイドライン【状況: 未着手】
+
+1. tsundoku `library/` のスライド関連ノート（frontmatter の `tags`/`summary` で機械抽出）から、
+   `skills/slidegen/references/design-guidelines.md`（デザイン原則）と
+   `references/type-selection-guide.md`（内容に応じた型の選び方）を編纂する。
+2. 抽出した知見をもとに 📋 型の優先順位を見直し、`docs/type_catalog.md` / backlog を更新する。
+   新しい型の候補（例: 「39デザインパターン」「グラフテンプレ10種36枚」由来）があれば 🔜/📋 に追記する。
+3. **完了条件**: references 2本がスキルから参照されており、型の優先順位が backlog に反映されている。
+
+### S4: 🔜 5型の実装【状況: 未着手】
+
+1. `priority_matrix_2x2` / `quiz_mcq` / `mandala_chart` / `sdg_grid` / `conjugation_table` を
+   `grid_2d` の variant として実装する（基本は `slidegen/render_base_grid.py` への variant 追記）。
+   手順は `docs/type_authoring.md`、雛形生成は `tools/new_type.py` を使う。
+2. 各型ごとに: `dsl-reference.md` への追記（CI ガードが強制する）、`examples/*.slide` の追加、
+   `make snapshot-update`、`docs/system_prompt.md`・`type_catalog.md`（🔜→✅）の追従を行う。
+3. **完了条件**: `RENDERERS` が 105 型になり、全テストが green。
+
+### S5系列: 📋 約50型の分野別バッチ【状況: 未着手】
+
+1セッション=1分野を目安に、S3 で見直した優先順位に沿って並べ替えて実施する。
+
+- **S5a チャート系（9型）**: bullet / harvey_ball_table / marimekko / sankey / funnel / scatter / bubble /
+  treemap / football_field
+- **S5b ビジネスフレーム（9型）**: lean_canvas / vpc / five_forces / 3c / 4p / pestel / bcg_matrix /
+  empathy_map / persona_card
+- **S5c 技術資料（10型）**: code_diff / sql_result / layered_stack 等。**Mermaid 前提の図系
+  （sequence_diagram / er_diagram 等）は着手前に方式の設計判断（ADR 候補）を先行させる**。
+- **S5d 日本の登壇文化（7型）**
+- **S5e 教育・学術（8型）**
+- **S5f ストーリー・マーケ＋データ補助（7型）**
+- **S5g 個人・イベント（7型）**
+
+各バッチの完了条件は S4 と同じ（型カタログ整合・snapshot 更新・examples 追加・CI green）。
+
+> 注: `type_catalog.md` には実装済みなのに 📋 のまま残っている型がある（policy_3col / brand_pillars /
+> pricing_tiers / takahashi 等、カタログの陳腐化）。S4 着手時に清掃すること。
+
+## 進め方の運用ルール
+
+- 各セッション内もステップ単位でユーザー承認を取りながら進める（Engagement workflow の方針）。
+- 各セッションの成果は PR 化する。ドキュメント（backlog / 本ファイル / CLAUDE.md）は都度追従させる。
+- 順序依存: S1 → S2 は必須順（`skills/` の器と CI 付け替えが先）。S3 は S2 以降いつでも着手可。
+  S4/S5 は S1 完了後なら着手可（`dsl-reference.md` 移設後が前提のため実質 S1 後）。
+
+## 参照
+
+- Agent Skills 仕様: https://agentskills.io/specification / https://code.claude.com/docs/en/skills
+- Agent Plugins 1.0: https://agent-plugins.org
+  （スキーマ: `https://agent-plugins.org/schemas/1.0.0/plugin.schema.json`）
+  発表記事: https://visualstudiomagazine.com/articles/2026/08/06/vs-code-agent-plugins-go-cross-client-with-new-open-standard.aspx
+- Claude Code plugins: https://code.claude.com/docs/en/plugins / https://code.claude.com/docs/en/plugin-marketplaces
+- 参照実装（Python 同梱スキル）: https://github.com/anthropics/skills （`pptx` スキル）
+- tsundoku: https://github.com/mrkxlia/tsundoku

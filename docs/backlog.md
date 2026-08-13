@@ -3,7 +3,24 @@
 > 立て直しエンゲージメントで洗い出した技術的負債・課題を**優先度順**にまとめる。
 > 個人/学習プロジェクトのスコープに合わせ、過剰な作り込みは避ける方針。
 > 関連: [requirements.md](../requirements.md) / [spec.md](../spec.md) / [docs/adr/](adr/)
-> 最終更新: 2026-07-03（#1 カタログ棚卸し＋ [model-catalog.md](model-catalog.md) 新設。#4 全型ビジュアル回帰の自動化を実施。#5 の potx連携・はみ出し物理検出＋DSL静的バリデーション = `current-improvements-for-another.md` の要否判定。P3 7c/7d/7e = PR #17。P1＋一部 quick-win = PR #14）
+> 最終更新: 2026-08-13（**方針転換ロードマップ S1（CF撤去＋DSLリファレンス移設）完了**に伴い、
+> Web アプリ前提だった既存項目を Closed 化）
+
+## 🔴 最優先: 方針転換（Web アプリ撤去 → Agent Skills/Plugin 化）
+
+**実行計画（正）**: [docs/plans/2026-08-agent-skills-transition.md](plans/2026-08-agent-skills-transition.md)
+
+Cloudflare 構成（`frontend/` `gateway/` と CD）を撤去し、純Python ライブラリ＋**Agent Skills（オープン仕様）＋
+Claude Code / Agent Plugins 1.0 両対応プラグイン**の構成へ転換する。あわせて未実装型（🔜5型＋📋約50型）の
+実装を進め、[tsundoku](https://github.com/mrkxlia/tsundoku) の知見をスキルに反映する。
+S1（CF撤去＋DSLリファレンス移設）→ S2（Skill/Plugin化）→ S3（tsundoku知識抽出）→ S4（🔜5型）→
+S5系列（📋約50型・分野別バッチ）の順で、1セッション=1PRを目安に進める。詳細・各セッションの完了条件は
+上記ロードマップ参照。
+
+- **S1: ✅ 完了**（[ADR 0007](adr/0007-retire-webapp-agent-skills.md)、`frontend/`/`gateway/` 削除、
+  DSL リファレンス等を `skills/slidegen/references/` へ移設、CI 縮小）。これに伴い下記 #1 の Web 前提部分・
+  #3・#6・7c、#5 の Web 専用項目を Closed 化した。
+- S2 以降: 未着手。
 
 ## このエンゲージメントで解消済み
 
@@ -19,24 +36,26 @@
 
 | # | 優先 | 課題 | 状況 |
 |---|---|---|---|
-| 1 | **高** | モデルカタログの陳腐化 | ✅ 完了 (PR #14) |
-| 2 | **高** | DSL 解説と実装のドリフト（chart 以外は未ガード） | ✅ 完了 (PR #14) |
-| 3 | 中 | ビュー回帰の自動ガードが無い（e2e が CI 外） | 🟡 一部 (PR #14: component+gitignore。e2e の CI 化は見送り) |
+| 1 | **高** | モデルカタログの陳腐化 | 🔵 Closed（S1: gateway 撤去により対象消滅。[ADR 0007](adr/0007-retire-webapp-agent-skills.md)） |
+| 2 | **高** | DSL 解説と実装のドリフト（chart 以外は未ガード） | ✅ 完了 (PR #14。S1 で読み取り先を dsl-reference.md へ付け替え) |
+| 3 | 中 | ビュー回帰の自動ガードが無い（e2e が CI 外） | 🔵 Closed（S1: frontend 撤去により対象消滅） |
 | 4 | 中 | 100型のビジュアル回帰が目視のみ | ✅ 完了（図形ツリースナップショット・全型） |
-| 5 | 中 | 未実装の機能バックログ | 🟡 一部（potx連携・はみ出し検出 完了。下記） |
-| 6 | 中 | フロントのビュー層にテストが無い | ✅ 完了 (PR #14) |
-| 7 | 低 | 軽微な負債（雛形TODO・古いコメント・wheel名 等） | 🟡 大半 (PR #14: 7b / PR #17: 7c・7d・7e。残: 7a は温存) |
+| 5 | 中 | 未実装の機能バックログ | 🟡 一部（potx連携・はみ出し検出 完了。Web専用項目は S1 で Closed。下記） |
+| 6 | 中 | フロントのビュー層にテストが無い | 🔵 Closed（S1: frontend 撤去により対象消滅） |
+| 7 | 低 | 軽微な負債（雛形TODO・古いコメント・wheel名 等） | 🟡 大半 (PR #14: 7b / PR #17: 7c・7d・7e。7c は S1 で対象消滅・Closed。残: 7a は温存) |
 
 ---
 
 ## P1（高）
 
-### 1. モデルカタログの陳腐化対策 — ✅ 完了 (PR #14)
-- **実施 (PR #14)**: `reliableForDsl` フラグを `providers.ts` に追加し `/api/models` で配信、frontend は純関数 `pickDslFallback`（カタログ順＋フラグ）で選ぶよう一般化し特定ID依存を撤去。残: カタログの ID/日付は手書き（動的探索は未対応）。
-- **実施 (2026-07-03)**: カタログを棚卸し（`or-deepseek-r1` は OpenRouter から消滅していたため `openai/gpt-oss-120b:free` に置換、gemini-2.5 系 2 モデルに 2026-10-16 廃止予定を注記）。手動更新を人力で回せるよう **[docs/model-catalog.md](model-catalog.md)（更新手順書）** を新設。**次回アクション: 2026-10-16 までに gemini-2.5-flash / 2.5-flash-lite をカタログと gateway/test から削除**。
-- **何**: `gateway/src/providers.ts` の `CATALOG` がモデルID・シャットダウン日をハードコード（例: 「gemini-2.0-flash は 2026-06-01 シャットダウン済」）。無料枠モデルは入れ替わりが激しく、放置すると**稼働中アプリが静かに壊れる**。`frontend/src/App.tsx` の `dslFallbackModel` も特定ID `gemini-3.1-flash-lite` に依存（軟結合）。
-- **なぜ高**: 既に本番稼働しており、モデル鮮度が運用品質に直結。
-- **対応案**: (a) カタログを設定/データ化し更新を一箇所に。(b) frontend のフォールバックを「特定ID」でなく **tier/能力**で選ぶ（`/api/models` の結果から）よう一般化（ADR 0005 の責務分界は維持）。(c) 起動時にモデル存在を軽く検証。
+### 1. モデルカタログの陳腐化対策 — 🔵 Closed（S1: 対象消滅）
+- **Closed (S1, 2026-08-13)**: `gateway/` を含む Cloudflare Web アプリを撤去したため、`gateway/src/providers.ts` の
+  `CATALOG` 自体が存在しなくなった。2026-10-16 期日で予定していた gemini-2.5 系モデルの削除タスク、
+  `docs/model-catalog.md`（更新手順書）は対象ごと不要になり削除した。詳細は
+  [ADR 0007](adr/0007-retire-webapp-agent-skills.md)。
+- 以下は撤去前の実施記録（履歴として保持）:
+  - **実施 (PR #14)**: `reliableForDsl` フラグを `providers.ts` に追加し `/api/models` で配信、frontend は純関数 `pickDslFallback`（カタログ順＋フラグ）で選ぶよう一般化し特定ID依存を撤去。
+  - **実施 (2026-07-03)**: カタログを棚卸し（`or-deepseek-r1` は OpenRouter から消滅していたため `openai/gpt-oss-120b:free` に置換）。
 
 ### 2. DSL 解説（人間向け）と実装のドリフト検知 — ✅ 完了 (PR #14 + docs ガード)
 - **実施 (PR #14)**: (b) を採用。`test_chart_dsl.py` に「`prompts.ts` が教える全型 ⊆ RENDERERS」を追加（slide 例＋スラッシュ列のクリーン token・43型）。
@@ -51,10 +70,11 @@
 
 ## P2（中）
 
-### 3. ビュー回帰の自動ガード（e2e を CI に） — 🟡 一部完了 (PR #14)
-- **実施 (PR #14)**: `@testing-library`+jsdom の `components.test.tsx` で一次ガード＋`.gitignore` 追加。残: e2e の CI 化は CI 軽量維持のため見送り（opt-in 据え置き）。
-- **何**: Playwright e2e はオプトイン（`@playwright/test` を devDependencies に入れず、CI 対象外）。今回 `e2e/smoke.spec.ts` の見出しセレクタが陳腐化して壊れていた（実証済み）。UI 刷新直後で、回帰を防ぐ価値が高い。
-- **対応案**: 任意 job として e2e を CI に追加（chromium キャッシュ活用）か、`@testing-library` でビューの最小結合テストを `frontend/test/` に追加。あわせて `frontend/test-results/` を `.gitignore` へ（現在未登録）。
+### 3. ビュー回帰の自動ガード（e2e を CI に） — 🔵 Closed（S1: 対象消滅）
+- **Closed (S1, 2026-08-13)**: 課題の対象だった `frontend/e2e/` `frontend/test/` ごと Web アプリを撤去したため
+  消滅。[ADR 0007](adr/0007-retire-webapp-agent-skills.md)。
+- 以下は撤去前の実施記録（履歴として保持）:
+  - **実施 (PR #14)**: `@testing-library`+jsdom の `components.test.tsx` で一次ガード＋`.gitignore` 追加。
 
 ### 4. 100型のビジュアル回帰の自動化 — ✅ 完了
 - **実施**: 案B（図形ツリースナップショット）で**全100型**を自動ガード。`tests/test_visual_regression.py` が各型を最小入力でレンダし、正規化した図形ツリー（種別・座標・塗り/線色・テキスト・フォント、表/チャート構造）を golden `tests/__snapshots__/visual_regression.json` と型ごとに比較。純Python・LibreOffice 不要・環境非依存。golden はコミット済みで Git diff で差分が読める。更新は `make snapshot-update`（=`SLIDEGEN_UPDATE_SNAPSHOTS=1`）。CI は `pytest tests/` 全体を回すため自動でガードに入る。`test_snapshot_covers_all_renderers` が golden⇔RENDERERS の増減を強制検知。
@@ -62,36 +82,36 @@
 - **何（元の課題）**: 第1層 `tests/test_invariants.py`（構造）はあったが、見た目の回帰は `tools/visual.py` のモンタージュ**目視**のみだった。
 
 ### 5. 未実装の機能バックログ
+
+**現役（純Python ライブラリのスコープ内）:**
 - ✅ potx 本連携（`slidegen/theme.py` の直値 → potx テーマ色参照。ADR 0004 ルール3の本実装）。
-  → **完了**: `theme.py` に `theme_from_potx()` を追加（accent1→main / accent2→main_2 / accent6→accent の一般 OOXML マッピング、読めなければ DEFAULT_THEME にフェイルセーフ）。`build()`/`api.py` の `theme` を None センチネル化し、template 提供かつ theme 未指定なら自動抽出（CLI・ブラウザ Pyodide 両経路で有効）。
+  → **完了**: `theme.py` に `theme_from_potx()` を追加（accent1→main / accent2→main_2 / accent6→accent の一般 OOXML マッピング、読めなければ DEFAULT_THEME にフェイルセーフ）。`build()`/`api.py` の `theme` を None センチネル化し、template 提供かつ theme 未指定なら自動抽出。
 - pptx → DSL シリアライザ（編集の双方向化。現状 `sync` は**文言差分のみ**）。
   → 🟡 **スコープ判断 (2026-07-03) → ADR化 (2026-07-05)**: 責務分離の方針を
   **[ADR 0006](adr/0006-provenance-roundtrip.md)** として正式化。
   任意 pptx は「デザイン取り込み」（LLM インポート、実装済み。`inspect_pptx.inspect_compact` で
-  構造抽出 → Pyodide worker `inspect` → `IMPORT_DECK_SYSTEM` で DSL 再構成。Step2/3 で
-  TABLE/CHART/GROUP 抽出とプロンプトの型カタログを強化）。
+  構造抽出 → `IMPORT_DECK_SYSTEM`（S1 で `skills/slidegen/references/import-deck-prompt.md` へ移設）
+  で DSL 再構成。Step2/3 で TABLE/CHART/GROUP 抽出とプロンプトの型カタログを強化）。
   自アプリ生成 pptx の**決定的双方向化**（プロベナンス方式：生成時に DSL ソースを埋め込み、
   `test_visual_regression.py` の図形ツリー比較器を流用して差分反映 + 全100型ラウンドトリップ検証）は
   ADR 0006 に記載の将来項として引き続き未実装。
 - 技術図 **Mermaid** 連携（設計の MNP 構想にあるが未実装）。
-- 本物のサムネイル（サーバ側 LibreOffice 等。ブラウザ単体では pptx→画像 不可のため別ホスト。ADR 0003 の代替案）。
 - ✅ テキストはみ出しの物理検出を第1層へ（現状は境界 overflow まで）。
   → **完了**: `tests/test_invariants.py` に `S3`（TEXT_BOX の水平/垂直はみ出しヒューリスティック）を追加。word_wrap=False は横幅、折り返しは高さで判定（code_block 等の意図的 no-wrap を誤検知しない）。
-- 会社テンプレ/設定の **IndexedDB 永続化**（現状は容量/プライバシー配慮でセッション限り）。
 - i18n（現状 日本語のみ）。
-- ✅ 添付画像の**マルチモーダル**活用（旧: `ingest.ts` は画像をメタ情報のみで LLM に渡さない）。
-  → **完了 (2026-07-03)**: ブラウザで縮小（長辺1280px・JPEG 段階品質・base64 20万字/枚。`frontend/src/image.ts`）→
-  vision 対応モデル選択時のみ `messages[].images` で送信（`/api/models` の `vision` フラグ）。gateway が
-  プロバイダ別に変換（Gemini `inline_data` / OpenAI系 `image_url` / Anthropic content blocks）し、
-  非 vision へのフォールバック時はエンコーダが剥がして安全に劣化。サーバ検証は jpeg/png/webp・30万字/枚・4枚/リクエスト、
-  `MAX_INPUT_BYTES` 既定は 200KB→1MB（spec.md 更新済み）。
+
+**🔵 Closed（S1, 2026-08-13）— Web アプリ前提のため対象消滅（[ADR 0007](adr/0007-retire-webapp-agent-skills.md)）:**
+- 本物のサムネイル（サーバ側 LibreOffice 等でブラウザの pptx→画像 不可を補う想定だった。ADR 0003 の代替案）。
+- 会社テンプレ/設定の **IndexedDB 永続化**（ブラウザのセッション限り保存を補う想定だった）。
+- ✅ 添付画像のマルチモーダル活用（`frontend/src/image.ts`・`gateway` のプロバイダ別変換。実装ごと撤去）。
 
 > 補足: 上記 potx連携 / はみ出し検出と、新規の **DSL 静的バリデーション**（`slidegen/dsl_validator.py`：未知型を build 前に検出し CLI を exit 1、誤記法/空スライドは警告）は、別レポ由来の指示書 `current-improvements-for-another.md` を当repo向けに要否判定して取り込んだもの。ハードコード型カタログ版の validator や内部リファクタ（render_common 等）は当repoの方針（真実は RENDERERS・過剰作り込み回避）に合わないため不採用。
 
-### 6. フロントのビュー層テスト — ✅ 完了 (PR #14)
-- **実施 (PR #14)**: `frontend/test/components.test.tsx` で TopBar/ConversationPane/DeckPane を prop 駆動検証（+7、jsdom 局所化）。
-- **何**: `frontend/test/` の vitest は **ロジック層**（ingest/md/phases/storage）のみ。`App.tsx`/`components.tsx` は型検査と e2e 任せ。
-- **対応案**: 主要分岐（オンボーディング/生成中/無効DSL回復/タブ切替）の軽いコンポーネントテスト。
+### 6. フロントのビュー層テスト — 🔵 Closed（S1: 対象消滅）
+- **Closed (S1, 2026-08-13)**: 課題の対象だった `frontend/` ごと Web アプリを撤去したため消滅。
+  [ADR 0007](adr/0007-retire-webapp-agent-skills.md)。
+- 以下は撤去前の実施記録（履歴として保持）:
+  - **実施 (PR #14)**: `frontend/test/components.test.tsx` で TopBar/ConversationPane/DeckPane を prop 駆動検証（+7、jsdom 局所化）。
 
 ---
 
@@ -99,6 +119,6 @@
 
 - **7a.** `slidegen/scaffold_type.py` の `# TODO: レイアウト(...)に従って配置を実装`（雛形のレイアウト未実装）。 → 🔵 温存（新型を起こす際に人間が埋める**生成テンプレート内のガイド用プレースホルダ**であり本体の未実装ではない。消すとガイドが失われるため意図的に残す）。
 - **7b.** 移植元 python（`slidegen_app.py` / `agent_prompts.py` / `ingest.py` / `llm_providers.py`）を指すコメントが各 TS に残る（既に不在で、新規参加者に紛らわしい）。文言を「移植済み」等へ。 → ✅ 完了 (PR #14)
-- **7c.** wheel 名 `slidegen-0.1.0-py3-none-any.whl` が `frontend/src/render/renderClient.ts` の既定値と `tools/build_wheel.sh` に分散。version bump 時に複数箇所更新が要る（micropip の basename 解釈制約も絡む）。 → ✅ 完了 (PR #17: `tests/test_version_sync.py` で `renderClient.ts` の既定版 ⇔ `pyproject.toml` version 一致を CI ガード。build_wheel.sh は元々動的抽出で drift せず)。
+- **7c.** wheel 名 `slidegen-0.1.0-py3-none-any.whl` が `frontend/src/render/renderClient.ts` の既定値と `tools/build_wheel.sh` に分散。version bump 時に複数箇所更新が要る（micropip の basename 解釈制約も絡む）。 → 🔵 Closed（S1, 2026-08-13）: `frontend/` `tools/build_wheel.sh` `tests/test_version_sync.py` を Web アプリごと撤去したため対象消滅（[ADR 0007](adr/0007-retire-webapp-agent-skills.md)）。撤去前は PR #17 で `test_version_sync.py` による CI ガードを実施していた。
 - **7d.** `Makefile` は bare `python3` 前提（要 venv 有効化。README に注記済み）。`uv run` ラッパに寄せると事故が減る。 → ✅ 完了 (PR #17: 全ターゲットを `uv run --extra dev python` 化＝ADR 0002 統一。README の venv 注記も解消)。
 - **7e.** `build-system` は setuptools（`pyproject.toml`）。ADR 0002 は uv 統一だが、これはビルド**フロント**の話で整合（`uv build` がこの backend を呼ぶ）。誤解防止に一言コメントしてもよい。 → ✅ 完了 (PR #17: `[build-system]` に 1 行コメント追記)。

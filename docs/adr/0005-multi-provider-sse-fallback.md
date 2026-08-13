@@ -1,6 +1,6 @@
 # 0005. マルチプロバイダ LLM 抽象 ＋ SSE 専用 ＋ 2層フォールバック
 
-- ステータス: 採用 (Accepted)
+- ステータス: Superseded by [0007](0007-retire-webapp-agent-skills.md) (2026-08-13)
 - 日付: 2026-06-28
 - 関連: `gateway/src/providers.ts`, `gateway/src/stream.ts`, `gateway/src/index.ts`, `frontend/src/App.tsx`
 
