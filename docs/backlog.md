@@ -20,7 +20,20 @@ S5系列（📋約50型・分野別バッチ）の順で、1セッション=1PR�
 - **S1: ✅ 完了**（[ADR 0007](adr/0007-retire-webapp-agent-skills.md)、`frontend/`/`gateway/` 削除、
   DSL リファレンス等を `skills/slidegen/references/` へ移設、CI 縮小）。これに伴い下記 #1 の Web 前提部分・
   #3・#6・7c、#5 の Web 専用項目を Closed 化した。
+  - **S1 後片付け（リポジトリ外・Cloudflare 側リソース）(2026-08-13)**: 完了条件にリポジトリ外リソースの
+    削除が含まれておらず追跡漏れだったところ、ユーザー指摘で発覚・対応。
+    Pages プロジェクト `slidegen`（slidegen-ezt.pages.dev）と GitHub secrets
+    `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID` は**削除済み**。Worker/KV は元々未作成と確認。
+    残作業は下記「🟡 ユーザー作業（Cloudflare ダッシュボード）」を参照。
 - S2 以降: 未着手。
+
+**🟡 ユーザー作業（Cloudflare ダッシュボード。Claude からは操作不可・未実施）:**
+- Zero Trust チーム `mrxlia`（`mrxlia.cloudflareaccess.com`）の Access アプリ削除
+  （旧 Pages プロジェクト向け、AUD `5ac4a021…17c03`）とそのポリシー。
+- 旧 GitHub secrets に入れていた Cloudflare API トークン本体の失効
+  （dash.cloudflare.com → My Profile → API Tokens。Pages:Edit スコープ）。
+- LLM API キー（GEMINI_API_KEY / OPENROUTER_API_KEY、任意で OPENAI/ANTHROPIC）のローテーション検討
+  （Pages プロジェクト削除で環境変数としては消滅済みだが、キー自体の失効は別途要判断）。
 
 ## このエンゲージメントで解消済み
 
