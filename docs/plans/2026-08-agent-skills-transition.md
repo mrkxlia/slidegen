@@ -173,7 +173,24 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 5. `README.md` にエージェント別の導入手順を追記する。
 6. **完了条件**: Claude Code から skill 経由で pptx 生成に成功し、両方の validate が green。
 
-### S3: tsundoku 知識抽出 → デザインガイドライン【状況: 未着手】
+### S3: tsundoku 知識抽出 → デザインガイドライン【状況: 完了 (PR #xx)】
+
+> **実施時の補足**（2026-08-13）:
+> - tsundoku `library/`（`/home/kota/tsundoku`）のスライド関連ノート5本
+>   （「パワポのデザインパターン大全 39のアイデア」「全10種36枚のパワポ用グラフテンプレート」
+>   「アクセンチュア現役社員が伝授！PowerPointスライド作成の秘訣」「外資系コンサルのスライドに学ぶ
+>   ロジックツリー活用法」「定例資料の冒頭に入れるべき1枚のスライド」）を実際に読んで知識抽出し、
+>   `skills/slidegen/references/design-guidelines.md`（デザイン原則、各原則に出典タグ＋出典表付き）と
+>   `references/type-selection-guide.md`（「したいこと→型名」の逆引き。RENDERERS全100型を突き合わせ）
+>   を新設した。SKILL.md の「構成提案」「レビューと修正」の2箇所から両ファイルへ誘導している。
+> - `docs/type_catalog.md` §4 に新規📋候補7型（area_chart / pictogram_array / dot_matrix_chart /
+>   org_chart / ranking_list / faq_qa / mission_vision_values）と❌候補（キャプチャ画像の羅列・拠点の
+>   地図表示・導入実績のロゴ壁）を追記し、既存📋列（funnel/scatter/bubble）をtsundoku実例の頻出度に
+>   基づき先頭寄りに並べ替えた。§7出典にtsundokuの1行を追加。
+> - 完了条件（references 2本がスキルから参照されている）は `tests/test_plugin_manifests.py` に
+>   `test_skill_references_design_guidance_docs` として機械ガードを追加。あわせて
+>   `test_type_selection_guide_types_are_registered`（type-selection-guide.md が案内する実装済み型
+>   ⊆ RENDERERS）も追加し、dsl-reference.md と同じ「型名は実在するものだけを書く」思想を踏襲した。
 
 1. tsundoku `library/` のスライド関連ノート（frontmatter の `tags`/`summary` で機械抽出）から、
    `skills/slidegen/references/design-guidelines.md`（デザイン原則）と
@@ -194,6 +211,12 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 ### S5系列: 📋 約50型の分野別バッチ【状況: 未着手】
 
 1セッション=1分野を目安に、S3 で見直した優先順位に沿って並べ替えて実施する。
+
+> **S3(2026-08-13)での追記**: tsundoku知見に基づく新規候補7型（area_chart / pictogram_array /
+> dot_matrix_chart / org_chart / ranking_list / faq_qa / mission_vision_values）を
+> `docs/type_catalog.md` §4 に追加した。各バッチの最新の型リストは `type_catalog.md` を正とし、
+> 下記の分野別バッチの型名列挙・件数は当初調査時点のスナップショットである点に留意すること
+> （二重管理・件数の手計算ミスを避けるため、本セクションでの精密な再カウントは行わない）。
 
 - **S5a チャート系（9型）**: bullet / harvey_ball_table / marimekko / sankey / funnel / scatter / bubble /
   treemap / football_field

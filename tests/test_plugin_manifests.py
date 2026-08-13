@@ -16,6 +16,8 @@ ROOT_PLUGIN_JSON = ROOT / "plugin.json"
 CLAUDE_PLUGIN_JSON = ROOT / ".claude-plugin" / "plugin.json"
 MARKETPLACE_JSON = ROOT / ".claude-plugin" / "marketplace.json"
 SKILL_MD = ROOT / "skills" / "slidegen" / "SKILL.md"
+DESIGN_GUIDELINES_MD = ROOT / "skills" / "slidegen" / "references" / "design-guidelines.md"
+TYPE_SELECTION_GUIDE_MD = ROOT / "skills" / "slidegen" / "references" / "type-selection-guide.md"
 
 # Agent Plugins 1.0 の plugin.json スキーマ（additionalProperties: false）が許可するキー。
 # https://agent-plugins.org/schemas/1.0.0/plugin.schema.json
@@ -101,3 +103,42 @@ def test_slidegen_wrapper_script_is_executable():
     script = ROOT / "skills" / "slidegen" / "scripts" / "slidegen.sh"
     assert script.exists(), "skills/slidegen/scripts/slidegen.sh が無い"
     assert script.stat().st_mode & 0o111, "skills/slidegen/scripts/slidegen.sh に実行ビットが無い"
+
+
+def test_skill_references_design_guidance_docs():
+    """S3完了条件: design-guidelines.md / type-selection-guide.md がスキルから参照されていること。"""
+    assert DESIGN_GUIDELINES_MD.exists(), "skills/slidegen/references/design-guidelines.md が無い"
+    assert TYPE_SELECTION_GUIDE_MD.exists(), "skills/slidegen/references/type-selection-guide.md が無い"
+
+    text = SKILL_MD.read_text(encoding="utf-8")
+    assert "references/design-guidelines.md" in text, (
+        "SKILL.md が references/design-guidelines.md を参照していない"
+    )
+    assert "references/type-selection-guide.md" in text, (
+        "SKILL.md が references/type-selection-guide.md を参照していない"
+    )
+
+
+def _type_selection_guide_registered_type_refs() -> set:
+    """type-selection-guide.md からバッククォート型名を抽出する。
+    📋（未実装候補）を含む行は対象外とする（実装済みと確定していないため）。
+    """
+    text = TYPE_SELECTION_GUIDE_MD.read_text(encoding="utf-8")
+    referenced = set()
+    for line in text.splitlines():
+        if "📋" in line:
+            continue
+        referenced.update(re.findall(r'`([a-z0-9_]+)`', line))
+    return referenced
+
+
+def test_type_selection_guide_types_are_registered():
+    """type-selection-guide.md が案内する実装済み型（📋以外）⊆ RENDERERS。
+    dsl-reference.md と同じ「型名は必ず実在するものだけを書く」というドリフト防止思想を軽量に流用する。
+    """
+    from slidegen.render import RENDERERS
+
+    referenced = _type_selection_guide_registered_type_refs()
+    assert referenced, "type-selection-guide.md からバッククォート型名を抽出できない（抽出ロジックの破綻）"
+    missing = sorted(t for t in referenced if t not in RENDERERS)
+    assert not missing, f"type-selection-guide.md が案内する未登録の型: {missing}"

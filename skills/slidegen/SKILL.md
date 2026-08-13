@@ -73,6 +73,12 @@ DSL 記述から直接入って構いません。壁打ちの途中で急に「�
   関係図なら matrix/cycle/pyramid など）を積極的に選ぶ。**具体的にどの型があるかは、
   この段階で [references/dsl-reference.md](references/dsl-reference.md) を読んで判断すること**
   （型カタログの正本はそちらにあり、ここには型名を列挙しない）。
+- 内容から型を逆引きしたいときは
+  [references/type-selection-guide.md](references/type-selection-guide.md)（「したいこと→型名」の索引）
+  も使う。型の詳しい書き方は dsl-reference.md が正本のまま変わらない。
+- 何をどう見せるか（配色・グラフの選び方・構成の作法）で迷ったら
+  [references/design-guidelines.md](references/design-guidelines.md)（デザイン原則。資料作成ノウハウの
+  知見から抽出）を参照する。
 - 末尾に「この流れでよければ DSL を作成します。修正点があれば教えてください」と添える。
 
 ## 3. DSL 記述
@@ -117,7 +123,8 @@ dsl-reference.md を見直して修正し、再実行してください。`Error
 
 1. **Content（内容）**: 1スライド1メッセージか／主張が言い切りか／冗長や重複はないか／数値は根拠付きか
 2. **Design（体裁）**: 型の選択が内容に合っているか（比較=compare/grid、数値=kpi/bar_chart、
-   流れ=process/timeline 等）／強調が1スライド1箇所に収まっているか／要素数が多すぎないか
+   流れ=process/timeline 等。迷ったら references/type-selection-guide.md、判断基準は
+   references/design-guidelines.md を参照）／強調が1スライド1箇所に収まっているか／要素数が多すぎないか
 3. **Coherence（流れ）**: 表紙→本編→まとめの一貫性／章立ての論理／重複スライドがないか
 
 講評をユーザーに示し、必要な修正を DSL に反映します。修正時の方針:

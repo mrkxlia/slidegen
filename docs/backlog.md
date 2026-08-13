@@ -3,8 +3,8 @@
 > 立て直しエンゲージメントで洗い出した技術的負債・課題を**優先度順**にまとめる。
 > 個人/学習プロジェクトのスコープに合わせ、過剰な作り込みは避ける方針。
 > 関連: [requirements.md](../requirements.md) / [spec.md](../spec.md) / [docs/adr/](adr/)
-> 最終更新: 2026-08-13（**方針転換ロードマップ S1（CF撤去＋DSLリファレンス移設）完了**に伴い、
-> Web アプリ前提だった既存項目を Closed 化）
+> 最終更新: 2026-08-13（**方針転換ロードマップ S3（tsundoku知識抽出→デザインガイドライン）完了**。
+> S1（CF撤去＋DSLリファレンス移設）完了に伴い、Web アプリ前提だった既存項目は Closed 化済み）
 
 ## 🔴 最優先: 方針転換（Web アプリ撤去 → Agent Skills/Plugin 化）
 
@@ -30,7 +30,12 @@ S5系列（📋約50型・分野別バッチ）の順で、1セッション=1PR�
   `tests/test_plugin_manifests.py` でマニフェスト整合を機械保証。CI に skills-ref validate を追加。
   リポジトリを public 化）。詳細・実施時の判断は
   [実行計画](plans/2026-08-agent-skills-transition.md) の S2 セクション参照。
-- S3 以降: 未着手。
+- **S3: ✅ 完了**（tsundoku library のノウハウ記事5本を知識抽出し、
+  `skills/slidegen/references/design-guidelines.md`（デザイン原則）と
+  `references/type-selection-guide.md`（型の逆引き）を新設。SKILL.md から両方を参照。
+  `docs/type_catalog.md` §4 に新規📋候補7型と❌候補を追記、既存📋列の優先順位も見直した）。
+  詳細・実施時の判断は [実行計画](plans/2026-08-agent-skills-transition.md) の S3 セクション参照。
+- S4以降: 未着手。
 
 **新規（S2 由来）:**
 - PyPI 公開の検討（`uvx --from git+...` を GitHub 依存から解放し、バージョン解決も速くなる）。
