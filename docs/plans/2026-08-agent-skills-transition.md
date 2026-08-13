@@ -130,7 +130,7 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
    ＋ リポジトリ外の Cloudflare リソース（Pages プロジェクト・GitHub secrets）の削除
    （2026-08-13 実施済み。Access アプリ削除のみユーザー作業として残存）。
 
-### S2: Agent Skill ＋ 両対応プラグイン化【状況: 完了 (PR #未定)】
+### S2: Agent Skill ＋ 両対応プラグイン化【状況: 完了 (PR #27)】
 
 > **実施時の補足**（2026-08-13）:
 > - **履歴のシークレット監査を実施しクリーンを確認**: gitleaks で全コミット走査＋Gemini
