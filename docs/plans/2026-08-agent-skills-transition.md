@@ -114,8 +114,21 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
      `frontend/.wrangler/`
    - リポジトリ外: Cloudflare Pages プロジェクト・Access アプリ・Pages secrets、GitHub リポジトリ secrets
      （`CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`）はユーザー作業として案内する（Claude からは操作不可）。
+   - **実施状況（2026-08-13 追記）**: 完了条件（下記7）にリポジトリ外リソースの削除が含まれておらず
+     追跡漏れになっていたため、S1 完了報告後もリポジトリ外リソースが残存していた。ユーザー指摘を受けて
+     wrangler CLI（既存 OAuth 認証）で実機確認のうえ、以下を実施:
+     - Cloudflare Pages プロジェクト `slidegen`（`slidegen-ezt.pages.dev`）＝**削除済み**
+       （Pages secrets・Workers AI binding も同時に消滅。ユーザー最終確認のうえ実行）
+     - GitHub リポジトリ secrets `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` ＝**削除済み**
+     - Worker `slidegen-gateway` ／ KV namespace `RL` ＝実機確認の結果、そもそも作成・デプロイされて
+       いなかった（対応不要）
+     - Zero Trust Access アプリ（チーム `mrxlia`、AUD `5ac4a021…17c03`）＝wrangler の OAuth スコープでは
+       操作不可のため未実施。**ユーザー作業として `docs/backlog.md` に記載**（ダッシュボードでの削除）
+     - 同アカウントの無関係プロジェクト（`tsundoku-site` / `mrkxlia-blog`）は対象外・未変更
 7. **完了条件**: `uv run --extra dev pytest tests/ -q` が green、CI が green、
    リポジトリ内に CF/Node への現行参照が残らない（docs の歴史的記述・ADR 除く）。
+   ＋ リポジトリ外の Cloudflare リソース（Pages プロジェクト・GitHub secrets）の削除
+   （2026-08-13 実施済み。Access アプリ削除のみユーザー作業として残存）。
 
 ### S2: Agent Skill ＋ 両対応プラグイン化【状況: 未着手】
 
