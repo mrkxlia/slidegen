@@ -1,0 +1,11 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "slidegen",
+  "version": "0.1.0",
+  "description": "DSL(記法)から編集可能な PowerPoint (.pptx) を生成する Agent Skill。Create editable PowerPoint decks from a simple DSL.",
+  "author": { "name": "mrkxlia", "url": "https://github.com/mrkxlia" },
+  "homepage": "https://github.com/mrkxlia/slidegen",
+  "repository": "https://github.com/mrkxlia/slidegen",
+  "license": "MIT",
+  "keywords": ["powerpoint", "pptx", "slides", "presentation", "dsl", "python", "agent-skill"]
+}

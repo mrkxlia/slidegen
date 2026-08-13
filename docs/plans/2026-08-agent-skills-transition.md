@@ -130,7 +130,30 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
    ＋ リポジトリ外の Cloudflare リソース（Pages プロジェクト・GitHub secrets）の削除
    （2026-08-13 実施済み。Access アプリ削除のみユーザー作業として残存）。
 
-### S2: Agent Skill ＋ 両対応プラグイン化【状況: 未着手】
+### S2: Agent Skill ＋ 両対応プラグイン化【状況: 完了 (PR #未定)】
+
+> **実施時の補足**（2026-08-13）:
+> - **履歴のシークレット監査を実施しクリーンを確認**: gitleaks で全コミット走査＋Gemini
+>   （`AIzaSy...`）/Cloudflare API トークン/`.dev.vars` を直撃パターンで走査。検出は旧
+>   `frontend/wrangler.toml` の `ACCESS_AUD`（Cloudflare Access のアプリ識別子。単体では認証に
+>   使えず、当該 Access アプリ自体も S1 後片付けで削除済み）1件のみで、真の秘密は0件。
+>   これに基づきユーザー承認のうえ**履歴を書き換えずに public 化**した。
+> - `claude plugin validate` は **CI に入れない**（Node/claude CLI セットアップを CI に戻さない
+>   ＝ ADR 0007 の縮小方針を維持）。代わりに `Makefile` の `validate-skill` ターゲット
+>   （skills-ref validate ＋ `claude plugin validate . --strict` の2連）でローカル運用に固定した。
+>   skills-ref は CI では外部リポジトリの破壊的変更を避けるため commit SHA にピン留めしている。
+> - `.claude-plugin/plugin.json` と `.claude-plugin/marketplace.json` を両方置く構成では、
+>   `claude plugin validate .` は marketplace.json 側を検証する（`plugin.json` を直接指定すると
+>   「プラグインルート＝リポジトリルート」の設計上、無関係な `CLAUDE.md` について
+>   「plugin root では project context として読み込まれない」という無害な warning が out
+>   る。`--strict` はこれもエラー化するため、`validate-skill` では `claude plugin validate .`
+>   （marketplace 経由）を使う）。
+> - `phase-prompts.md` は SKILL.md から参照しない（各フェーズの要点は SKILL.md 本文に編み込み
+>   済みのため二重ロードを避けた。references への保存自体は出自保存・S3 素材として継続）。
+> - **SKILL.md には型名を一切列挙しない**運用ルールを採用（CI ガード `test_dsl_reference.py` は
+>   `dsl-reference.md` のみを見るため、SKILL.md に型名を書くと未ガードのドリフト源になる）。
+>   `tests/test_plugin_manifests.py` の `test_skill_md_does_not_enumerate_type_names` で機械ガード。
+> - LICENSE は MIT を新規追加（著作権者表記は `mrkxlia`）。
 
 1. `skills/slidegen/SKILL.md` を作成する。**オープン仕様6フィールドのみ**を使う
    （`compatibility` に "Requires Python 3.10+ and uv" 等を記載）。

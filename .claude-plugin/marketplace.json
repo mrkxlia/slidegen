@@ -1,0 +1,12 @@
+{
+  "name": "slidegen",
+  "owner": { "name": "mrkxlia", "url": "https://github.com/mrkxlia" },
+  "description": "DSL(記法)から編集可能な PowerPoint (.pptx) を生成する slidegen スキルのマーケットプレイス",
+  "plugins": [
+    {
+      "name": "slidegen",
+      "source": "./",
+      "description": "DSL(記法)から編集可能な PowerPoint (.pptx) を生成するスキル"
+    }
+  ]
+}

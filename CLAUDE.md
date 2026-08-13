@@ -9,11 +9,18 @@ slidegen ＝ DSL から **編集可能な PowerPoint(.pptx)** を生成する純
 撤去後は、スライド作成ロジックを **Agent Skills（オープン仕様）＋プラグイン**として一般化し、
 Claude Code に限らず各 AI エージェントから利用可能にする方針転換を進めている。
 正となる実行計画は [docs/plans/2026-08-agent-skills-transition.md](docs/plans/2026-08-agent-skills-transition.md)
-（S1: Cloudflare 撤去＋DSLリファレンス移設＝**完了**。S2 以降＝未着手）。
+（S1: Cloudflare 撤去＋DSLリファレンス移設＝**完了**。S2: Agent Skill＋両対応プラグイン化＝**完了**。
+S3 以降＝未着手）。**リポジトリは S2 で public 化した**（履歴のシークレット監査済み・クリーン。
+詳細は実行計画 S2 セクションの実施時補足）。
 
 - Web アプリが LLM に渡していたプロンプト資産（DSL リファレンス・壁打ちフェーズの各システムプロンプト・
   pptx 取り込み用プロンプト）は `skills/slidegen/references/` へ移設済み（`dsl-reference.md` /
-  `phase-prompts.md` / `import-deck-prompt.md`）。
+  `phase-prompts.md` / `import-deck-prompt.md`）。壁打ちフローの要点は `skills/slidegen/SKILL.md`
+  本文に編み込み済み（`phase-prompts.md` は出自保存用に残置、SKILL.md からは参照しない）。
+- `skills/slidegen/` は Agent Skills オープン仕様に準拠したスキル本体（`SKILL.md` /
+  `scripts/slidegen.sh` レンダラッパー / `references/`）。ルートの `plugin.json`
+  （Agent Plugins 1.0）と `.claude-plugin/plugin.json` + `marketplace.json`（Claude Code）が
+  同じ `skills/` を共有する両対応プラグイン構成。
 - Web アプリ撤去直前の状態は Git タグ `archive/cloudflare-webapp` から参照・復元できる。
 - 要件/仕様は [requirements.md](requirements.md) / [spec.md](spec.md)。設計判断は `docs/adr/`
   （0002 uv 統一、0004 編集可能pptx必達、0006 pptx↔DSL 責務分離、0007 Web アプリ撤去。
@@ -36,10 +43,14 @@ Claude Code に限らず各 AI エージェントから利用可能にする方�
   chart は `render_charts.py`(複数形)が正
   （`bar_chart`/`line_chart`/`stacked_bar`/`stacked_100_bar`/`bar_horizontal`/`clustered_bar`、
   DSL は `categories` + `col` + 数値行）。
-- `skills/slidegen/references/` … Agent Skills 資産。**DSL リファレンスの正本は `dsl-reference.md`**
-  （CI ガード `tests/test_dsl_reference.py` の対象）。`phase-prompts.md`（壁打ちフェーズの各プロンプト）・
-  `import-deck-prompt.md`（pptx 取り込み用プロンプト、ADR 0006 の手段1）も同居。S2 で `SKILL.md` 本文に
-  編み込む素材として保存している。
+- `skills/slidegen/` … Agent Skill 本体。`SKILL.md`（frontmatter はオープン仕様6フィールドのみ。
+  **型名は列挙しない** — `tests/test_plugin_manifests.py` が機械ガード）、`scripts/slidegen.sh`
+  （リポジトリ内外どちらでも動くレンダラッパー。内: `uv run slidegen`、外: `uvx --from git+...`）、
+  `references/`（**DSL リファレンスの正本は `dsl-reference.md`**、CI ガード
+  `tests/test_dsl_reference.py` の対象。`phase-prompts.md`・`import-deck-prompt.md` も同居）。
+- ルート `plugin.json`（Agent Plugins 1.0）・`.claude-plugin/plugin.json` +
+  `marketplace.json`（Claude Code）… プラグインマニフェスト。version は `pyproject.toml` と
+  `tests/test_plugin_manifests.py` で同期保証。
 - `tests/` … `test_invariants.py`（構造インバリアント）、`test_dsl_reference.py`
   （dsl-reference.md ≡ RENDERERS の同値ガード）、`test_examples.py`（examples/*.slide の parse/render 回帰）、
   `test_visual_regression.py`（全100型の図形ツリースナップショット）、`test_docs_drift.py`
@@ -57,6 +68,7 @@ uv run slidegen build examples/sample.slide -o out.pptx
 uv build                                  # wheel 化
 make test     # 第1層: 構造インバリアントの pytest
 make visual   # 第2層: モンタージュ生成 → 目視
+make validate-skill   # Agent Skill/プラグインマニフェスト検証（skills-ref + claude plugin validate）
 ```
 
 ## 重要な設計上の制約・注意
@@ -64,6 +76,9 @@ make visual   # 第2層: モンタージュ生成 → 目視
 - **`skills/slidegen/references/dsl-reference.md` が AI に教える型 ≡ `RENDERERS`** を
   `tests/test_dsl_reference.py` が CI で機械保証する。新型を追加したら dsl-reference.md への
   追記も必須（怠ると CI が落ちる）。
+- **`skills/slidegen/SKILL.md` には型名を列挙しない**。型カタログの正本は dsl-reference.md
+  一本に保つ（`tests/test_plugin_manifests.py` の `test_skill_md_does_not_enumerate_type_names`
+  が `slide <型>` の実例が無いことを機械ガードする）。
 - Python は **uv 統一**（`build` をランタイム依存に入れない。ADR 0002）。
 - public API（`render_text` / `render_to_bytes` / `render_file`）とレンダ規約は不変。
 
@@ -71,4 +86,4 @@ make visual   # 第2層: モンタージュ生成 → 目視
 
 課題・ロードマップは [docs/backlog.md](docs/backlog.md) に集約。方針転換の進捗は
 [docs/plans/2026-08-agent-skills-transition.md](docs/plans/2026-08-agent-skills-transition.md)
-（次は S2: Agent Skill ＋ 両対応プラグイン化）。
+（次は S3: tsundoku 知識抽出 → デザインガイドライン）。

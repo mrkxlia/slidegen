@@ -21,6 +21,28 @@ Web アプリが LLM に渡していたプロンプト資産（DSL リファレ�
 `archive/cloudflare-webapp` から参照できる。詳細な移行計画・進捗は
 [docs/plans/2026-08-agent-skills-transition.md](docs/plans/2026-08-agent-skills-transition.md)。
 
+## エージェントから使う（Agent Skill / プラグイン）
+
+スライド作成ロジックは Agent Skills（オープン仕様）準拠のスキル `skills/slidegen/` として同梱。
+Claude Code / Agent Plugins 1.0 対応クライアントの両形式に対応する。
+
+### Claude Code
+```
+/plugin marketplace add mrkxlia/slidegen
+/plugin install slidegen@slidegen
+```
+ローカル開発中の動作確認は `claude --plugin-dir .`。
+
+### Agent Plugins 1.0 対応クライアント（Codex / Cursor / Copilot / VS Code 等）
+```
+npx plugins add mrkxlia/slidegen
+```
+
+### プラグイン非対応の環境（素の利用）
+リポジトリを clone し、エージェントに `skills/slidegen/SKILL.md` を読ませる。
+レンダは `uv run slidegen build`（リポジトリ内）または
+`uvx --from git+https://github.com/mrkxlia/slidegen slidegen build`（どこからでも）。
+
 ## クイックスタート
 
 Python は **uv 統一**（[ADR 0002](docs/adr/0002-uv-for-python-packaging.md)）。
@@ -62,7 +84,8 @@ API 仕様は [spec.md](spec.md) §2。
 
 ```
 slidegen/   コアライブラリ（parser / render*.py / theme / api / cli）。RENDERERS = 100 型
-skills/     Agent Skills / プラグイン資産（DSL リファレンス・壁打ちプロンプト。S2 で SKILL.md 化予定）
+skills/     Agent Skill 本体（SKILL.md・scripts/ レンダラッパー・references/ DSL リファレンス等）
+plugin.json / .claude-plugin/   プラグインマニフェスト（Agent Plugins 1.0 / Claude Code。両方 skills/ を共有）
 tools/      new_type.py（新型雛形）/ visual.py（ビジュアル回帰用モンタージュ生成）
 tests/      第1層 pytest(test_invariants) ＋ DSL リファレンス整合ガード ＋ 第2層 visual.py
 examples/   サンプル記法(.slide)

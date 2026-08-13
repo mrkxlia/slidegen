@@ -48,3 +48,14 @@ slidegen sync  <original.slide> <edited.pptx> [--apply] [-o <updated.slide>]
 - 白紙レイアウト `slide_layouts[6]` を使い、継承プレースホルダを除去（全ページ透け対策）。
 - 16:9（13.333×7.5 inch）、座標は Inches/Pt、すべて**ネイティブ要素**（テキストフレーム/シェイプ/`add_table`）。
 - 色・フォントは **`theme` 経由のみ**、影なし、強調は accent のみ。新型は `render_<type>()` を足し `register` する。
+
+## 5. Agent Skill / プラグイン配布 — `skills/slidegen/`
+
+- **Agent Skills（オープン仕様）**準拠のスキル本体。frontmatter は仕様の6フィールドのみ（`SKILL.md`）。
+  型カタログは列挙せず `references/dsl-reference.md` へ progressive disclosure で誘導する。
+- 配布は**両対応プラグイン**構成: ルート `plugin.json`（Agent Plugins 1.0）／
+  `.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json`（Claude Code）が同じ
+  `skills/` を共有する。version は `pyproject.toml` と一致（`tests/test_plugin_manifests.py` が保証）。
+- レンダは `skills/slidegen/scripts/slidegen.sh`（リポジトリ内: `uv run slidegen`、外:
+  `uvx --from git+https://github.com/mrkxlia/slidegen slidegen`、いずれも public API・CLI 仕様は不変）。
+- 検証: `skills-ref validate`（CI で自動実行）／`claude plugin validate`（`make validate-skill`）。
