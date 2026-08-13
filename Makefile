@@ -1,7 +1,7 @@
 # slidegen Makefile — テスト駆動で型を増やすときのショートカット
 # 社内 Claude Code は基本これだけ覚えればよい
 
-.PHONY: test visual all clean help snapshot-update
+.PHONY: test visual all clean help snapshot-update validate-skill
 
 # 第1層：構造インバリアントの自動テスト（pytest）
 test:
@@ -35,6 +35,12 @@ check:
 clean:
 	rm -rf out build dist *.egg-info __pycache__ */__pycache__ */*/__pycache__
 
+# Agent Skill / プラグインマニフェストの検証（CI では skills-ref のみ実行。
+# claude plugin validate は claude CLI のローカル導入が前提のためここで手動実行する）
+validate-skill:
+	uvx --from "git+https://github.com/agentskills/agentskills#subdirectory=skills-ref" skills-ref validate skills/slidegen
+	claude plugin validate . --strict
+
 help:
 	@echo "make test         - 第1層: pytestで構造インバリアントを確認"
 	@echo "make visual       - 第2層: 全サンプルのモンタージュをoutに生成"
@@ -44,3 +50,4 @@ help:
 	@echo "make check TYPE=mytype"
 	@echo "                  - 新型の検証（pytest+モンタージュ）"
 	@echo "make snapshot-update - 第2層(自動): 図形ツリーの golden を再生成（見た目変更/新型後）"
+	@echo "make validate-skill  - Agent Skill/プラグインマニフェストの検証（skills-ref + claude plugin validate）"

@@ -19,7 +19,9 @@ slidegen は、独自の中間記法(DSL)から、PowerPoint で**編集可能�
 
 > 2026-08 まではこれに加えて Cloudflare 無料枠上の Web アプリ（AI と壁打ちしてスライドを作る）を
 > 併設していたが撤去した（[ADR 0007](docs/adr/0007-retire-webapp-agent-skills.md)）。撤去後は
-> Agent Skills / プラグイン構成への転換を進めている（[docs/plans/2026-08-agent-skills-transition.md](docs/plans/2026-08-agent-skills-transition.md)）。
+> **Agent Skills / プラグイン構成（`skills/slidegen/`）へ転換済み**（S2 完了。
+> [docs/plans/2026-08-agent-skills-transition.md](docs/plans/2026-08-agent-skills-transition.md)）。
+> スライド作成ロジックは Claude Code / Agent Plugins 1.0 対応クライアントの両方から利用できる。
 
 ## 2. スコープ / 非スコープ
 
@@ -60,5 +62,5 @@ slidegen は、独自の中間記法(DSL)から、PowerPoint で**編集可能�
 - **型 (type)**: レイアウトの種類。要素数から具体的な配置が決まる。
 - **MNP（中間記法パターン）**: AI に座標でなく DSL を操作させる設計思想。
 - **壁打ち**: AI と対話して要件・構成を固める工程（Web アプリでの実現手段は撤去済み。
-  Agent Skills 化後はエージェントとの対話がこれを担う想定）。
+  現在は `skills/slidegen/SKILL.md` に従うエージェントとの対話がこれを担う）。
 - **3層責任分界**: 内容(AI) / 構造(型カタログ) / 見せ方(デザイン制約) ＋ ブランド書式(potx)。

@@ -25,7 +25,17 @@ S5系列（📋約50型・分野別バッチ）の順で、1セッション=1PR�
     Pages プロジェクト `slidegen`（slidegen-ezt.pages.dev）と GitHub secrets
     `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID` は**削除済み**。Worker/KV は元々未作成と確認。
     残作業は下記「🟡 ユーザー作業（Cloudflare ダッシュボード）」を参照。
-- S2 以降: 未着手。
+- **S2: ✅ 完了**（`skills/slidegen/SKILL.md`・`scripts/slidegen.sh` レンダラッパー・
+  `plugin.json`／`.claude-plugin/plugin.json`・`marketplace.json`・LICENSE(MIT) を追加。
+  `tests/test_plugin_manifests.py` でマニフェスト整合を機械保証。CI に skills-ref validate を追加。
+  リポジトリを public 化）。詳細・実施時の判断は
+  [実行計画](plans/2026-08-agent-skills-transition.md) の S2 セクション参照。
+- S3 以降: 未着手。
+
+**新規（S2 由来）:**
+- PyPI 公開の検討（`uvx --from git+...` を GitHub 依存から解放し、バージョン解決も速くなる）。
+- `Makefile` の `validate-skill` が参照する skills-ref の commit SHA ピン留めの定期更新
+  （agentskills リポジトリの破壊的変更を CI で拾わないためのトレードオフ。放置すると古いまま固定される）。
 
 **🟡 ユーザー作業（Cloudflare ダッシュボード。Claude からは操作不可・未実施）:**
 - Zero Trust チーム `mrxlia`（`mrxlia.cloudflareaccess.com`）の Access アプリ削除

@@ -1,0 +1,7 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "slidegen",
+  "version": "0.1.0",
+  "description": "DSL(記法)から編集可能な PowerPoint (.pptx) を生成するスキル（壁打ち→構成提案→DSL→レンダ→レビュー）",
+  "author": { "name": "mrkxlia", "url": "https://github.com/mrkxlia" }
+}
