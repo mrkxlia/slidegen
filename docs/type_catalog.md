@@ -40,10 +40,10 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 
 ---
 
-## 2. 実装済みの型（`RENDERERS` に計100型）
+## 2. 実装済みの型（`RENDERERS` に計105型）
 
 > **真実は `slidegen/render.py` の `RENDERERS`**（`uv run python -c "import slidegen,slidegen.render as r;print(len(r.RENDERERS))"`
-> → 100）。本書は分類のための見取り図で、以下のセクション3も含め多くが既に ✅ 実装済み。
+> → 105）。本書は分類のための見取り図で、以下のセクション3も含め多くが既に ✅ 実装済み。
 > 数の手入力は古くなりやすいので、網羅確認は `RENDERERS` を参照すること。
 
 ### ベース構成（既存）
@@ -84,11 +84,11 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 | comparison_matrix | ✅ | 技術選定◎○△× | 行=選択肢, 列=評価軸, 記号セル |
 | heatmap_matrix | ✅ | 評価の色濃淡 | セル={value,color} |
 | raci | ✅ | 責任分担表 | R/A/C/I色付き |
-| priority_matrix_2x2 | 🔜 | Eisenhower等 | preset=eisenhower/impact_effort |
-| quiz_mcq | 🔜 | 4択クイズ | 問題+A-D+Answer |
-| mandala_chart | 🔜 | マンダラート3×3 | 中央+周囲8 |
-| sdg_grid | 🔜 | SDGs17マス | 公式色, highlight |
-| conjugation_table | 🔜 | 活用表 | 行=人称, 列=時制 |
+| priority_matrix_2x2 | ✅ | Eisenhower等 | preset=eisenhower/impact_effort |
+| quiz_mcq | ✅ | 4択クイズ | 問題+A-D+Answer |
+| mandala_chart | ✅ | マンダラート3×3 | 中央+周囲8 |
+| sdg_grid | ✅ | SDGs17マス | 公式色不使用・自社テーマ内で統一, highlightは{ }で表現 |
+| conjugation_table | ✅ | 活用表 | 行=人称, 列=時制 |
 
 ---
 
@@ -117,8 +117,8 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 
 ### 日本の登壇・ビジネス文化（②③調査）
 📋 speaker_intro_card / cta_recruit / chapter_number_strip（登壇サンドイッチ）
-📋 takahashi_oneword（高橋メソッド）/ takeaways_emoji
-📋 policy_3col / houkoku_sodan_irai / haikei_kadai_kaiketsu_kouka
+✅ takahashi（高橋メソッド。takahashi_oneword は統合済み）／ 📋 takeaways_emoji
+✅ policy_3col ／ 📋 houkoku_sodan_irai / haikei_kadai_kaiketsu_kouka
 
 ### 教育・学術（③調査）
 📋 frayer_model / worked_example / theorem_proof / flashcard
@@ -126,7 +126,7 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 
 ### ストーリー・マーケ（③調査）
 📋 golden_circle / storybrand_sb7 / pixar_story_spine
-📋 aida_funnel / brand_pillars / jtbd_statement / pricing_tiers
+📋 aida_funnel / jtbd_statement ／ ✅ brand_pillars / pricing_tiers（他セクションでも実装済み表記あり）
 
 ### データ補助（③調査）
 ✅ data_source_footer（実装済み・ROI最大）
