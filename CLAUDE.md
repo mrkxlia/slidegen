@@ -10,7 +10,8 @@ slidegen ＝ DSL から **編集可能な PowerPoint(.pptx)** を生成する純
 Claude Code に限らず各 AI エージェントから利用可能にする方針転換を進めている。
 正となる実行計画は [docs/plans/2026-08-agent-skills-transition.md](docs/plans/2026-08-agent-skills-transition.md)
 （S1: Cloudflare 撤去＋DSLリファレンス移設＝**完了**。S2: Agent Skill＋両対応プラグイン化＝**完了**。
-S3: tsundoku 知識抽出＋デザインガイドライン＝**完了**。S4 以降＝未着手）。
+S3: tsundoku 知識抽出＋デザインガイドライン＝**完了**。S4: 5型実装（grid_2d variant）＝**完了**。
+S5以降＝未着手）。
 **リポジトリは S2 で public 化した**（履歴のシークレット監査済み・クリーン。
 詳細は実行計画 S2 セクションの実施時補足）。
 
@@ -42,7 +43,7 @@ S3: tsundoku 知識抽出＋デザインガイドライン＝**完了**。S4 以
 
 ## ディレクトリ
 
-- `slidegen/` … コアライブラリ。型は継続的に追加され現在 `RENDERERS` に**計100型**登録済みだが、
+- `slidegen/` … コアライブラリ。型は継続的に追加され現在 `RENDERERS` に**計105型**登録済みだが、
   **レンダ規約（編集可能なネイティブ要素・theme経由・登録は `register`/`register_many`）と public API は不変**。
   chart は `render_charts.py`(複数形)が正
   （`bar_chart`/`line_chart`/`stacked_bar`/`stacked_100_bar`/`bar_horizontal`/`clustered_bar`、
@@ -60,7 +61,7 @@ S3: tsundoku 知識抽出＋デザインガイドライン＝**完了**。S4 以
   `tests/test_plugin_manifests.py` で同期保証。
 - `tests/` … `test_invariants.py`（構造インバリアント）、`test_dsl_reference.py`
   （dsl-reference.md ≡ RENDERERS の同値ガード）、`test_examples.py`（examples/*.slide の parse/render 回帰）、
-  `test_visual_regression.py`（全100型の図形ツリースナップショット）、`test_docs_drift.py`
+  `test_visual_regression.py`（全105型の図形ツリースナップショット）、`test_docs_drift.py`
   （system_prompt.md/type_catalog.md のドリフト検知）等。
 - `tools/` … `new_type.py`（新型の雛形生成）、`visual.py`（ビジュアル回帰用モンタージュ生成）。
 - `docs/` … 要件補助・仕様補助・ADR・設計・型カタログ・方針転換ロードマップ（`docs/plans/`）。
@@ -93,4 +94,4 @@ make validate-skill   # Agent Skill/プラグインマニフェスト検証（sk
 
 課題・ロードマップは [docs/backlog.md](docs/backlog.md) に集約。方針転換の進捗は
 [docs/plans/2026-08-agent-skills-transition.md](docs/plans/2026-08-agent-skills-transition.md)
-（次は S4: 🔜 5型の実装）。
+（次は S5系列: 📋 約50型の分野別バッチ実装）。

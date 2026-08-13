@@ -43,3 +43,99 @@ slide raci
     "C"
     "R"
     "C"
+
+---
+
+slide conjugation_table
+  kicker "英語文法"
+  headline "be動詞の人称・時制変化"
+  foot "行=人称、列=時制（highlightで代表例を強調）"
+  columns "現在形" "過去形" "未来形"
+  col "I"
+    "am"
+    "was"
+    "will be"
+  col "You / We / They"
+    "are"
+    "were"
+    "will be"
+  col "He / She / It" highlight
+    "is"
+    "was"
+    "will be"
+
+---
+
+slide quiz_mcq
+  kicker "クイズ"
+  headline "日本で人口が最も多い都道府県は？"
+  foot "正解: B（col highlightで正解の行を指定）"
+  columns "回答"
+  col "A"
+    "大阪府"
+  col "B" highlight
+    "東京都"
+  col "C"
+    "愛知県"
+  col "D"
+    "神奈川県"
+
+---
+
+slide priority_matrix_2x2
+  kicker "タスク管理"
+  headline "重要度×緊急度で優先順位を可視化"
+  foot "{ }内が最優先で着手すべきタスク（Eisenhowerマトリクス）"
+  columns "緊急" "緊急でない"
+  col "重要"
+    "{重大インシデント対応}、顧客からの緊急問い合わせ"
+    "中期戦略の立案、スキルアップ学習"
+  col "重要でない"
+    "急な差し込み会議、定型の事務連絡"
+    "SNSチェック、雑務"
+
+---
+
+slide mandala_chart
+  kicker "目標達成"
+  headline "マンダラチャート：新規事業立ち上げ"
+  foot "中央={核となるテーマ}、周囲8マスに要素分解"
+  col
+    "資金調達"
+    "市場調査"
+    "チーム編成"
+  col
+    "法務対応"
+    "{新規事業立ち上げ}"
+    "プロダクト設計"
+  col
+    "販路開拓"
+    "ブランディング"
+    "KPI設計"
+
+---
+
+slide sdg_grid
+  kicker "SDGs"
+  headline "自社事業がひもづくSDGs目標"
+  foot "{ }内が本プロジェクトの重点目標（配色は自社テーマ内に統一。公式17色は使わない）"
+  col
+    "1 貧困をなくそう"
+    "2 飢餓をゼロに"
+    "3 保健"
+    "4 教育"
+    "5 ジェンダー"
+    "6 水・衛生"
+  col
+    "7 エネルギー"
+    "8 働きがい"
+    "{9 産業と技術革新}"
+    "10 不平等の是正"
+    "11 まちづくり"
+    "12 生産と消費"
+  col
+    "13 気候変動"
+    "14 海の豊かさ"
+    "15 陸の豊かさ"
+    "16 平和と公正"
+    "17 パートナーシップ"

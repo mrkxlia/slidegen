@@ -199,7 +199,7 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
    新しい型の候補（例: 「39デザインパターン」「グラフテンプレ10種36枚」由来）があれば 🔜/📋 に追記する。
 3. **完了条件**: references 2本がスキルから参照されており、型の優先順位が backlog に反映されている。
 
-### S4: 🔜 5型の実装【状況: 未着手】
+### S4: 5型の実装【状況: 完了 (PR #xx)】
 
 1. `priority_matrix_2x2` / `quiz_mcq` / `mandala_chart` / `sdg_grid` / `conjugation_table` を
    `grid_2d` の variant として実装する（基本は `slidegen/render_base_grid.py` への variant 追記）。
@@ -207,6 +207,27 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 2. 各型ごとに: `dsl-reference.md` への追記（CI ガードが強制する）、`examples/*.slide` の追加、
    `make snapshot-update`、`docs/system_prompt.md`・`type_catalog.md`（🔜→✅）の追従を行う。
 3. **完了条件**: `RENDERERS` が 105 型になり、全テストが green。
+
+> **実施時の補足**（2026-08-14）:
+> - 5型はいずれも既存の `grid_2d` の行×列セルモデル（`Block`=行、`Block.lines`=列セル）にそのまま
+>   乗った。新しい `_cell_color` モードは不要で、セル単位の強調は既存の2手段
+>   （`col ... highlight` ＝行、本文中の `{ }` ＝特定セル）で完結する。唯一の新規実装は、列見出し帯の
+>   有無を切り替える `header` トグル（`_DEFAULT` は不変、`v.get("header", True)` で後方互換を確保）。
+>   `mandala_chart`/`sdg_grid`（`row_label: False`）はこのトグルを使い、この2型では
+>   `col ... highlight` が無効（`has_rowlabel` ゲート配下で無視される）なので強調は必ず `{ }` を使う
+>   よう dsl-reference.md に明記した。
+> - `sdg_grid` のカタログ注記「公式色」は theme.py の3色制約（base/main/accent固定・配色70:25:5）と
+>   衝突するため不採用とし、自社テーマ内の色に統一した。既存の `swot`
+>   （`slidegen/render_frameworks.py` の `_SWOT` テーブルが実世界の4色SWOTを `main`/`muted`/`main_2`/
+>   `accent` の4語へ正規化している）が直接の前例。`type_catalog.md` 冒頭の原則
+>   （「配色面積比が70:25:5から大きく外れていたら、取り込まずベース寄りに正規化する」）とも整合する。
+> - S4着手時の清掃指示どおり、`type_catalog.md` の陳腐化した📋も是正した：`policy_3col`
+>   （実装済みなのに📋のままだった）を✅化、`brand_pillars`/`pricing_tiers`（他セクションで既に✅な
+>   のに同一ファイル内に重複した📋表記が残存）の重複を解消、`takahashi_oneword`（RENDERERSに存在せず、
+>   実装済みの型名は `takahashi`）をトークンごと実装名に訂正の上✅化した。
+> - `docs/system_prompt.md` は変更不要と判断した。この文書は「代表的な型」のみを教える非網羅
+>   ドキュメントで、`grid_2d` 系は comparison_matrix を含め元々一切掲載されておらず、
+>   `test_docs_drift.py` はこの文書について「教える型 ⊆ RENDERERS」のみを検査するため影響なし。
 
 ### S5系列: 📋 約50型の分野別バッチ【状況: 未着手】
 
@@ -231,8 +252,9 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 
 各バッチの完了条件は S4 と同じ（型カタログ整合・snapshot 更新・examples 追加・CI green）。
 
-> 注: `type_catalog.md` には実装済みなのに 📋 のまま残っている型がある（policy_3col / brand_pillars /
-> pricing_tiers / takahashi 等、カタログの陳腐化）。S4 着手時に清掃すること。
+> 注: `type_catalog.md` には実装済みなのに 📋 のまま残っている型があった（policy_3col / brand_pillars /
+> pricing_tiers / takahashi 等、カタログの陳腐化）。S4 完了時に清掃済み（詳細は S4 セクションの
+> 実施時の補足を参照）。以降も同様の陳腐化が見つかれば都度是正する。
 
 ## 進め方の運用ルール
 

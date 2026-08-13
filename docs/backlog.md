@@ -3,7 +3,7 @@
 > 立て直しエンゲージメントで洗い出した技術的負債・課題を**優先度順**にまとめる。
 > 個人/学習プロジェクトのスコープに合わせ、過剰な作り込みは避ける方針。
 > 関連: [requirements.md](../requirements.md) / [spec.md](../spec.md) / [docs/adr/](adr/)
-> 最終更新: 2026-08-13（**方針転換ロードマップ S3（tsundoku知識抽出→デザインガイドライン）完了**。
+> 最終更新: 2026-08-14（**方針転換ロードマップ S4（5型実装＝grid_2d variant）完了**。
 > S1（CF撤去＋DSLリファレンス移設）完了に伴い、Web アプリ前提だった既存項目は Closed 化済み）
 
 ## 🔴 最優先: 方針転換（Web アプリ撤去 → Agent Skills/Plugin 化）
@@ -11,7 +11,7 @@
 **実行計画（正）**: [docs/plans/2026-08-agent-skills-transition.md](plans/2026-08-agent-skills-transition.md)
 
 Cloudflare 構成（`frontend/` `gateway/` と CD）を撤去し、純Python ライブラリ＋**Agent Skills（オープン仕様）＋
-Claude Code / Agent Plugins 1.0 両対応プラグイン**の構成へ転換する。あわせて未実装型（🔜5型＋📋約50型）の
+Claude Code / Agent Plugins 1.0 両対応プラグイン**の構成へ転換する。あわせて未実装型（📋約50型）の
 実装を進め、[tsundoku](https://github.com/mrkxlia/tsundoku) の知見をスキルに反映する。
 S1（CF撤去＋DSLリファレンス移設）→ S2（Skill/Plugin化）→ S3（tsundoku知識抽出）→ S4（🔜5型）→
 S5系列（📋約50型・分野別バッチ）の順で、1セッション=1PRを目安に進める。詳細・各セッションの完了条件は
@@ -35,7 +35,15 @@ S5系列（📋約50型・分野別バッチ）の順で、1セッション=1PR�
   `references/type-selection-guide.md`（型の逆引き）を新設。SKILL.md から両方を参照。
   `docs/type_catalog.md` §4 に新規📋候補7型と❌候補を追記、既存📋列の優先順位も見直した）。
   詳細・実施時の判断は [実行計画](plans/2026-08-agent-skills-transition.md) の S3 セクション参照。
-- S4以降: 未着手。
+- **S4: ✅ 完了**（`priority_matrix_2x2` / `quiz_mcq` / `mandala_chart` / `sdg_grid` /
+  `conjugation_table` の5型を `grid_2d`（`slidegen/render_base_grid.py`）の variant として実装。
+  列見出し帯の有無を切り替える `header` トグルを新設（`mandala_chart`/`sdg_grid` で使用）。
+  セル単位の強調は既存の `{ }` インライン強調で表現（新規カラーモードは追加せず）。
+  `sdg_grid` は SDGs公式17色を採用せず自社テーマ内の色に統一（`swot` の4色正規化と同じ判断）。
+  `type_catalog.md` の陳腐化した📋（`policy_3col`/`brand_pillars`/`pricing_tiers`/`takahashi`）も
+  あわせて是正。`RENDERERS` は100→105型。詳細・実施時の判断は
+  [実行計画](plans/2026-08-agent-skills-transition.md) の S4 セクション参照。
+- S5以降（📋約50型・分野別バッチ）: 未着手。
 
 **新規（S2 由来）:**
 - PyPI 公開の検討（`uvx --from git+...` を GitHub 依存から解放し、バージョン解決も速くなる）。

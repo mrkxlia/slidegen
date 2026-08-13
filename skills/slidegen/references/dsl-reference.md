@@ -23,7 +23,7 @@ slide <型名>
 型ごとの差は「col にタイトルが要るか」「col の行数」「用途」だけ。下記カタログの
 用途を見て型名を選び、中身（headline/col の文言）だけを書けばよい。
 
-## 型カタログ（RENDERERS 全100型。用途で型名を選ぶ）
+## 型カタログ（RENDERERS 全105型。用途で型名を選ぶ）
 - title / section / agenda / quote / bullets … 表紙・章扉・目次・引用・箇条書き
 - compare(2〜4) / cards(2〜6) / kpi(1〜4) / process(3〜6) / pros_cons(2) / table … 比較・カード・指標・手順・メリデメ・表
 - matrix / cycle / pyramid / tree / formula / timeline / image_left … 対応表・循環・階層・樹形図・数式・年表・画像+文
@@ -36,7 +36,9 @@ slide <型名>
 - split_layout(基底) / before_after / problem_solution / dual_hero / image_text … 左右分割：対比・課題解決・2要素並置・画像+文
 - hypothesis_prediction / limitations_future … 左右分割：仮説と予測・限界と展望
 - grid_2d(基底) / comparison_matrix / scorecard_compare / raci / heatmap_matrix / decision_matrix / plain_grid
-    … 行×列のセル（評価記号◎○△×・スコア比較・責任分担・色濃淡評価・意思決定基準・単純グリッド。書き方は下記参照）
+  / priority_matrix_2x2 / quiz_mcq / mandala_chart / sdg_grid / conjugation_table
+    … 行×列のセル（評価記号◎○△×・スコア比較・責任分担・色濃淡評価・意思決定基準・単純グリッド・
+      優先度2x2・4択クイズ・マンダラチャート・SDGs一覧・活用表。書き方は下記参照）
 - nodes_and_connectors(基底) / process_flow / value_chain / cycle_loop / pdca / flow_branching / funnel_steps
     … ノード+矢印（横並びフロー・バリューチェーン・循環・PDCA・分岐フロー・ファネル）
 - hero_canvas(基底) / big_fact / stat_trio / tagline / takahashi / ted_idea / break_slide / statement
@@ -142,3 +144,72 @@ slide comparison_matrix
     "セル値"
     "セル値"
     "セル値"
+
+## grid_2d 系：priority_matrix_2x2 / quiz_mcq / mandala_chart / sdg_grid / conjugation_table
+
+conjugation_table（行=人称、列=時制。comparison_matrix と同じ書き方）:
+slide conjugation_table
+  headline "be動詞の人称・時制変化"
+  columns "現在形" "過去形" "未来形"
+  col "I"
+    "am"
+    "was"
+    "will be"
+  col "He / She / It" highlight
+    "is"
+    "was"
+    "will be"
+
+quiz_mcq（col 1つ=選択肢1つ。正解は highlight で指定。columns には短い見出しを1つ）:
+slide quiz_mcq
+  headline "日本で人口が最も多い都道府県は？"
+  columns "回答"
+  col "A"
+    "大阪府"
+  col "B" highlight
+    "東京都"
+  col "C"
+    "愛知県"
+
+priority_matrix_2x2（2x2固定。列=横軸、col=縦軸。強調したい象限のセルだけ本文中の { } で囲む）:
+slide priority_matrix_2x2
+  headline "重要度×緊急度で優先順位を可視化"
+  columns "緊急" "緊急でない"
+  col "重要"
+    "{重大インシデント対応}、顧客からの緊急問い合わせ"
+    "中期戦略の立案、スキルアップ学習"
+  col "重要でない"
+    "急な差し込み会議、定型の事務連絡"
+    "SNSチェック、雑務"
+
+mandala_chart（3x3固定。col はタイトルなしで3つ、各3行。中央=2つ目のcolの2つ目の行）:
+slide mandala_chart
+  headline "マンダラチャート：新規事業立ち上げ"
+  col
+    "資金調達"
+    "市場調査"
+    "チーム編成"
+  col
+    "法務対応"
+    "{新規事業立ち上げ}"
+    "プロダクト設計"
+  col
+    "販路開拓"
+    "ブランディング"
+    "KPI設計"
+
+sdg_grid（17目標を任意の行数に手分割。列数が揃わなくてもよい）:
+slide sdg_grid
+  headline "自社事業がひもづくSDGs目標"
+  col
+    "1 貧困をなくそう"
+    "2 飢餓をゼロに"
+    "3 保健"
+  col
+    "7 エネルギー"
+    "{9 産業と技術革新}"
+    "10 不平等の是正"
+
+mandala_chart / sdg_grid の注意：この2型は row_label が無いため `col ... highlight` は
+描画に反映されない（無視される）。強調は必ず本文中の `{ }` を使う。
+また sdg_grid は公式の17色を使わない（本DSLの配色制約は常に自社テーマ内の色で統一する）。

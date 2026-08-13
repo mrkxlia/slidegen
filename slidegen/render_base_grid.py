@@ -44,6 +44,11 @@ VARIANTS = {
     "heatmap_matrix":    {"mode": "heat", "row_label": True},
     "decision_matrix":   {"mode": "symbol", "row_label": True},
     "plain_grid":        {"mode": "plain", "row_label": True},
+    "conjugation_table":   {"mode": "plain", "row_label": True},
+    "quiz_mcq":            {"mode": "plain", "row_label": True},
+    "priority_matrix_2x2": {"mode": "plain", "row_label": True},
+    "mandala_chart":       {"mode": "plain", "row_label": False, "header": False},
+    "sdg_grid":            {"mode": "plain", "row_label": False, "header": False},
 }
 
 # 評価記号 → 色の強さ(0..1)。背景の塗り分けに使う。
@@ -75,6 +80,7 @@ def render_grid_2d(slide, data: Slide, theme):
     render_foot(slide, data, theme)
     v = resolve_variant(data, VARIANTS, _DEFAULT)
     mode = v["mode"]
+    show_header = v.get("header", True)
 
     # 列見出し：props["columns_list"]（多値）優先、無ければ columns 単値、それも無ければ自動
     col_headers = data.props.get("columns_list")
@@ -99,18 +105,19 @@ def render_grid_2d(slide, data: Slide, theme):
     grid_w = CONTENT_W - label_w
     cw = columns_geometry(grid_w, ncol, gap)
 
-    header_h = Inches(0.5)
+    header_h = Inches(0.5) if show_header else Inches(0)
     rh = (avail_h - header_h - gap * nrow) / nrow if nrow else avail_h
 
-    # --- 列見出し行 ---
+    # --- 列見出し行（header: False の variant では列に意味がないため描画しない） ---
     x0 = MARGIN + label_w
-    for j in range(ncol):
-        x = x0 + j * (cw + gap)
-        add_rect(slide, x, top, cw, header_h, theme, "main", rounded=False)
-        label = col_headers[j] if j < len(col_headers) else ""
-        add_text(slide, x, top, cw, header_h, theme, label,
-                 size=12, color_name="on_main", bold=True,
-                 align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+    if show_header:
+        for j in range(ncol):
+            x = x0 + j * (cw + gap)
+            add_rect(slide, x, top, cw, header_h, theme, "main", rounded=False)
+            label = col_headers[j] if j < len(col_headers) else ""
+            add_text(slide, x, top, cw, header_h, theme, label,
+                     size=12, color_name="on_main", bold=True,
+                     align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
 
     # --- 各行 ---
     for i, b in enumerate(rows):
