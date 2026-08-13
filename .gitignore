@@ -18,13 +18,3 @@ type_specs/
 
 # OS
 .DS_Store
-
-# Node / フロント・ゲートウェイ
-node_modules/
-frontend/dist/
-frontend/.env.local
-frontend/public/wheels/
-frontend/test-results/
-gateway/.wrangler/
-gateway/.dev.vars
-*.tsbuildinfo
