@@ -3,7 +3,20 @@
 > 立て直しエンゲージメントで洗い出した技術的負債・課題を**優先度順**にまとめる。
 > 個人/学習プロジェクトのスコープに合わせ、過剰な作り込みは避ける方針。
 > 関連: [requirements.md](../requirements.md) / [spec.md](../spec.md) / [docs/adr/](adr/)
-> 最終更新: 2026-07-03（#1 カタログ棚卸し＋ [model-catalog.md](model-catalog.md) 新設。#4 全型ビジュアル回帰の自動化を実施。#5 の potx連携・はみ出し物理検出＋DSL静的バリデーション = `current-improvements-for-another.md` の要否判定。P3 7c/7d/7e = PR #17。P1＋一部 quick-win = PR #14）
+> 最終更新: 2026-08-13（**方針転換ロードマップ**を最上位項目として追加。既存項目の刈り込みは
+> ロードマップ S1 セッションで実施予定）
+
+## 🔴 最優先: 方針転換（Web アプリ撤去 → Agent Skills/Plugin 化）
+
+**実行計画（正）**: [docs/plans/2026-08-agent-skills-transition.md](plans/2026-08-agent-skills-transition.md)
+
+Cloudflare 構成（`frontend/` `gateway/` と CD）を撤去し、純Python ライブラリ＋**Agent Skills（オープン仕様）＋
+Claude Code / Agent Plugins 1.0 両対応プラグイン**の構成へ転換する。あわせて未実装型（🔜5型＋📋約50型）の
+実装を進め、[tsundoku](https://github.com/mrkxlia/tsundoku) の知見をスキルに反映する。
+S1（CF撤去＋DSLリファレンス移設）→ S2（Skill/Plugin化）→ S3（tsundoku知識抽出）→ S4（🔜5型）→
+S5系列（📋約50型・分野別バッチ）の順で、1セッション=1PRを目安に進める。詳細・各セッションの完了条件は
+上記ロードマップ参照。このロードマップの完了に伴い、下記の既存項目（特に #1 モデルカタログの Web 前提部分）は
+S1 で見直し・刈り込みを行う。
 
 ## このエンゲージメントで解消済み
 
