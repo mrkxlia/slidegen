@@ -1,6 +1,6 @@
 # 0003. pptx 生成をブラウザ内 Pyodide で実行する
 
-- ステータス: 採用 (Accepted)
+- ステータス: Superseded by [0007](0007-retire-webapp-agent-skills.md) (2026-08-13)
 - 日付: 2026-06-28
 - 関連: [0001](0001-same-origin-pages-functions.md), [0004](0004-editable-native-pptx.md), `frontend/src/render/`, `public/render-worker.js`, `tools/build_wheel.sh`
 

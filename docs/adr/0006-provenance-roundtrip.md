@@ -3,7 +3,8 @@
 - ステータス: 採用 (Accepted)
 - 日付: 2026-07-05
 - 関連: [docs/backlog.md #5](../backlog.md), [0004](0004-editable-native-pptx.md),
-  `slidegen/inspect_pptx.py`, `slidegen/sync.py`, `frontend/src/prompts.ts`（`IMPORT_DECK_SYSTEM`）,
+  `slidegen/inspect_pptx.py`, `slidegen/sync.py`,
+  `skills/slidegen/references/import-deck-prompt.md`（旧 `IMPORT_DECK_SYSTEM`）,
   `tests/test_visual_regression.py`
 
 ## コンテキスト

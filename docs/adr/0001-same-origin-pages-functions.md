@@ -1,6 +1,6 @@
 # 0001. ゲートウェイを独立 Worker でなく Pages Functions として同一オリジン配信する
 
-- ステータス: 採用 (Accepted)
+- ステータス: Superseded by [0007](0007-retire-webapp-agent-skills.md) (2026-08-13)
 - 日付: 2026-06-27
 - 関連: PR #3, `docs/deployment.md`, `frontend/functions/api/[[path]].ts`, `gateway/src/pages.ts`
 
