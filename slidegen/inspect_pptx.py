@@ -19,7 +19,7 @@ inspect_pptx.py — 既存の .pptx から「型スペック」を抽出する�
     python -m slidegen.inspect_pptx good_deck.pptx -n 3     # 3枚目だけ
     python -m slidegen.inspect_pptx good_deck.pptx --compact # LLM向けテキストスペック
 
-inspect_compact() はブラウザ（Pyodide worker）のデザイン取り込みが使う LLM 向け出力。
+inspect_compact() はデザイン取り込み（既存pptx→DSL再構成）が使う LLM 向け出力。
 サイズ上限（スライド数・スライドあたり文字数）は関数側で保証する。
 """
 from __future__ import annotations
@@ -263,7 +263,7 @@ def inspect_compact(path: str, max_slides: int = 30,
     """LLM に渡すためのコンパクトなテキストスペックを返す（デザイン取り込み用）。
 
     - スライド上限・スライドあたり文字数上限を関数側で保証する
-      （呼び出し側=ブラウザは gateway の入力上限 200KB を意識しなくてよい）。
+      （呼び出し側は LLM への入力サイズ上限を個別に意識しなくてよい）。
     - 内容テキストは text_limit 字まで（DSL 再構成には本文が必要なので JSON 版より長め）。
     - TABLE/CHART は実データ（セル値・カテゴリ・系列数値）を含める（文字数予算は消費するが、
       LLM が数値を捏造しないためには実データの提示が必須）。

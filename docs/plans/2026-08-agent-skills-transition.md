@@ -69,9 +69,20 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 
 各セッションはこのファイルの該当セクションに `状況: 未着手/進行中/完了 (PR #xx)` を追記して更新すること。
 
-### S1: Cloudflare 撤去 ＋ DSL リファレンス移設【状況: 未着手】
+### S1: Cloudflare 撤去 ＋ DSL リファレンス移設【状況: 完了】
 
 **最優先。他セッションの土台となるため必ず最初に実施。**
+
+> **実施時の訂正**（下記 手順2 の記載誤り）: 「`frontend/src/phases.ts` の対話フロー・
+> `IMPORT_DECK_SYSTEM`」とあるが、実際には対話フロー（`PHASE_HEARING`/`PHASE_OUTLINE`/
+> `PHASE_DSL`/`PHASE_REVIEW`/`PHASE_REVISE`）も `IMPORT_DECK_SYSTEM` も、すべて
+> `frontend/src/prompts.ts` 側にあった（`phases.ts` は応答クリーニング等のユーティリティで、
+> 移設すべきプロンプト資産は無かった）。移設は `phase-prompts.md`（対話フロー）と
+> `import-deck-prompt.md`（IMPORT_DECK_SYSTEM）に分けて実施した。
+>
+> **アーカイブタグの付与位置**: 「削除直前のコミット」ではなく、**移設コミット**（Web アプリ・旧
+> CI・旧テストが無傷で、かつ `skills/` への移設物とも共存する唯一の時点）に付与した。
+> ユーザー承認済みの判断（詳細は [ADR 0007](../adr/0007-retire-webapp-agent-skills.md)）。
 
 1. 削除直前のコミットに Git タグ `archive/cloudflare-webapp` を付与する。
 2. 削除より先に移設する:

@@ -1,7 +1,7 @@
 """
 test_inspect_pptx.py — inspect_pptx（既存 pptx の構造抽出）のテスト。
 
-デザイン取り込み（ブラウザの Pyodide worker → LLM）の入力になる
+デザイン取り込み（既存pptx→DSL再構成、LLM への入力）になる
 inspect() / inspect_compact() を、slidegen 自身が生成した pptx で検証する。
 純Python・LibreOffice 不要。
 """
