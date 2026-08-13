@@ -173,7 +173,7 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 5. `README.md` にエージェント別の導入手順を追記する。
 6. **完了条件**: Claude Code から skill 経由で pptx 生成に成功し、両方の validate が green。
 
-### S3: tsundoku 知識抽出 → デザインガイドライン【状況: 完了 (PR #xx)】
+### S3: tsundoku 知識抽出 → デザインガイドライン【状況: 完了 (PR #28)】
 
 > **実施時の補足**（2026-08-13）:
 > - tsundoku `library/`（`/home/kota/tsundoku`）のスライド関連ノート5本
