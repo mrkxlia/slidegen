@@ -199,7 +199,7 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
    新しい型の候補（例: 「39デザインパターン」「グラフテンプレ10種36枚」由来）があれば 🔜/📋 に追記する。
 3. **完了条件**: references 2本がスキルから参照されており、型の優先順位が backlog に反映されている。
 
-### S4: 5型の実装【状況: 完了 (PR #xx)】
+### S4: 5型の実装【状況: 完了 (PR #29)】
 
 1. `priority_matrix_2x2` / `quiz_mcq` / `mandala_chart` / `sdg_grid` / `conjugation_table` を
    `grid_2d` の variant として実装する（基本は `slidegen/render_base_grid.py` への variant 追記）。
