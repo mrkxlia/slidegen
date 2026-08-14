@@ -229,7 +229,7 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 >   ドキュメントで、`grid_2d` 系は comparison_matrix を含め元々一切掲載されておらず、
 >   `test_docs_drift.py` はこの文書について「教える型 ⊆ RENDERERS」のみを検査するため影響なし。
 
-### S5系列: 📋 約50型の分野別バッチ【状況: S5a 完了 (PR #30)、S5b以降 未着手】
+### S5系列: 📋 約50型の分野別バッチ【状況: S5a/S5b 完了、S5c以降 未着手】
 
 1セッション=1分野を目安に、S3 で見直した優先順位に沿って並べ替えて実施する。
 
@@ -242,8 +242,8 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 - **S5a チャート系（10型）【完了】**: bullet / harvey_ball_table / marimekko / sankey / funnel /
   scatter / bubble / treemap / football_field / area_chart（当初9型に、S3で📋候補入りした
   area_chart を追加。ユーザー承認済み）。
-- **S5b ビジネスフレーム（9型）**: lean_canvas / vpc / five_forces / 3c / 4p / pestel / bcg_matrix /
-  empathy_map / persona_card
+- **S5b ビジネスフレーム（9型）【完了】**: lean_canvas / vpc / five_forces / 3c / 4p / pestel /
+  bcg_matrix / empathy_map / persona_card
 - **S5c 技術資料（10型）**: code_diff / sql_result / layered_stack 等。**Mermaid 前提の図系
   （sequence_diagram / er_diagram 等）は着手前に方式の設計判断（ADR 候補）を先行させる**。
 - **S5d 日本の登壇文化（7型）**
@@ -284,6 +284,40 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 > - `RENDERERS` は105→115型（`examples/charts2_demo.slide` を新規追加し、10型を1枚ずつ実演）。
 > - `docs/system_prompt.md` は変更不要と判断した（チャート型を含め型名を列挙しない非網羅文書。
 >   S4 前例と同じ判断）。
+
+> **S5b 実施時の補足（2026-08-15）**:
+> - 9型を実装コストで3グループに分けた。(A) `lean_canvas` は `bmc`（`render_frameworks2.py`）と
+>   完全に同一の9セル非対称ジオメトリだったため、`render_bmc` の本体を
+>   `_render_canvas9(slide, data, theme, labels)` に抽出しラベルリストだけ差し替える形で共有した
+>   （リファクタ前後で `bmc` の golden スナップショットが一致することを確認し、無害を証明してから
+>   進めた）。(B) `4p`/`pestel` は `labeled_blocks`（`render_base_labeled.py`）の `VARIANTS` 辞書へ
+>   数行追記するだけで済んだ（S4 と同じ経済性）。`pestel` は6項目を3列グリッドで表示するため、
+>   grid レイアウトの列数を `variant.get("cols", 2)` で上書き可能にした（既定2のため既存
+>   variant の出力は不変）。(C) 専用ジオメトリが要る `vpc`/`five_forces`/`3c`/`bcg_matrix`/
+>   `empathy_map`/`persona_card` の6型は、S5a の `render_charts_shapes.py` 前例に倣い新規モジュール
+>   `render_frameworks3.py` にまとめた。
+> - `vpc` の正式な「square＋circle」ジオメトリは標準図形・回転不使用の制約下で再現できないため、
+>   左右2パネル×各3段の矩形（Value Map／Customer Profile）＋中央の双方向矢印に簡略化した
+>   （ユーザー承認済みの設計判断ではなく実装上の制約対応）。
+> - `3c` はベン図（3円の重なり）ではなく、顧客を頂点にした三角配置カード3枚を採用した
+>   （ユーザー承認済み）。理由は `venn2` の実装知見：ベタ塗り円は重なり部が潰れ、各要素に
+>   分析項目を箇条書きで入れる用途には向かない。カード間は接続線（`add_connector`）で先に描画し、
+>   カードを上に重ねることで三角の関係性を示した。
+> - `bcg_matrix` は自由軸の `matrix` 型の variant にはせず、独立型として実装した（象限ラベル・
+>   色・軸ラベルがすべて固定の意味論を持ち、`matrix` は逆に「自由な軸ラベル」が前提のため）。
+>   dsl-reference.md / type-selection-guide.md の双方に使い分けを明記した。
+> - `empathy_map` は Pain/Gain を含む6ブロック構成を採用した（ユーザー承認済み。XPLANE 標準版に
+>   相当し、`vpc`/`persona_card` との接続点としての実務価値を優先した）。
+> - `persona_card` は写真を実際には配置せず、`MSO_SHAPE.OVAL`（塗りのみ）に名前の頭文字を重ねる
+>   プレースホルダとした（画像埋め込みに依存しない設計思想を維持しつつ、編集時に画像塗りへ
+>   差し替え可能）。
+> - 型名 `3c` は数字始まりだが、`tests/test_dsl_reference.py`/`test_docs_drift.py` の抽出正規表現
+>   （`[a-z0-9][a-z0-9_]*`。`5e` 型の前例と同じ扱い）にマッチするため DSL 上の制約はない。
+>   Python 識別子は数字始まり不可のため、関数名のみ `render_three_c` とし
+>   `R.register("3c", render_three_c)` で登録名と分離した。
+> - `RENDERERS` は115→124型（`examples/frameworks3_demo.slide` を新規追加し、経費精算SaaSを
+>   題材に9型を1枚ずつ実演）。
+> - `docs/system_prompt.md` は変更不要と判断した（S4/S5a と同じ、型名を列挙しない非網羅文書）。
 
 ## 進め方の運用ルール
 

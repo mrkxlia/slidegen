@@ -2,6 +2,7 @@
 render_frameworks2.py — ビジネスフレーム個別型 第2弾。
 
 - bmc          : ビジネスモデルキャンバス（9ブロックの固定非対称レイアウト）
+- lean_canvas  : リーンキャンバス（bmc と同一ジオメトリ・ラベルのみ差し替え）
 - journey_map  : カスタマージャーニー（横スイムレーン：ステージ×行）
 - pricing_tiers: 料金プラン（N列カード、中央を強調）
 
@@ -18,25 +19,12 @@ from .render_util import block_items, add_items_text, columns_geometry
 
 
 # ---------------------------------------------------------------------------
-# BMC（ビジネスモデルキャンバス：9ブロック固定）
+# 9セル非対称キャンバス（共通ジオメトリ）：bmc / lean_canvas が共有する。
 # 標準レイアウト：
-#   上段：KP | KA(上)/KR(下) | VP | CR(上)/CH(下) | CS
-#   下段：Cost Structure | Revenue Streams（横2分割）
+#   上段：col0 | col1(上)/col2(下) | col3(中央強調) | col4(上)/col5(下) | col6
+#   下段：col7 | col8（横2分割）
 # ---------------------------------------------------------------------------
-_BMC_LABELS = [
-    "Key Partners｜パートナー",
-    "Key Activities｜主要活動",
-    "Key Resources｜リソース",
-    "Value Propositions｜価値提案",
-    "Customer Relationships｜顧客との関係",
-    "Channels｜チャネル",
-    "Customer Segments｜顧客セグメント",
-    "Cost Structure｜コスト構造",
-    "Revenue Streams｜収益の流れ",
-]
-
-
-def render_bmc(slide, data: Slide, theme):
+def _render_canvas9(slide, data: Slide, theme, labels):
     top = render_header(slide, data, theme)
     render_foot(slide, data, theme)
     blocks = data.blocks
@@ -49,8 +37,8 @@ def render_bmc(slide, data: Slide, theme):
     colw = (CONTENT_W - gap * 4) / 5   # 上段5列
 
     def cell(idx, x, y, w, h):
-        label = _BMC_LABELS[idx]
-        # VP(idx=3) は中央＝強調
+        label = labels[idx]
+        # idx=3（中央列）は強調
         head_color = "accent" if idx == 3 else "main"
         add_rect(slide, int(x), int(y), int(w), int(h), theme, "base_2", rounded=True)
         hh = Inches(0.36)
@@ -65,24 +53,57 @@ def render_bmc(slide, data: Slide, theme):
                             items, size=9, anchor=MSO_ANCHOR.TOP, bullet=(len(items) > 1))
 
     x0 = MARGIN
-    # 列1: KP（縦フル）
+    # 列1（縦フル）
     cell(0, x0, top, colw, upper_h)
-    # 列2: KA(上)/KR(下)
+    # 列2（上）/列3（下）
     half = (upper_h - gap) / 2
     cell(1, x0 + (colw + gap), top, colw, half)
     cell(2, x0 + (colw + gap), top + half + gap, colw, half)
-    # 列3: VP（縦フル・中央強調）
+    # 列3（縦フル・中央強調）
     cell(3, x0 + (colw + gap) * 2, top, colw, upper_h)
-    # 列4: CR(上)/CH(下)
+    # 列4（上）/列5（下）
     cell(4, x0 + (colw + gap) * 3, top, colw, half)
     cell(5, x0 + (colw + gap) * 3, top + half + gap, colw, half)
-    # 列5: CS（縦フル）
+    # 列5（縦フル）
     cell(6, x0 + (colw + gap) * 4, top, colw, upper_h)
-    # 下段：Cost | Revenue（横2分割）
+    # 下段：横2分割
     ly = top + upper_h + gap
     halfw = (CONTENT_W - gap) / 2
     cell(7, x0, ly, halfw, lower_h)
     cell(8, x0 + halfw + gap, ly, halfw, lower_h)
+
+
+_BMC_LABELS = [
+    "Key Partners｜パートナー",
+    "Key Activities｜主要活動",
+    "Key Resources｜リソース",
+    "Value Propositions｜価値提案",
+    "Customer Relationships｜顧客との関係",
+    "Channels｜チャネル",
+    "Customer Segments｜顧客セグメント",
+    "Cost Structure｜コスト構造",
+    "Revenue Streams｜収益の流れ",
+]
+
+_LEAN_CANVAS_LABELS = [
+    "Problem｜課題",
+    "Solution｜解決策",
+    "Key Metrics｜主要指標",
+    "UVP｜独自の価値提案",
+    "Unfair Advantage｜優位性",
+    "Channels｜チャネル",
+    "Customer Segments｜顧客セグメント",
+    "Cost Structure｜コスト構造",
+    "Revenue Streams｜収益の流れ",
+]
+
+
+def render_bmc(slide, data: Slide, theme):
+    _render_canvas9(slide, data, theme, _BMC_LABELS)
+
+
+def render_lean_canvas(slide, data: Slide, theme):
+    _render_canvas9(slide, data, theme, _LEAN_CANVAS_LABELS)
 
 
 # ---------------------------------------------------------------------------
@@ -202,5 +223,6 @@ def render_pricing_tiers(slide, data: Slide, theme):
 
 
 R.register("bmc", render_bmc)
+R.register("lean_canvas", render_lean_canvas)
 R.register("journey_map", render_journey_map)
 R.register("pricing_tiers", render_pricing_tiers)

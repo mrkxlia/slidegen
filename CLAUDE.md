@@ -11,7 +11,7 @@ Claude Code に限らず各 AI エージェントから利用可能にする方�
 正となる実行計画は [docs/plans/2026-08-agent-skills-transition.md](docs/plans/2026-08-agent-skills-transition.md)
 （S1: Cloudflare 撤去＋DSLリファレンス移設＝**完了**。S2: Agent Skill＋両対応プラグイン化＝**完了**。
 S3: tsundoku 知識抽出＋デザインガイドライン＝**完了**。S4: 5型実装（grid_2d variant）＝**完了**。
-S5a: チャート系10型実装＝**完了**。S5b以降＝未着手）。
+S5a: チャート系10型実装＝**完了**。S5b: ビジネスフレーム9型実装＝**完了**。S5c以降＝未着手）。
 **リポジトリは S2 で public 化した**（履歴のシークレット監査済み・クリーン。
 詳細は実行計画 S2 セクションの実施時補足）。
 
@@ -43,14 +43,18 @@ S5a: チャート系10型実装＝**完了**。S5b以降＝未着手）。
 
 ## ディレクトリ
 
-- `slidegen/` … コアライブラリ。型は継続的に追加され現在 `RENDERERS` に**計115型**登録済みだが、
+- `slidegen/` … コアライブラリ。型は継続的に追加され現在 `RENDERERS` に**計124型**登録済みだが、
   **レンダ規約（編集可能なネイティブ要素・theme経由・登録は `register`/`register_many`）と public API は不変**。
   ネイティブchart は `render_charts.py`(複数形)が正
   （`bar_chart`/`line_chart`/`stacked_bar`/`stacked_100_bar`/`bar_horizontal`/`clustered_bar`/`area_chart`、
   DSL は `categories` + `col` + 数値行。`scatter`/`bubble` は `col` の各行が x,y 点）。
   図形描画チャート型（`bullet`/`funnel`/`football_field`/`harvey_ball_table`/`marimekko`/`treemap`/
   `sankey`）は `render_charts_shapes.py` が正（S5a, 2026-08 実装。waterfall/narrative_curve と
-  同じ「標準プリセット図形の積み木」方針）。
+  同じ「標準プリセット図形の積み木」方針）。ビジネスフレーム型は3モジュールに分かれる：
+  `render_frameworks.py`（`swot`/`venn2`）、`render_frameworks2.py`（`bmc`/`lean_canvas`/
+  `journey_map`/`pricing_tiers`。`lean_canvas` は `bmc` と共通ジオメトリ `_render_canvas9`を共有）、
+  `render_frameworks3.py`（`vpc`/`five_forces`/`3c`/`bcg_matrix`/`empathy_map`/`persona_card`、
+  S5b, 2026-08 実装）。`4p`/`pestel` は `render_base_labeled.py` の `labeled_blocks` variant。
 - `skills/slidegen/` … Agent Skill 本体。`SKILL.md`（frontmatter はオープン仕様6フィールドのみ。
   **型名は列挙しない** — `tests/test_plugin_manifests.py` が機械ガード）、`scripts/slidegen.sh`
   （リポジトリ内外どちらでも動くレンダラッパー。内: `uv run slidegen`、外: `uvx --from git+...`）、
@@ -64,7 +68,7 @@ S5a: チャート系10型実装＝**完了**。S5b以降＝未着手）。
   `tests/test_plugin_manifests.py` で同期保証。
 - `tests/` … `test_invariants.py`（構造インバリアント）、`test_dsl_reference.py`
   （dsl-reference.md ≡ RENDERERS の同値ガード）、`test_examples.py`（examples/*.slide の parse/render 回帰）、
-  `test_visual_regression.py`（全115型の図形ツリースナップショット）、`test_docs_drift.py`
+  `test_visual_regression.py`（全124型の図形ツリースナップショット）、`test_docs_drift.py`
   （system_prompt.md/type_catalog.md のドリフト検知）等。
 - `tools/` … `new_type.py`（新型の雛形生成）、`visual.py`（ビジュアル回帰用モンタージュ生成）。
 - `docs/` … 要件補助・仕様補助・ADR・設計・型カタログ・方針転換ロードマップ（`docs/plans/`）。
@@ -97,4 +101,4 @@ make validate-skill   # Agent Skill/プラグインマニフェスト検証（sk
 
 課題・ロードマップは [docs/backlog.md](docs/backlog.md) に集約。方針転換の進捗は
 [docs/plans/2026-08-agent-skills-transition.md](docs/plans/2026-08-agent-skills-transition.md)
-（S5a: チャート系10型実装＝完了。次は S5b: ビジネスフレーム9型）。
+（S5b: ビジネスフレーム9型実装＝完了。次は S5c: 技術資料10型）。

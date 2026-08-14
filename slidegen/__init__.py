@@ -18,6 +18,7 @@ from . import render_frameworks  # noqa: F401  ビジネスフレーム型（swo
 from . import render_data_support  # noqa: F401  データ補助型（data_source_footer/waterfall）
 from . import render_tech  # noqa: F401  技術系型（code_block/terminal/api_endpoint_table）
 from . import render_frameworks2  # noqa: F401  ビジネスフレーム第2弾（bmc/journey_map/pricing_tiers）
+from . import render_frameworks3  # noqa: F401  ビジネスフレーム第3弾(S5b)（vpc/five_forces/3c/bcg_matrix/empathy_map/persona_card）
 from .theme import Theme, DEFAULT_THEME
 from .api import render_text, render_to_bytes, render_file  # バックエンド用 public API
 
