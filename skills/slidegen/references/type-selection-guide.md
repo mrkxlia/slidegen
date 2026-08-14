@@ -47,13 +47,20 @@
 | 時系列の推移を示す | `line_chart` | |
 | 積み上げで内訳を示す | `stacked_bar` | 主役は1系列に絞る（design-guidelines.md §4） |
 | 構成比の推移を示す | `stacked_100_bar` | |
-| 累積の面グラフで示す | 📋 area_chart（新規候補） | 当面は `line_chart` で代替 |
+| 累積の面グラフで示す | `area_chart` | col を複数並べると積み上げ面になる |
 | 割合を人型ピクトグラムで示す | 📋 pictogram_array（新規候補） | |
 | 割合をドットの集合で示す | 📋 dot_matrix_chart（新規候補） | |
 | 増減の要因分解を示す（ウォーターフォール） | `waterfall` | |
-| 目標に対する達成度を示す（ゲージの代替） | 📋 bullet（既存📋候補） | |
-| 定性評価を●◐○等で示す | 📋 harvey_ball_table（既存📋候補） | |
-| 円グラフで割合を示したい | — | design-guidelines.md §4 の理由により非推奨。`stacked_100_bar` か `bar_horizontal` で代替 |
+| 目標に対する達成度を示す（ゲージの代替） | `bullet` | |
+| 定性評価を●◐○等で示す | `harvey_ball_table` | |
+| 円グラフで割合を示したい | — | design-guidelines.md §4 の理由により非推奨。`stacked_100_bar` / `bar_horizontal` / `bullet` で代替 |
+| 2変数の相関を示す（散布図） | `scatter` | |
+| 3変数目（規模）を加えて示す（バブルチャート） | `bubble` | |
+| 段階的な絞り込み・コンバージョンを定量的に示す（ファネル） | `funnel` | 定性の段のみを示すなら `funnel_steps` |
+| 複数の評価手法によるレンジ・幅を横バーで比較する（バリュエーション等） | `football_field` | |
+| 列の規模×内訳の構成比を同時に示す（マリメッコ） | `marimekko` | |
+| 面積比で構成比を示す（ツリーマップ） | `treemap` | |
+| 左右2段のフロー・内訳の移動を示す（サンキー） | `sankey` | |
 | 料金プランを比較する | `pricing_tiers` | |
 | 年表・沿革・スケジュールを示す | `timeline` | |
 | ランキング・順位を示す | 📋 ranking_list（新規候補） | 当面は `table` / `bar_horizontal` で代替 |
@@ -98,7 +105,7 @@
 ## 使わない方がよい表現
 
 - 円グラフ・ゲージ・3D → 理由は design-guidelines.md §4 参照。`stacked_100_bar` / `bar_horizontal` /
-  📋bullet（新規候補ではなく既存📋候補）で代替する。
+  `bullet`（ゲージ代替）で代替する。
 - 画像キャプチャの羅列・地図での拠点表示・実績ロゴの壁 → ネイティブ図形のみ・画像化しないという
   設計思想（`docs/type_catalog.md` §6）と衝突しやすいため現状非対応。詳細は
   `docs/type_catalog.md` §4「tsundoku 知見由来の新規候補」の❌候補を参照。

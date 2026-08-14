@@ -20,6 +20,7 @@ DSL_REFERENCE_MD = ROOT / "skills" / "slidegen" / "references" / "dsl-reference.
 TAUGHT_CHART_TYPES = {
     "bar_chart", "line_chart", "bar_horizontal",
     "stacked_bar", "stacked_100_bar", "clustered_bar",
+    "area_chart", "scatter", "bubble",
 }
 
 

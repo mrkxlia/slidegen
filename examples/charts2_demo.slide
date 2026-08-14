@@ -1,0 +1,131 @@
+# S5a: チャート系10型の実証（area_chart / scatter / bubble / bullet / funnel /
+# football_field / harvey_ball_table / marimekko / treemap / sankey）
+
+slide area_chart
+  kicker "推移"
+  headline "月次アクティブユーザーの累積"
+  categories "4月" "5月" "6月" "7月"
+  unit "万人"
+  foot "積み上げ面グラフ（ネイティブ編集可能）"
+  col "既存ユーザー"
+    "80"
+    "85"
+    "90"
+    "95"
+  col "新規ユーザー"
+    "10"
+    "15"
+    "18"
+    "22"
+
+---
+
+slide scatter
+  kicker "相関分析"
+  headline "広告費と売上の相関"
+  x_label "広告費（百万円）"
+  y_label "売上（億円）"
+  col "既存店"
+    "10" "1.2"
+    "15" "1.8"
+  col "新店"
+    "8" "0.9"
+
+---
+
+slide bubble
+  kicker "ポートフォリオ"
+  headline "市場の魅力度マップ"
+  x_label "市場成長率（%）"
+  y_label "シェア（%）"
+  col "事業ポートフォリオ"
+    "12" "30" "45"
+    "5" "55" "80"
+
+---
+
+slide bullet
+  kicker "KPI"
+  headline "主要KPIの達成状況"
+  unit "％"
+  col "売上達成率" highlight
+    実績 "82"
+    目標 "100"
+    上限 "120"
+  col "新規顧客数"
+    実績 "340"
+    目標 "300"
+
+---
+
+slide funnel
+  kicker "コンバージョン"
+  headline "登録までのファネル"
+  unit "人"
+  col "訪問"
+    "10000"
+  col "会員登録"
+    "3500"
+  col "初回購入" highlight
+    "1200"
+
+---
+
+slide football_field
+  kicker "バリュエーション"
+  headline "株式価値の評価レンジ"
+  unit "億円"
+  marker "100"
+  col "DCF"
+    "80" "120"
+  col "類似会社比較" highlight
+    "90" "140"
+
+---
+
+slide harvey_ball_table
+  kicker "定性比較"
+  headline "3社の定性比較"
+  columns "機能" "価格" "サポート"
+  col "自社" highlight
+    "100" "75" "100"
+  col "A社"
+    "50" "100" "25"
+
+---
+
+slide marimekko
+  kicker "構成比"
+  headline "地域×製品の売上構成"
+  unit "億円"
+  col "国内" highlight
+    製品A "60"
+    製品B "40"
+  col "北米"
+    製品A "30"
+    製品B "50"
+
+---
+
+slide treemap
+  kicker "構成比"
+  headline "事業別売上の構成"
+  unit "億円"
+  col "クラウド" highlight
+    "45"
+  col "受託開発"
+    "30"
+  col "コンサル"
+    "15"
+
+---
+
+slide sankey
+  kicker "フロー分析"
+  headline "流入チャネル別の転換フロー"
+  unit "件"
+  col "広告経由" highlight
+    無料登録 "60"
+    直接購入 "15"
+  col "オーガニック"
+    無料登録 "40"

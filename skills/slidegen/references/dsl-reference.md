@@ -48,10 +48,20 @@ slide <型名>
 - narrative_curve(基底) / emotion_arc / story_curve / trend_line / sparkline_narrative … 折れ線+注釈ピン（感情曲線・物語曲線・トレンド線・注釈付き推移）
 - band_strip(基底) / section_band / sidebar / source_footer / chapter_band … 水平/垂直の帯（章扉・サイドバー・出典フッタ・章番号帯）
 - framed_canvas(基底) / program / greeting / certificate / announcement … 外枠+内部（式次第・挨拶状・賞状・告知）
-- bar_chart / line_chart / bar_horizontal / stacked_bar / stacked_100_bar / clustered_bar
+- bar_chart / line_chart / bar_horizontal / stacked_bar / stacked_100_bar / clustered_bar / area_chart
     … 添付Excel/CSVの数値をネイティブ編集可能グラフ化（下記の書き方を厳守）
+- scatter / bubble
+    … 2〜3変数の相関・分布をネイティブ散布図/バブルチャート化（categories を使わない。下記参照）
 - waterfall / swot(4象限固定) / venn2(2円) / bmc(9ブロック固定)
     … 増減の分解＋定番ビジネスフレーム（col の数・順序が意味を持つ。下記参照）
+- bullet(上限4) … 目標vs実績のバレットグラフ（ゲージの代替。箇条書きの bullets とは別の型。下記参照）
+- funnel(上限6) … 定量ファネル（段ごとに幅が減るバー。定性の段のみなら nodes_and_connectors 系の
+    funnel_steps を使う。下記参照）
+- football_field(上限6) … 評価手法ごとのレンジを横バーで比較（M&Aのvaluation football field。下記参照）
+- harvey_ball_table(行5×列5上限) … 定性比較を●◐○の4段階記号で表現（comparison_matrixと同じ書き方。下記参照）
+- marimekko(列5×セグメント4上限) … 列幅=規模・縦は構成比100%積み上げのマリメッコチャート（下記参照）
+- treemap(上限8) … 面積=構成比のツリーマップ（DSL記述順＝配置順。下記参照）
+- sankey(左4×右4×フロー8上限) … 左右2段の簡易フロー図（下記参照）
 - journey_map / pricing_tiers … カスタマージャーニー（stages必須。下記参照）・料金プラン比較（col highlight で推奨プラン強調）
 - value_chain … バリューチェーン（nodes_and_connectors 系。上記参照）
 - code_block / terminal / api_endpoint_table
@@ -134,7 +144,119 @@ slide bar_chart
 #   - 複数系列の量比較 → clustered_bar
 #   - 時系列の推移 → line_chart
 #   - 積み上げ → stacked_bar、構成比(100%) → stacked_100_bar
+#   - 時系列の累積・面で示す → area_chart（col を複数並べると積み上げ面）
 # 複数系列は col を複数並べる（各 col が1系列。行数=カテゴリ数）。
+
+## scatter / bubble の書き方（x,y座標の点群。categories を使わない）
+categories の代わりに、col の各行を1点として直接 x,y の値で書く。ラベル付き多値行
+（`ラベル "x" "y"`）は使えない（ラベル指定時は2値目以降が捨てられる仕様のため）。
+
+slide scatter
+  headline "広告費と売上の相関"
+  x_label "広告費（百万円）"      # 任意：軸ラベルの注記
+  y_label "売上（億円）"
+  col "既存店"                   # col = 系列（複数可）
+    "10" "1.2"                  # 1行 = "x" "y" の2値（ラベル無し）
+    "15" "1.8"
+  col "新店"
+    "8" "0.9"
+
+slide bubble                    # 同じ書き方。1行 = "x" "y" "規模" の3値
+  headline "市場の魅力度マップ"
+  x_label "市場成長率（%）"
+  y_label "シェア（%）"
+  col "事業ポートフォリオ"
+    "12" "30" "45"
+    "5" "55" "80"
+
+## bullet の書き方（目標vs実績。ゲージの代替）
+col 1つ=KPI 1個（上限4）。行の1行目=実績、2行目=目標、3行目(任意)=上限
+（省略時は実績・目標の1.15倍が自動設定される）。ラベル（実績/目標/上限）は表示用の
+自由文字列で、意味を決めるのは行の並び順（何行目か）。
+
+slide bullet
+  headline "主要KPIの達成状況"
+  unit "％"
+  col "売上達成率" highlight   # highlight = 実績バーを強調（1つだけ）
+    実績 "82"
+    目標 "100"
+    上限 "120"                # 任意。省略可
+  col "新規顧客数"
+    実績 "340"
+    目標 "300"
+
+## funnel の書き方（定量ファネル。定性の段のみなら funnel_steps を使う）
+col 1つ=段1個（上限6）。1行目=値（数値）。
+
+slide funnel
+  headline "登録までのファネル"
+  unit "人"
+  col "訪問"
+    "10000"
+  col "登録" highlight
+    "1200"
+
+## football_field の書き方（評価レンジの横バー比較）
+col 1つ=評価手法1個（上限6）。1行に2値「下限」「上限」を書く。任意で marker に
+基準値（現在値等）を書くと縦線が入る。
+
+slide football_field
+  headline "株式価値の評価レンジ"
+  unit "億円"
+  marker "100"               # 任意：基準値の縦線
+  col "DCF"
+    "80" "120"
+  col "類似会社比較" highlight
+    "90" "140"
+
+## harvey_ball_table の書き方（定性比較 ●◐○。comparison_matrix と同じ書き方）
+値は 0/25/50/75/100 のみ（最近傍にスナップされる）。行5×列5が上限。
+
+slide harvey_ball_table
+  headline "3社の定性比較"
+  columns "機能" "価格" "サポート"    # 評価軸（列。短い語で）
+  col "自社" highlight               # highlight で行全体を強調
+    "100" "75" "100"
+  col "A社"
+    "50" "100" "25"
+
+## marimekko の書き方（列幅=規模、縦=構成比100%）
+col=列（上限5）、col 直下の各行は「セグメント名 "値"」（上限4行、全列で同じ順に書く）。
+セグメントの色は行の並び順で決まる（1行目=main、2行目=main_2、…）。
+
+slide marimekko
+  headline "地域×製品の売上構成"
+  unit "億円"
+  col "国内" highlight       # highlight は列名・合計の文字色と枠線のみを強調（塗りは変えない）
+    製品A "60"
+    製品B "40"
+  col "北米"
+    製品A "30"
+    製品B "50"
+
+## treemap の書き方（面積=構成比。DSL記述順のまま配置する＝並べ替えない）
+col=項目（上限8）。1行目=値。大きい順に書くと見やすい。
+
+slide treemap
+  headline "事業別売上の構成"
+  unit "億円"
+  col "クラウド" highlight    # highlight は枠線のみで強調（セル文字は背景とのコントラスト優先で変えない）
+    "45"
+  col "受託開発"
+    "30"
+
+## sankey の書き方（左右2段の簡易フロー図）
+col=左ノード（上限4）。col 直下の各行「右ノード名 "値"」= そのノードから右ノードへの
+フロー（右ノードは出現順に自動集約、上限4。フロー総数は上限8で超過分は切り捨てられる）。
+
+slide sankey
+  headline "流入チャネル別の転換フロー"
+  unit "件"
+  col "広告経由" highlight   # highlight でそのノードと流出フローを強調
+    無料登録 "60"
+    直接購入 "15"
+  col "オーガニック"
+    無料登録 "40"
 
 ## grid_2d 系（comparison_matrix 等）
 slide comparison_matrix

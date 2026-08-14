@@ -33,8 +33,10 @@ SNAP_FILE = SNAP_DIR / "visual_regression.json"
 _UPDATE = os.environ.get("SLIDEGEN_UPDATE_SNAPSHOTS") == "1"
 
 # チャート系はカテゴリ＋数値が要るので、意味のあるスナップショットになるよう専用入力を与える。
+# scatter/bubble も同じ4値系列を stride 2/3 で点として解釈するため _chart_slide で足りる。
 _CHART_TYPES = ("bar_chart", "clustered_bar", "bar_horizontal",
-                "line_chart", "stacked_bar", "stacked_100_bar")
+                "line_chart", "stacked_bar", "stacked_100_bar",
+                "area_chart", "scatter", "bubble")
 
 
 def _minimal_slide(t: str) -> Slide:

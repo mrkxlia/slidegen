@@ -13,6 +13,7 @@ from . import render_base_band  # noqa: F401  基底レイアウト band_strip +
 from . import render_base_curve  # noqa: F401  基底レイアウト narrative_curve + variant 群
 from . import render_base_framed  # noqa: F401  基底レイアウト framed_canvas + variant 群
 from . import render_charts  # noqa: F401  ネイティブチャート型（棒/折れ線/積み上げ等）
+from . import render_charts_shapes  # noqa: F401  図形描画チャート型（bullet/funnel/football_field等）
 from . import render_frameworks  # noqa: F401  ビジネスフレーム型（swot/venn2）
 from . import render_data_support  # noqa: F401  データ補助型（data_source_footer/waterfall）
 from . import render_tech  # noqa: F401  技術系型（code_block/terminal/api_endpoint_table）
