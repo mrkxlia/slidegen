@@ -19,6 +19,7 @@
 | 限界と次に向けた展望を左右で示す | `limitations_future` | |
 | 4象限で分類・位置づけを示す | `matrix` | |
 | SWOT分析（4象限固定） | `swot` | |
+| PPM（花形/問題児/金のなる木/負け犬の固定2x2） | `bcg_matrix` | 自由に軸ラベルを決めたい4象限は `matrix` |
 | 意思決定基準で評価する | `decision_matrix` | |
 | 評価を◎○△×で比較する | `comparison_matrix` | |
 | スコアで比較する | `scorecard_compare` | |
@@ -26,6 +27,7 @@
 | 責任分担（RACI）を示す | `raci` | |
 | 単純な行×列のグリッドを作る | `plain_grid` | |
 | 2集合の重なりを示す（ベン図） | `venn2` | |
+| 市場・自社・競合の3Cを示す | `3c` | 顧客を頂点にした三角配置 |
 | 親子・階層構造を1段示す | `tree` | 多段の組織図は📋org_chart（新規候補）参照 |
 | 数式・算出方法を示す | `formula` | 相乗効果（掛け算）・組み合わせ（足し算）もこの型で表現できる |
 | 手順・ロードマップを横並びフローで示す | `process` / `process_flow` | |
@@ -35,6 +37,10 @@
 | じょうろ型（下位ほど絞り込まれる）の分解を示す | `funnel_steps` | |
 | ピラミッド型（上位ほど規模が小さい）の階層を示す | `pyramid` | |
 | ビジネスモデルキャンバス（9ブロック固定） | `bmc` | |
+| リーンキャンバス（9ブロック固定） | `lean_canvas` | bmc と同じ非対称レイアウト |
+| バリュープロポジションキャンバス（価値と顧客課題の適合） | `vpc` | |
+| ファイブフォース分析（業界構造の5つの競争要因） | `five_forces` | |
+| 顧客への共感マップを示す | `empathy_map` | Think&Feel/See/Hear/Say&Do＋Pain/Gainの6ブロック |
 | カスタマージャーニーを示す | `journey_map` | |
 
 ## 分類B: 要素間に関係がない（グラフ・事例・型が決まっているもの）
@@ -99,6 +105,7 @@
 | 賞状・認定証を示す | `certificate` | |
 | 告知・お知らせを示す | `announcement` | |
 | 組織図（多段階層）を示す | 📋 org_chart（新規候補） | 1段のみなら `tree` で代替可 |
+| ペルソナ像（属性・ゴール・課題）を1枚で示す | `persona_card` | |
 | 出典・脚注のフッタ帯を示す | `source_footer` | |
 | サイドバー・補足帯を示す | `sidebar` | |
 
@@ -114,7 +121,8 @@
 
 `prep` / `sds` / `desc`（話法フレーム）、`kishotenketsu` / `johakyu`（物語フレーム）、
 `feia` / `haikei`（分析・提案）、`kpt` / `ssc` / `fourls`（ふりかえり）、`sipoc` /
-`what_sowhat_nowwhat`（フレームワーク解説）、`5e` / `kwl`（教育フレーム）、`know_dontknow` /
+`what_sowhat_nowwhat`（フレームワーク解説）、`4p`（マーケティングミックス）、
+`pestel`（マクロ環境分析）、`5e` / `kwl`（教育フレーム）、`know_dontknow` /
 `editorial_cols` / `numbered_columns`（コラム系）、`emotion_arc` / `story_curve` / `trend_line` /
 `sparkline_narrative`（折れ線+注釈系）は、型名自体が用途を表しているため本ガイドの逆引き表からは省略する。
 一覧は dsl-reference.md の型カタログを参照。

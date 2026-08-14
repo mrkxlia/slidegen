@@ -109,6 +109,16 @@ VARIANTS = {
         "labels": ["K｜知っている", "W｜知りたい", "L｜学んだ"],
         "layout": "row", "accent_idx": None,
     },
+    # ビジネスフレーム(S5b) --------------------------------------------------
+    "4p": {
+        "labels": ["Product｜製品", "Price｜価格", "Place｜流通", "Promotion｜販促"],
+        "layout": "grid", "accent_idx": None,
+    },
+    "pestel": {
+        "labels": ["Political｜政治", "Economic｜経済", "Social｜社会",
+                   "Technological｜技術", "Environmental｜環境", "Legal｜法規制"],
+        "layout": "grid", "cols": 3, "accent_idx": None,
+    },
 }
 
 
@@ -163,8 +173,8 @@ def render_labeled_blocks(slide, data: Slide, theme):
                         accent=(i == accent_idx) or blk.highlight,
                         label_side="left")
     elif layout == "grid":
-        # 2列グリッド(2x2 等)
-        cols = 2
+        # 2列グリッド(2x2 等。variant の cols で列数を上書き可能。既定2)
+        cols = variant.get("cols", 2)
         rows = (n + cols - 1) // cols
         cw = (CONTENT_W - gap * (cols - 1)) / cols
         ch = (avail_h - gap * (rows - 1)) / rows

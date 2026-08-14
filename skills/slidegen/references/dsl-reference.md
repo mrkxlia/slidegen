@@ -23,15 +23,17 @@ slide <型名>
 型ごとの差は「col にタイトルが要るか」「col の行数」「用途」だけ。下記カタログの
 用途を見て型名を選び、中身（headline/col の文言）だけを書けばよい。
 
-## 型カタログ（RENDERERS 全105型。用途で型名を選ぶ）
+## 型カタログ（RENDERERS 全124型。用途で型名を選ぶ）
 - title / section / agenda / quote / bullets … 表紙・章扉・目次・引用・箇条書き
-- compare(2〜4) / cards(2〜6) / kpi(1〜4) / process(3〜6) / pros_cons(2) / table … 比較・カード・指標・手順・メリデメ・表
+- compare(2〜4) / cards(2〜6) / kpi(1〜4) / process(3〜6) / pros_cons(2) / table / persona_card … 比較・カード・指標・手順・メリデメ・表・ペルソナカード（下記参照）
 - matrix / cycle / pyramid / tree / formula / timeline / image_left … 対応表・循環・階層・樹形図・数式・年表・画像+文
 - labeled_blocks(基底) / prep / sds / desc … 話法フレーム（Point-Reason-Example-Point 等）
 - kishotenketsu / johakyu … 物語フレーム（起承転結・序破急）
 - feia / haikei … 分析・提案（Finding-Action・背景-課題-解決）
 - kpt / ssc / fourls … ふりかえり（Keep-Problem-Try・Stop-Start-Continue・4Ls）
 - brand_pillars / sipoc / what_sowhat_nowwhat … フレームワーク解説
+- 4p / pestel … マーケティングミックス（Product-Price-Place-Promotion）・
+    マクロ環境分析（Political-Economic-Social-Technological-Environmental-Legal）
 - 5e / kwl … 教育フレーム（5E・KWL）
 - split_layout(基底) / before_after / problem_solution / dual_hero / image_text … 左右分割：対比・課題解決・2要素並置・画像+文
 - hypothesis_prediction / limitations_future … 左右分割：仮説と予測・限界と展望
@@ -52,8 +54,11 @@ slide <型名>
     … 添付Excel/CSVの数値をネイティブ編集可能グラフ化（下記の書き方を厳守）
 - scatter / bubble
     … 2〜3変数の相関・分布をネイティブ散布図/バブルチャート化（categories を使わない。下記参照）
-- waterfall / swot(4象限固定) / venn2(2円) / bmc(9ブロック固定)
+- waterfall / swot(4象限固定) / venn2(2円) / bmc(9ブロック固定) / lean_canvas(9ブロック固定)
     … 増減の分解＋定番ビジネスフレーム（col の数・順序が意味を持つ。下記参照）
+- vpc / five_forces / 3c / bcg_matrix(2x2固定) / empathy_map … バリュープロポジションキャンバス・
+    ファイブフォース・3C分析・PPM（花形/問題児/金のなる木/負け犬の固定順。自由軸の4象限は matrix
+    を使う）・共感マップ（col の数・順序が固定。下記参照）
 - bullet(上限4) … 目標vs実績のバレットグラフ（ゲージの代替。箇条書きの bullets とは別の型。下記参照）
 - funnel(上限6) … 定量ファネル（段ごとに幅が減るバー。定性の段のみなら nodes_and_connectors 系の
     funnel_steps を使う。下記参照）
@@ -120,9 +125,105 @@ slide code_block
     "def fetch_with_retry(url, n=3):"
     "    for i in range(n):"        # 行頭スペースはそのまま保持される（インデント表現）
 
-## swot / venn2 / bmc（col の数と順序が固定）
+## swot / venn2 / bmc / lean_canvas（col の数と順序が固定）
 swot は col を4つ（強み・弱み・機会・脅威の順）、venn2 は3つ（左円・重なり・右円の順）、
-bmc は9つ（9ブロックの固定順）で書く。順序を守れば col にタイトルは不要。
+bmc は9つ（9ブロックの固定順）、lean_canvas も9つ（bmc と同じ非対称レイアウトで、
+Problem/Solution/Key Metrics/UVP/Unfair Advantage/Channels/Customer Segments/Cost/Revenue の順）
+で書く。順序を守れば col にタイトルは不要。
+
+## vpc の書き方（col 6つ固定順。左=Value Map／右=Customer Profile の3段対応）
+col は「左上→左中→左下→右上→右中→右下」の順（Gain Creators→Products & Services→
+Pain Relievers→Gains→Customer Jobs→Pains）。col にタイトルは不要。
+
+slide vpc
+  headline "提供価値と顧客課題のフィット"
+  col
+    "承認まで自動で回る"
+  col
+    "レシートOCRアプリ"
+  col
+    "手入力と照合をなくす"
+  col
+    "月次を早く締めたい"
+  col
+    "毎月の経費精算・承認"
+  col
+    "手作業の転記ミス"
+
+## five_forces の書き方（col 5つ固定順。中央→上→左→右→下）
+col は「中央(業界内の競争)→上(新規参入の脅威)→左(売り手の交渉力)→右(買い手の交渉力)→
+下(代替品の脅威)」の順。col にタイトルは不要。
+
+slide five_forces
+  headline "業界構造の5つの競争要因"
+  col
+    "大手2社と多数の新興"
+  col
+    "開発障壁は低い"
+
+## 3c の書き方（col 3つ固定順。顧客を頂点にした三角配置）
+col は「顧客→自社→競合」の順（型名は数字始まりだが `slide 3c` とそのまま書ける）。
+col にタイトルは不要。
+
+slide 3c
+  headline "市場・競合・自社の3C"
+  col
+    "市場は年率12%成長"
+  col
+    "OCR精度に強み"
+  col
+    "大手は大企業向け中心"
+
+## bcg_matrix の書き方（col 4つ固定順。自由軸の4象限は matrix を使う）
+col は「花形→問題児→金のなる木→負け犬」の固定順（軸ラベル・象限色も固定）。
+自由に軸ラベルを決めたい2x2は `matrix` 型（props の x_axis/y_axis）を使う。
+
+slide bcg_matrix
+  headline "投資は花形と問題児に集中する"
+  col
+    "クラウド経費精算"
+  col
+    "AI監査オプション"
+  col
+    "会計事務所向け既存製品"
+  col
+    "オンプレ版"
+
+## empathy_map の書き方（col 6つ固定順。上段2x2＋下段Pain/Gain）
+col は「考え・感情→見えているもの→聞いていること→発言・行動→Pain→Gain」の順。
+col にタイトルは不要。
+
+slide empathy_map
+  headline "顧客の共感マップ"
+  col
+    "また月末が来る"
+  col
+    "山積みのレシート"
+  col
+    "早く締めてほしいの声"
+  col
+    "手作業で照合し続ける"
+  col
+    "残業と入力ミス"
+  col
+    "定時で締めて分析に時間を使う"
+
+## persona_card の書き方（name/role プロパティ＋col。1つ目のcolだけ rows 可）
+name/role はトップレベルのプロパティ。1つ目の col（タイトル省略可）は「ラベル "値"」形式の
+属性一覧（プロフィール）、2つ目以降の col はタイトル必須（ゴール／課題等の見出しになる）で
+本文は箇条書き。highlight で強調したいセクションに付ける。
+
+slide persona_card
+  headline "ターゲット：中堅メーカーの経理マネージャー"
+  name "田中 花子"
+  role "経理マネージャー（38）・従業員300名の製造業"
+  col "プロフィール"
+    経験 "経理歴12年"
+    環境 "会計ソフト＋Excel"
+  col "ゴール"
+    "月次決算を5営業日で締める"
+  col "課題" highlight
+    "紙のレシート照合に月40時間"
 
 ## チャート型の書き方（重要・厳守）
 チャートは専用の型名そのものを slide の型に使う（"chart_type" というプロパティは存在しない）。

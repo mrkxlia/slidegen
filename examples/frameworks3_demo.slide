@@ -1,0 +1,163 @@
+# S5b: ビジネスフレーム9型の実証（lean_canvas / vpc / five_forces / 3c / 4p / pestel /
+# bcg_matrix / empathy_map / persona_card）。経費精算SaaSを題材に9枚。
+
+slide lean_canvas
+  kicker "事業仮説"
+  headline "経費精算SaaSのリーンキャンバス"
+  foot "9ブロック固定・UVPを強調"
+  col
+    "経費精算に月40時間"
+    "既存ツールは高価"
+  col
+    "レシートOCRで自動化"
+  col
+    "週次アクティブ率"
+    "精算リードタイム"
+  col
+    "撮るだけで精算が終わる"
+  col
+    "税理士ネットワーク"
+  col
+    "会計士経由の紹介"
+  col
+    "従業員50〜300名の中小企業"
+  col
+    "開発人件費"
+  col
+    "月額サブスク"
+
+---
+
+slide vpc
+  kicker "価値適合"
+  headline "提供価値と顧客課題のフィット"
+  foot "左=Value Map／右=Customer Profile"
+  col
+    "承認まで自動で回る"
+  col
+    "レシートOCRアプリ"
+  col
+    "手入力と照合をなくす"
+  col
+    "月次を早く締めたい"
+  col
+    "毎月の経費精算・承認"
+  col
+    "手作業の転記ミス"
+
+---
+
+slide five_forces
+  kicker "業界構造"
+  headline "経費精算SaaS市場の5つの競争要因"
+  foot "中央=業界内の競争"
+  col
+    "大手2社と多数の新興"
+  col
+    "開発障壁は低い"
+  col
+    "OCRエンジンは複数調達可"
+  col
+    "乗り換えコストが低い"
+  col
+    "Excel運用・法人カード明細"
+
+---
+
+slide 3c
+  kicker "環境分析"
+  headline "市場・競合・自社の3C"
+  foot "顧客を頂点にした三角配置"
+  col
+    "中小企業のバックオフィス"
+    "市場は年率12%成長"
+  col
+    "OCR精度に強み"
+  col
+    "大手は大企業向け中心"
+
+---
+
+slide 4p
+  kicker "マーケティング"
+  headline "初年度のマーケティングミックス"
+  foot "Product/Price/Place/Promotion"
+  col
+    "クラウド経費精算サービス"
+  col
+    "1ユーザー月額600円"
+  col
+    "会計士チャネル・オンライン直販"
+  col
+    "導入事例ウェビナー"
+
+---
+
+slide pestel
+  kicker "マクロ環境"
+  headline "事業環境のPESTEL分析"
+  foot "6項目・3列グリッド"
+  col
+    "電子帳簿保存法の改正"
+  col
+    "人件費の上昇"
+  col
+    "経理の人材不足"
+  col
+    "OCR・LLMの精度向上"
+  col
+    "ペーパーレス要請"
+  col
+    "インボイス制度"
+
+---
+
+slide bcg_matrix
+  kicker "事業ポートフォリオ"
+  headline "投資は花形と問題児に集中する"
+  foot "花形/問題児/金のなる木/負け犬の固定順"
+  col
+    "クラウド経費精算"
+  col
+    "AI監査オプション"
+  col
+    "会計事務所向け既存製品"
+  col
+    "オンプレ版"
+
+---
+
+slide empathy_map
+  kicker "顧客理解"
+  headline "経理担当者の共感マップ"
+  foot "上段2x2＋Pain/Gainの6ブロック"
+  col
+    "また月末が来る"
+  col
+    "山積みのレシート"
+  col
+    "早く締めてほしいの声"
+  col
+    "手作業で照合し続ける"
+  col
+    "残業と入力ミス"
+  col
+    "定時で締めて分析に時間を使う"
+
+---
+
+slide persona_card
+  kicker "ペルソナ"
+  headline "ターゲット：中堅メーカーの経理マネージャー"
+  name "田中 花子"
+  role "経理マネージャー（38）・従業員300名の製造業"
+  col "プロフィール"
+    経験 "経理歴12年"
+    環境 "会計ソフト＋Excel"
+    リテラシー "ITは平均的"
+  col "ゴール"
+    "月次決算を5営業日で締める"
+  col "課題" highlight
+    "紙のレシート照合に月40時間"
+  col "行動"
+    "情報収集はWebセミナーと同業の口コミ"

@@ -40,10 +40,10 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 
 ---
 
-## 2. 実装済みの型（`RENDERERS` に計115型）
+## 2. 実装済みの型（`RENDERERS` に計124型）
 
 > **真実は `slidegen/render.py` の `RENDERERS`**（`uv run python -c "import slidegen,slidegen.render as r;print(len(r.RENDERERS))"`
-> → 115）。本書は分類のための見取り図で、以下のセクション3も含め多くが既に ✅ 実装済み。
+> → 124）。本書は分類のための見取り図で、以下のセクション3も含め多くが既に ✅ 実装済み。
 > 数の手入力は古くなりやすいので、網羅確認は `RENDERERS` を参照すること。
 
 ### ベース構成（既存）
@@ -105,9 +105,9 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 ❌ 円グラフ・ゲージ・3D（設計思想で非推奨。stacked_100_bar/bulletで代替）
 
 ### ビジネスフレーム（①③調査）
-✅ swot / ✅ venn2 / ✅ bmc（9ブロック固定）／ 📋 lean_canvas / vpc
-✅ value_chain ／ 📋 five_forces / 3c / 4p / pestel / bcg_matrix
-✅ journey_map（スイムレーン）／ 📋 empathy_map / persona_card
+✅ swot / ✅ venn2 / ✅ bmc（9ブロック固定）／ ✅ lean_canvas（9ブロック固定。S5b, 2026-08）
+✅ value_chain ／ ✅ five_forces / 3c / 4p / pestel / bcg_matrix（S5b, 2026-08）
+✅ journey_map（スイムレーン）／ ✅ empathy_map / persona_card（S5b, 2026-08）
 
 ### 技術資料（②調査）
 ✅ code_block / ✅ terminal ／ 📋 code_diff / sql_result（技術登壇の基本セット）

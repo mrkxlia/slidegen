@@ -3,7 +3,7 @@
 > 立て直しエンゲージメントで洗い出した技術的負債・課題を**優先度順**にまとめる。
 > 個人/学習プロジェクトのスコープに合わせ、過剰な作り込みは避ける方針。
 > 関連: [requirements.md](../requirements.md) / [spec.md](../spec.md) / [docs/adr/](adr/)
-> 最終更新: 2026-08-14（**方針転換ロードマップ S5a（チャート系10型実装）完了**。
+> 最終更新: 2026-08-15（**方針転換ロードマップ S5b（ビジネスフレーム9型実装）完了**。
 > S1（CF撤去＋DSLリファレンス移設）完了に伴い、Web アプリ前提だった既存項目は Closed 化済み）
 
 ## 🔴 最優先: 方針転換（Web アプリ撤去 → Agent Skills/Plugin 化）
@@ -51,7 +51,14 @@ S5系列（📋約50型・分野別バッチ）の順で、1セッション=1PR�
   P2（accent面積8%上限）を超過しやすいためアウトライン枠線＋識別ラベルの文字色のみで表現。
   `RENDERERS` は105→115型。詳細・実施時の判断は
   [実行計画](plans/2026-08-agent-skills-transition.md) の S5a セクション参照。
-- S5b以降（📋約40型・分野別バッチ）: 未着手。
+- **S5b: ✅ 完了**（ビジネスフレーム9型 `lean_canvas`/`vpc`/`five_forces`/`3c`/`4p`/`pestel`/
+  `bcg_matrix`/`empathy_map`/`persona_card` を実装。`lean_canvas` は `bmc` と共通ジオメトリを
+  共有（`render_frameworks2.py` に `_render_canvas9` を抽出）、`4p`/`pestel` は既存
+  `labeled_blocks` の variant 追記のみ、残り6型は新規 `render_frameworks3.py`。
+  `bcg_matrix` は自由軸の `matrix` とは別の独立型（固定象限・固定軸ラベル）とした。
+  `RENDERERS` は115→124型。詳細・実施時の判断は
+  [実行計画](plans/2026-08-agent-skills-transition.md) の S5b セクション参照。
+- S5c以降（📋約31型・分野別バッチ）: 未着手。
 
 **新規（S2 由来）:**
 - PyPI 公開の検討（`uvx --from git+...` を GitHub 依存から解放し、バージョン解決も速くなる）。
