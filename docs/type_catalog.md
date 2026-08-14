@@ -40,10 +40,10 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 
 ---
 
-## 2. 実装済みの型（`RENDERERS` に計105型）
+## 2. 実装済みの型（`RENDERERS` に計115型）
 
 > **真実は `slidegen/render.py` の `RENDERERS`**（`uv run python -c "import slidegen,slidegen.render as r;print(len(r.RENDERERS))"`
-> → 105）。本書は分類のための見取り図で、以下のセクション3も含め多くが既に ✅ 実装済み。
+> → 115）。本書は分類のための見取り図で、以下のセクション3も含め多くが既に ✅ 実装済み。
 > 数の手入力は古くなりやすいので、網羅確認は `RENDERERS` を参照すること。
 
 ### ベース構成（既存）
@@ -98,10 +98,10 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 ✅ 基本チャート6種(bar_chart/bar_horizontal/line_chart/stacked_bar/stacked_100_bar/clustered_bar) ネイティブグラフ
    → python-pptx のネイティブChart APIで実装。現状の最大の空白。
 ✅ waterfall（増減分解・実装済み）
-📋 bullet（ゲージ代替。目標vs実績）
-📋 harvey_ball_table（定性比較●◐○。tableに円shape）
-📋 funnel / scatter / bubble（S3, 2026-08: tsundokuのグラフ36枚実例分析で頻出度が高く優先度を引き上げ。
-  根拠は design-guidelines.md §4） / marimekko / sankey / treemap / football_field
+✅ bullet（ゲージ代替。目標vs実績。S5a, 2026-08）
+✅ harvey_ball_table（定性比較●◐○。OVALのリング＋PIEの部分塗りで4段階を表現。S5a, 2026-08）
+✅ funnel / scatter / bubble（S3, 2026-08: tsundokuのグラフ36枚実例分析で頻出度が高く優先度を引き上げ。
+  根拠は design-guidelines.md §4） / marimekko / sankey / treemap / football_field（S5a, 2026-08 実装）
 ❌ 円グラフ・ゲージ・3D（設計思想で非推奨。stacked_100_bar/bulletで代替）
 
 ### ビジネスフレーム（①③調査）
@@ -145,7 +145,7 @@ tsundoku library の資料作成ノウハウ記事5本（詳細出典は
 等の実装済み型で対応済みのため追記不要（詳細な対応表は
 [type-selection-guide.md](../skills/slidegen/references/type-selection-guide.md) を参照）。
 
-📋 area_chart（累積面グラフ。line_chart系ネイティブチャートの追加候補）
+✅ area_chart（累積面グラフ。line_chart系ネイティブチャート。S5a, 2026-08 実装。§4参照）
 📋 pictogram_array（人型ピクトグラム配列＝ISOTYPE chart。grid_2d variant候補）
 📋 dot_matrix_chart（10×10等のドットマトリクスで割合を面的に示す。grid_2d variant候補）
 📋 org_chart（多段階層の組織図。nodes_and_connectors/tree variant候補。既存 tree は親+フラットな

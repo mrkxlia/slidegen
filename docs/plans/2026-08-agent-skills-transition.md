@@ -229,7 +229,7 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 >   ドキュメントで、`grid_2d` 系は comparison_matrix を含め元々一切掲載されておらず、
 >   `test_docs_drift.py` はこの文書について「教える型 ⊆ RENDERERS」のみを検査するため影響なし。
 
-### S5系列: 📋 約50型の分野別バッチ【状況: 未着手】
+### S5系列: 📋 約50型の分野別バッチ【状況: S5a 完了、S5b以降 未着手】
 
 1セッション=1分野を目安に、S3 で見直した優先順位に沿って並べ替えて実施する。
 
@@ -239,8 +239,9 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 > 下記の分野別バッチの型名列挙・件数は当初調査時点のスナップショットである点に留意すること
 > （二重管理・件数の手計算ミスを避けるため、本セクションでの精密な再カウントは行わない）。
 
-- **S5a チャート系（9型）**: bullet / harvey_ball_table / marimekko / sankey / funnel / scatter / bubble /
-  treemap / football_field
+- **S5a チャート系（10型）【完了】**: bullet / harvey_ball_table / marimekko / sankey / funnel /
+  scatter / bubble / treemap / football_field / area_chart（当初9型に、S3で📋候補入りした
+  area_chart を追加。ユーザー承認済み）。
 - **S5b ビジネスフレーム（9型）**: lean_canvas / vpc / five_forces / 3c / 4p / pestel / bcg_matrix /
   empathy_map / persona_card
 - **S5c 技術資料（10型）**: code_diff / sql_result / layered_stack 等。**Mermaid 前提の図系
@@ -255,6 +256,34 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 > 注: `type_catalog.md` には実装済みなのに 📋 のまま残っている型があった（policy_3col / brand_pillars /
 > pricing_tiers / takahashi 等、カタログの陳腐化）。S4 完了時に清掃済み（詳細は S4 セクションの
 > 実施時の補足を参照）。以降も同様の陳腐化が見つかれば都度是正する。
+
+> **S5a 実施時の補足（2026-08-14）**:
+> - 実装方式は型ごとに使い分けた：`area_chart`/`scatter`/`bubble` はネイティブ Chart API
+>   （`render_charts.py` に集約。`scatter`/`bubble` は `XyChartData`/`BubbleChartData` を使う
+>   新関数 `render_xy_chart`、既存の凡例・軸スタイリングは `_style_legend`/`_style_axes` に
+>   共通関数抽出）。残り7型（`bullet`/`funnel`/`football_field`/`harvey_ball_table`/`marimekko`/
+>   `treemap`/`sankey`）は waterfall・narrative_curve の前例（標準プリセット図形の積み木、
+>   回転/flip不使用）を踏襲した図形描画で、新規モジュール `slidegen/render_charts_shapes.py`
+>   に実装した（waterfall 自体は `render_data_support.py` に現状維持）。
+> - `harvey_ball_table` の部分塗り（25/50/75%）は `MSO_SHAPE.PIE` の `adjustments` を実機検証
+>   （`[162, 0]`=25%、`[162, 54]`=50%、`[162, 108]`=75%。いずれも `adj1=162` 固定＝12時起点、
+>   時計回り、回転プロパティは不使用）した上で採用した。離散5値の定性記号であり、
+>   `type_catalog.md` の「❌円グラフ」判断（角度読み取りの精度問題）とは別物と整理した。
+> - `marimekko`/`treemap` の `highlight` は、セル面積が大きく accent 塗りにすると P2
+>   （invariants の accent面積8%上限）に抵触しやすいため、**アウトライン枠線＋周辺の識別
+>   ラベル（列名・合計等）の文字色のみ**で表現する設計にした（塗りは変えない。線・文字色は
+>   P2 の計算対象外）。セル内文字自体は背景とのコントラストを優先し、highlight で色を
+>   変えない（ドラフト段階で dsl-reference の記述と実装が食い違っていたため、実装＝枠線のみ
+>   に文言を合わせて修正した）。
+> - DSL 設計は `parser.py` の制約（`ラベル "v1" "v2"` は2値目以降が捨てられる仕様）を踏まえ、
+>   ラベル付き多値行をどの型にも使わない方針にした（scatter/bubble=無ラベル固定 stride 行、
+>   bullet/sankey/marimekko=ラベル1値 rows、funnel/treemap/football_field=col 単位）。
+> - 新 `bullet`（既存 `bullets`＝箇条書き）・新 `funnel`（既存 `funnel_steps`＝nodes系の定性段）
+>   と紛らわしい名前が既存型にあったため、dsl-reference.md と type-selection-guide.md の両方に
+>   相互参照を明記した。
+> - `RENDERERS` は105→115型（`examples/charts2_demo.slide` を新規追加し、10型を1枚ずつ実演）。
+> - `docs/system_prompt.md` は変更不要と判断した（チャート型を含め型名を列挙しない非網羅文書。
+>   S4 前例と同じ判断）。
 
 ## 進め方の運用ルール
 
