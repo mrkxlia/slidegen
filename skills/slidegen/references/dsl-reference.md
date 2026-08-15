@@ -23,13 +23,16 @@ slide <型名>
 型ごとの差は「col にタイトルが要るか」「col の行数」「用途」だけ。下記カタログの
 用途を見て型名を選び、中身（headline/col の文言）だけを書けばよい。
 
-## 型カタログ（RENDERERS 全134型。用途で型名を選ぶ）
+## 型カタログ（RENDERERS 全138型。用途で型名を選ぶ）
 - title / section / agenda / quote / bullets … 表紙・章扉・目次・引用・箇条書き
-- compare(2〜4) / cards(2〜6) / kpi(1〜4) / process(3〜6) / pros_cons(2) / table / persona_card … 比較・カード・指標・手順・メリデメ・表・ペルソナカード（下記参照）
+- compare(2〜4) / cards(2〜6) / kpi(1〜4) / process(3〜6) / pros_cons(2) / table / persona_card
+  / speaker_intro_card / takeaways_emoji(2〜6)
+    … 比較・カード・指標・手順・メリデメ・表・ペルソナカード・登壇者紹介・絵文字付き
+      持ち帰りポイント（下記参照）
 - matrix / cycle / pyramid / tree / formula / timeline / image_left … 対応表・循環・階層・樹形図・数式・年表・画像+文
 - labeled_blocks(基底) / prep / sds / desc … 話法フレーム（Point-Reason-Example-Point 等）
 - kishotenketsu / johakyu … 物語フレーム（起承転結・序破急）
-- feia / haikei … 分析・提案（Finding-Action・背景-課題-解決）
+- feia / haikei / houkoku_sodan_irai … 分析・提案（Finding-Action・背景-課題-解決・報告-相談-依頼）
 - kpt / ssc / fourls … ふりかえり（Keep-Problem-Try・Stop-Start-Continue・4Ls）
 - brand_pillars / sipoc / what_sowhat_nowwhat … フレームワーク解説
 - 4p / pestel … マーケティングミックス（Product-Price-Place-Promotion）・
@@ -47,8 +50,8 @@ slide <型名>
   / cloud_architecture
     … ノード+矢印（横並びフロー・バリューチェーン・循環・PDCA・分岐フロー・ファネル・
       クラウド構成の左→右ティア）
-- hero_canvas(基底) / big_fact / stat_trio / tagline / takahashi / ted_idea / break_slide / statement
-    … 単一フォーカス（巨大数字1つ／3つの数字並置／一言コピー／高橋メソッド／TED型メッセージ／休憩幕間／宣言文。書き方は下記参照）
+- hero_canvas(基底) / big_fact / stat_trio / tagline / takahashi / ted_idea / break_slide / statement / cta_recruit
+    … 単一フォーカス（巨大数字1つ／3つの数字並置／一言コピー／高橋メソッド／TED型メッセージ／休憩幕間／宣言文／採用CTA。書き方は下記参照）
 - columns_with_header(基底) / policy_3col / know_dontknow / editorial_cols / numbered_columns / data_limitations
     … ヘッダー帯+N列（論点整理・分かっている/いないこと・編集コラム・番号付き列・データの限界注記）
 - narrative_curve(基底) / emotion_arc / story_curve / trend_line / sparkline_narrative … 折れ線+注釈ピン（感情曲線・物語曲線・トレンド線・注釈付き推移）
@@ -95,6 +98,14 @@ slide stat_trio
 
 slide tagline
   headline "一言で伝えたいコピー"
+
+slide cta_recruit
+  headline "一緒にプロダクトを作りませんか"
+  contact "採用ページ: example.com/careers"   # 下部の強調バーに表示（任意）
+  col                                          # 訴求ポイント（上限4、col.title=1行）
+    "フルリモート可"
+  col
+    "エンジニア5名採用中"
 
 ## table の書き方（先頭の col が見出し行になる）
 slide table
@@ -578,3 +589,24 @@ slide er_diagram
     from "顧客"
     to "注文"
     "1" "N"                 # 左右のカーディナリティ（lines[0]/lines[1]。省略可）
+
+## takeaways_emoji の書き方（col.title=絵文字、col.lines=短い持ち帰り文。上限6）
+
+slide takeaways_emoji
+  headline "今日の持ち帰りポイント"
+  col "🎯"
+    "まず計測してから最適化する"
+  col "🚀" highlight
+    "小さくデプロイして学習を早める"
+
+## speaker_intro_card の書き方（name/role プロパティ＋col1つ=bio箇条書き）
+
+登壇者紹介1枚に特化した単一フォーカス構成（persona_card のような複数カード群は持たない）。
+
+slide speaker_intro_card
+  headline "登壇者紹介"
+  name "山田 太郎"
+  role "株式会社Example / シニアエンジニア"
+  col
+    "Webフロントエンド開発に10年従事"
+    "OSSコントリビューター"

@@ -20,7 +20,7 @@ from pptx.enum.shapes import MSO_SHAPE
 
 from . import render as R
 from .render import (add_rect, add_text, add_hline, render_header, render_foot,
-                     SLIDE_H, MARGIN, CONTENT_W)
+                     SLIDE_W, SLIDE_H, MARGIN, CONTENT_W)
 from .parser import Slide
 from .render_util import block_items, add_items_text, fill_shape
 
@@ -384,9 +384,50 @@ def render_persona_card(slide, data: Slide, theme):
                   head_h=Inches(0.38), label_size=13, body_size=12)
 
 
+# ---------------------------------------------------------------------------
+# speaker_intro_card — 登壇者紹介カード（persona_card のOVAL写真意匠を単一フォーカスへ
+#   簡略化。右側カード群は持たず、写真+名前+役職+bio箇条書きのみの中央寄せ構成）
+# ---------------------------------------------------------------------------
+def render_speaker_intro_card(slide, data: Slide, theme):
+    top = render_header(slide, data, theme)
+    render_foot(slide, data, theme)
+    bottom = SLIDE_H - Inches(0.7)
+
+    name = data.props.get("name", "")
+    role = data.props.get("role", "")
+    cx = SLIDE_W / 2
+    photo_d = Inches(1.8)
+    photo_x = cx - photo_d / 2
+    photo_y = top + Inches(0.2)
+    oval = slide.shapes.add_shape(MSO_SHAPE.OVAL, int(photo_x), int(photo_y), int(photo_d), int(photo_d))
+    fill_shape(oval, theme, "main_3", no_shadow=True)
+    add_text(slide, int(photo_x), int(photo_y), int(photo_d), int(photo_d), theme,
+              name[:1] if name else "?", size=48, color_name="main", bold=True,
+              align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+
+    name_y = photo_y + photo_d + Inches(0.2)
+    add_text(slide, int(MARGIN), int(name_y), int(CONTENT_W), Inches(0.5), theme, name,
+              size=24, color_name="ink", bold=True,
+              align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+    role_y = name_y + Inches(0.5)
+    add_text(slide, int(MARGIN), int(role_y), int(CONTENT_W), Inches(0.4), theme, role,
+              size=14, color_name="muted",
+              align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+
+    bio_y = role_y + Inches(0.55)
+    if data.blocks:
+        items = block_items(data.blocks[0])
+        if items:
+            bio_w = CONTENT_W * 0.6
+            bio_x = MARGIN + (CONTENT_W - bio_w) / 2
+            add_items_text(slide, int(bio_x), int(bio_y), int(bio_w), int(bottom - bio_y),
+                            theme, items, size=13, anchor=MSO_ANCHOR.TOP, bullet=(len(items) > 1))
+
+
 R.register("vpc", render_vpc)
 R.register("five_forces", render_five_forces)
 R.register("3c", render_three_c)
 R.register("bcg_matrix", render_bcg_matrix)
 R.register("empathy_map", render_empathy_map)
 R.register("persona_card", render_persona_card)
+R.register("speaker_intro_card", render_speaker_intro_card)

@@ -1,0 +1,52 @@
+# S5d: 日本の登壇文化4型の実証（speaker_intro_card / cta_recruit / takeaways_emoji /
+# houkoku_sodan_irai）。技術カンファレンス登壇を題材に。
+
+slide speaker_intro_card
+  kicker "登壇者紹介"
+  headline "経費精算SaaSを支える技術"
+  name "山田 太郎"
+  role "株式会社Example / シニアエンジニア"
+  foot "登壇サンドイッチの冒頭に使う"
+  col
+    "Webフロントエンド開発に10年従事"
+    "OSSコントリビューター"
+    "Twitter: @yamada_taro"
+
+---
+
+slide takeaways_emoji
+  kicker "まとめ"
+  headline "今日の持ち帰りポイント"
+  foot "絵文字+短文のグリッド"
+  col "🎯"
+    "まず計測してから最適化する"
+  col "🚀" highlight
+    "小さくデプロイして学習を早める"
+  col "🤝"
+    "チームで振り返りを続ける"
+
+---
+
+slide cta_recruit
+  headline "一緒にプロダクトを作りませんか"
+  contact "採用ページ: example.com/careers"
+  foot "登壇サンドイッチの締めに使う"
+  col
+    "フルリモート可"
+  col
+    "エンジニア5名採用中"
+  col
+    "副業からの参画もOK"
+
+---
+
+slide houkoku_sodan_irai
+  kicker "定例MTG"
+  headline "今週の報告・相談・依頼"
+  foot "報告→相談→依頼の3ブロック"
+  col
+    "経費精算SaaSのβ版を先週リリース"
+  col
+    "OCR精度の改善方針を相談したい"
+  col highlight
+    "来週までにレビューをお願いします"

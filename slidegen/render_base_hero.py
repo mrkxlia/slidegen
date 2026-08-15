@@ -6,7 +6,8 @@ render_base_hero.py — 基底レイアウト `hero_canvas` と variant ラッ�
 
 variant:
   mode    : "fact"(巨大数字+キャプション) | "word"(巨大コピー1行) |
-            "break"(休憩) | "statement"(主張文) | "trio"(3数字並列)
+            "break"(休憩) | "statement"(主張文) | "trio"(3数字並列) |
+            "cta"(大見出し+訴求ポイント+連絡先バー)
   bg      : 背景色名（Noneなら白）
 
 記法例(big_fact):
@@ -43,6 +44,7 @@ VARIANTS = {
     "break_slide":{"mode": "break",     "bg": "main"},
     "statement":  {"mode": "statement", "bg": None},
     "ted_idea":   {"mode": "word",      "bg": "main"},
+    "cta_recruit":{"mode": "cta",       "bg": None},
 }
 
 
@@ -106,6 +108,33 @@ def render_hero_canvas(slide, data: Slide, theme):
             add_text(slide, MARGIN, SLIDE_H * 0.58, CONTENT_W, Inches(0.8), theme, sub,
                      size=24, color_name="on_main",
                      align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.TOP)
+
+    elif mode == "cta":
+        msg = data.props.get("headline", "")
+        add_text(slide, MARGIN, SLIDE_H * 0.14, CONTENT_W, Inches(1.3), theme,
+                 split_emphasis(msg), size=38, color_name=on_bg, bold=True,
+                 align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+        items = data.blocks[:4]
+        item_h = Inches(0.45)
+        items_top = SLIDE_H * 0.46
+        for i, blk in enumerate(items):
+            text = blk.title or (blk.lines[0] if blk.lines else "")
+            if text:
+                add_text(slide, MARGIN, items_top + i * item_h, CONTENT_W, item_h, theme,
+                         f"・{text}", size=18, color_name=on_bg,
+                         align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+        contact = data.props.get("contact", "")
+        if contact:
+            # 帯は全幅×0.75"だとP2(accent面積8%上限)を超過するため、幅0.85倍・高さ0.65"に
+            # 縮めて面積比を約6.6%に抑える（実機テストで確認済み）。
+            bar_w = CONTENT_W * 0.85
+            bar_h = Inches(0.65)
+            bar_x = MARGIN + (CONTENT_W - bar_w) / 2
+            bar_y = SLIDE_H - Inches(1.3)  # render_foot の領域(SLIDE_H-0.55〜)と重ならない位置
+            add_rect(slide, bar_x, bar_y, bar_w, bar_h, theme, "accent", rounded=True)
+            add_text(slide, bar_x, bar_y, bar_w, bar_h, theme, contact,
+                     size=18, color_name="on_accent", bold=True,
+                     align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
 
     else:  # statement（主張文・中央寄せ＋上下に細い線）
         msg = data.props.get("headline") or data.props.get("message", "")

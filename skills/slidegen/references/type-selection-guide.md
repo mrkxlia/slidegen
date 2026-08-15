@@ -116,6 +116,9 @@
 | 告知・お知らせを示す | `announcement` | |
 | 組織図（多段階層）を示す | 📋 org_chart（新規候補） | 1段のみなら `tree` で代替可 |
 | ペルソナ像（属性・ゴール・課題）を1枚で示す | `persona_card` | |
+| 登壇者紹介を1枚で示す | `speaker_intro_card` | persona_card より単純な単一フォーカス構成 |
+| 採用CTA（訴求ポイント+連絡先）を示す | `cta_recruit` | |
+| 絵文字付きの持ち帰りポイントを示す | `takeaways_emoji` | |
 | 出典・脚注のフッタ帯を示す | `source_footer` | |
 | サイドバー・補足帯を示す | `sidebar` | |
 
@@ -130,7 +133,8 @@
 ## その他: 話法・ふりかえり・教育フレーム系
 
 `prep` / `sds` / `desc`（話法フレーム）、`kishotenketsu` / `johakyu`（物語フレーム）、
-`feia` / `haikei`（分析・提案）、`kpt` / `ssc` / `fourls`（ふりかえり）、`sipoc` /
+`feia` / `haikei` / `houkoku_sodan_irai`（分析・提案。報告・相談・依頼）、
+`kpt` / `ssc` / `fourls`（ふりかえり）、`sipoc` /
 `what_sowhat_nowwhat`（フレームワーク解説）、`4p`（マーケティングミックス）、
 `pestel`（マクロ環境分析）、`5e` / `kwl`（教育フレーム）、`know_dontknow` /
 `editorial_cols` / `numbered_columns`（コラム系）、`emotion_arc` / `story_curve` / `trend_line` /

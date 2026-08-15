@@ -74,6 +74,10 @@ VARIANTS = {
         "labels": ["背景", "課題", "解決策", "効果"],
         "layout": "row", "accent_idx": 3,
     },
+    "houkoku_sodan_irai": {  # 日本のビジネス文化：報告→相談→依頼
+        "labels": ["報告", "相談", "依頼"],
+        "layout": "row", "accent_idx": 2,
+    },
     # 振り返り(レトロ) ----------------------------------------------------
     "kpt": {
         "labels": ["Keep｜続ける", "Problem｜課題", "Try｜試す"],
