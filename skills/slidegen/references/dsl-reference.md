@@ -23,18 +23,21 @@ slide <型名>
 型ごとの差は「col にタイトルが要るか」「col の行数」「用途」だけ。下記カタログの
 用途を見て型名を選び、中身（headline/col の文言）だけを書けばよい。
 
-## 型カタログ（RENDERERS 全160型。用途で型名を選ぶ）
+## 型カタログ（RENDERERS 全166型。用途で型名を選ぶ）
 - title / section / agenda / quote / bullets … 表紙・章扉・目次・引用・箇条書き
 - compare(2〜4) / cards(2〜6) / kpi(1〜4) / process(3〜6) / pros_cons(2) / table / persona_card
-  / speaker_intro_card / takeaways_emoji(2〜6)
+  / speaker_intro_card / takeaways_emoji(2〜6) / ranking_list(上限8)
     … 比較・カード・指標・手順・メリデメ・表・ペルソナカード・登壇者紹介・絵文字付き
-      持ち帰りポイント（下記参照）
-- matrix / cycle / pyramid / tree / formula / timeline / image_left … 対応表・循環・階層・樹形図・数式・年表・画像+文
+      持ち帰りポイント・順位バッジ付きランキング（下記参照）
+- matrix / cycle / pyramid / tree / org_chart(ノード10・レベル3上限) / formula / timeline / image_left
+    … 対応表・循環・階層・樹形図・多段組織図・数式・年表・画像+文（org_chartはrowsで上司参照。下記参照）
 - labeled_blocks(基底) / prep / sds / desc … 話法フレーム（Point-Reason-Example-Point 等）
 - kishotenketsu / johakyu … 物語フレーム（起承転結・序破急）
 - feia / haikei / houkoku_sodan_irai … 分析・提案（Finding-Action・背景-課題-解決・報告-相談-依頼）
 - kpt / ssc / fourls … ふりかえり（Keep-Problem-Try・Stop-Start-Continue・4Ls）
-- brand_pillars / sipoc / what_sowhat_nowwhat … フレームワーク解説
+- brand_pillars / sipoc / what_sowhat_nowwhat / mission_vision_values … フレームワーク解説
+    （mission_vision_valuesはbrand_pillarsの3固定ロール版：Mission-Vision-Values）
+- faq_qa … Q&A（col.title=質問、lines=回答。col縦積み）
 - 4p / pestel … マーケティングミックス（Product-Price-Place-Promotion）・
     マクロ環境分析（Political-Economic-Social-Technological-Environmental-Legal）
 - 5e / kwl … 教育フレーム（5E・KWL）
@@ -105,6 +108,9 @@ slide <型名>
     programとは時刻列の有無で使い分ける。下記参照）
 - maturity_model(上限6) … 成熟度モデル（横方向N段階。右ほど成熟＝カードが階段状に
     高くなる。下記参照）
+- dot_matrix_chart(上限25) / pictogram_array(上限25) … 単一の値を「N個中M個を塗った
+    単位アイコン」で示す（円のドット／人型の代わりの角丸長方形。1つの値のみ・col複数は
+    非対応。下記参照）
 
 ## hero_canvas 系の書き方（big_fact 等は col ではなく専用プロパティ）
 slide big_fact
@@ -766,3 +772,59 @@ smart_goal は col を5つ（S→M→A→R→Tの順。5列row）、elevator_pit
 （For→Who→Our Product→Unlikeの順。縦積み）、recipe_step は2つ
 （材料→手順の順。左右分割・手順の番号は本文に書く）で書く。順序を守ればcolに
 タイトルは不要（recipe_stepの手順は自動番号なし）。
+
+## org_chart の書き方（col.title=名前。rows[0]の値=上司の名前。上限ノード10・レベル3）
+
+上司参照が無い（またはcol.titleに一致しない）ノードはルート扱いになる。DSL記述順は
+問わない（先に子を書いてもよい）。循環参照はレベル計算時に打ち切って安全に描画する。
+
+slide org_chart
+  headline "開発本部の組織図"
+  col "CEO"
+  col "CTO"
+    上司 "CEO"          # rows[0]の値=上司名（ラベルは自由）
+  col "エンジニアリング部長"
+    上司 "CTO"
+
+## dot_matrix_chart / pictogram_array の書き方（col1つ・title=ラベル、lines[0]=値）
+
+`total`（既定20・上限25にクランプ）個の単位アイコンのうち、値の数だけ塗る。
+実物のISOTYPE図解も可読性のため通常10〜20個程度に留めるため、100個等では描かない。
+
+slide dot_matrix_chart
+  headline "顧客満足度"
+  total "20"
+  col "満足（4点以上）" highlight
+    "14"
+
+slide pictogram_array
+  headline "経理担当者の10人に7人が回答"
+  col "撮るだけで精算したいと回答"
+    "7"
+
+## ranking_list の書き方（col記述順=順位。バッジは自動採番。col.title=項目名、lines[0]=値）
+
+slide ranking_list
+  headline "満足度ランキング"
+  col "ExpenseFlow" highlight
+    "4.8"
+  col "競合A"
+    "4.2"
+
+## faq_qa の書き方（col.title=質問、lines=回答。縦積み）
+
+slide faq_qa
+  headline "導入前のFAQ"
+  col "既存の会計システムと連携できますか"
+    "主要な会計システムとAPI連携できます"
+
+## mission_vision_values の書き方（col 3つ固定順：Mission→Vision→Values）
+
+slide mission_vision_values
+  headline "私たちのMission / Vision / Values"
+  col
+    "経理業務から単純作業をなくす"
+  col
+    "誰もが本質的な仕事に集中できる世界"
+  col
+    "現場目線／シンプルさ／誠実さ"

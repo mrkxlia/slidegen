@@ -3,8 +3,8 @@
 > 立て直しエンゲージメントで洗い出した技術的負債・課題を**優先度順**にまとめる。
 > 個人/学習プロジェクトのスコープに合わせ、過剰な作り込みは避ける方針。
 > 関連: [requirements.md](../requirements.md) / [spec.md](../spec.md) / [docs/adr/](adr/)
-> 最終更新: 2026-08-15（**方針転換ロードマップ S5g（個人・イベント・ライフ7型実装）完了。
-> S5系列は一区切り**。
+> 最終更新: 2026-08-15（**方針転換ロードマップ S5h（tsundoku新規候補6型実装）完了。
+> type_catalog.md の📋が実質ゼロになり、S5系列（分野別バッチ）は完走した**。
 > S1（CF撤去＋DSLリファレンス移設）完了に伴い、Web アプリ前提だった既存項目は Closed 化済み）
 
 ## 🔴 最優先: 方針転換（Web アプリ撤去 → Agent Skills/Plugin 化）
@@ -113,11 +113,22 @@ S5系列（📋約50型・分野別バッチ）の順で、1セッション=1PR�
   accent塗りだとP2上限を超過しやすいためlayered_stack等と同じアウトライン枠線方式で
   実装）。`RENDERERS` は153→160型。詳細・実施時の判断は
   [実行計画](plans/2026-08-agent-skills-transition.md) の S5g セクション参照。
-- **S5系列（分野別バッチ）はS5gで一区切り**。ただし type_catalog.md §4
-  「tsundoku知見由来の新規候補」（S3, 2026-08で発見）の6型
-  `pictogram_array`/`dot_matrix_chart`/`org_chart`/`ranking_list`/`faq_qa`/
-  `mission_vision_values` はどのS5バッチにも割り当てられておらず📋のまま残っている。
-  実装するかはユーザー判断（後続バッチ「S5h」の起案が必要）。
+- **S5h: ✅ 完了**（type_catalog.md §4「tsundoku知見由来の新規候補」（S3, 2026-08で発見）
+  の6型 `pictogram_array`/`dot_matrix_chart`/`org_chart`/`ranking_list`/`faq_qa`/
+  `mission_vision_values` を、S5gまでで未割当のまま残っていたのをユーザー承認の上で
+  実装。`faq_qa`/`mission_vision_values`は`labeled_blocks` variant追記のみ。
+  `pictogram_array`/`dot_matrix_chart`は当初カタログで示唆されていた「grid_2d
+  variant候補」を不採用とし、`render_charts_shapes.py`の共通実装
+  `_render_unit_grid`を新規実装した（実物のISOTYPE図解のように100個描くと
+  test_invariants.pyのS2＝1スライドshape数上限<80に単独で抵触するため、既定20・
+  上限25個にクランプする粗い粒度で表現。単一の値のみ扱う設計とし複数系列比較は
+  対象外にしてshape数リスクを構造的に避けた）。`org_chart`は既存`tree`（親1+子1段
+  限定）を、`rows`の値を上司参照とする多段階層版として`render_relations.py`に
+  追記（ノード10・レベル3上限、循環参照はレベル計算時に打ち切り）。`ranking_list`は
+  `render_more.py`に追記（順位バッジは自動採番）。`RENDERERS` は160→166型。
+  これで type_catalog.md の📋は実質ゼロになり、**S5系列（分野別バッチ）は完走した**。
+  詳細・実施時の判断は
+  [実行計画](plans/2026-08-agent-skills-transition.md) の S5h セクション参照。
 
 **新規（S2 由来）:**
 - PyPI 公開の検討（`uvx --from git+...` を GitHub 依存から解放し、バージョン解決も速くなる）。

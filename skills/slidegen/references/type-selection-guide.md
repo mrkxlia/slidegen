@@ -34,7 +34,7 @@
 | 単純な行×列のグリッドを作る | `plain_grid` | |
 | 2集合の重なりを示す（ベン図） | `venn2` | |
 | 市場・自社・競合の3Cを示す | `3c` | 顧客を頂点にした三角配置 |
-| 親子・階層構造を1段示す | `tree` | 多段の組織図は📋org_chart（新規候補）参照 |
+| 親子・階層構造を1段示す | `tree` | 多段の組織図は `org_chart` を使う |
 | C4コンテキスト図（中心システム+周辺アクター）を示す | `c4_context` | 中心は常に強調される |
 | シーケンス図（参加者間のメッセージのやり取り）を示す | `sequence_diagram` | 参加者は縦のライフライン |
 | 状態遷移図を示す | `state_transition` | 状態は円周上に自動配置 |
@@ -64,6 +64,9 @@
 | 指標(KPI)を1〜4個並べて示す | `kpi` | |
 | 単一系列の量を比較する | `bar_chart` / `bar_horizontal` | 項目の順位を見せるなら横棒 |
 | 特定の棒に注釈コールアウトを付けて示す | `annotated_chart` | ネイティブChart非対応。自前描画の棒グラフ |
+| 割合をドット（丸）の集合で示す | `dot_matrix_chart` | 1つの値のみ・上限25個 |
+| 割合を人型ピクトグラム（ISOTYPE）風に示す | `pictogram_array` | 人型は角丸長方形で簡略化 |
+| ランキング・順位を示す | `ranking_list` | 順位バッジは自動採番 |
 | 複数系列を比較する | `clustered_bar` | |
 | 時系列の推移を示す | `line_chart` | |
 | 積み上げで内訳を示す | `stacked_bar` | 主役は1系列に絞る（design-guidelines.md §4） |
@@ -84,11 +87,10 @@
 | 左右2段のフロー・内訳の移動を示す（サンキー） | `sankey` | |
 | 料金プランを比較する | `pricing_tiers` | |
 | 年表・沿革・スケジュールを示す | `timeline` | |
-| ランキング・順位を示す | 📋 ranking_list（新規候補） | 当面は `table` / `bar_horizontal` で代替 |
 | 名言・問いかけを大きく示す | `quote` | |
 | 事例・特徴・メンバーを並べる（カード） | `cards` | |
 | メリット・デメリットを示す | `pros_cons` | |
-| Q&Aをまとめる | 📋 faq_qa（新規候補） | 当面は `labeled_blocks` / `prep` で代替 |
+| Q&Aをまとめる | `faq_qa` | col.title=質問、lines=回答 |
 | ソースコードを示す | `code_block` | |
 | ターミナル出力を示す | `terminal` | |
 | API仕様一覧を示す | `api_endpoint_table` | |
@@ -117,14 +119,14 @@
 | 休憩・幕間ページを示す | `break_slide` | |
 | 高橋メソッド（大きな文字1〜数語）で示す | `takahashi` | |
 | TED型の1メッセージスライドを示す | `ted_idea` | |
-| MVV（Mission/Vision/Values）を示す | 📋 mission_vision_values（新規候補） | 当面は `brand_pillars` / `tagline` で代替 |
+| MVV（Mission/Vision/Values）を示す | `mission_vision_values` | brand_pillarsの3固定ロール版 |
 | 論点を3列で整理する | `policy_3col` | |
 | フレームワークの柱を示す（ブランドピラー等） | `brand_pillars` | |
 | 式次第・進行表を示す | `program` | 時刻付きのタイムテーブルなら `event_timetable` |
 | 挨拶状・お礼状を示す | `greeting` | |
 | 賞状・認定証を示す | `certificate` | |
 | 告知・お知らせを示す | `announcement` | |
-| 組織図（多段階層）を示す | 📋 org_chart（新規候補） | 1段のみなら `tree` で代替可 |
+| 組織図（多段階層）を示す | `org_chart` | 1段のみなら `tree` で代替可。rows[0]の値が上司参照 |
 | ペルソナ像（属性・ゴール・課題）を1枚で示す | `persona_card` | |
 | 登壇者紹介を1枚で示す | `speaker_intro_card` | persona_card より単純な単一フォーカス構成 |
 | 採用CTA（訴求ポイント+連絡先）を示す | `cta_recruit` | |

@@ -229,7 +229,7 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 >   ドキュメントで、`grid_2d` 系は comparison_matrix を含め元々一切掲載されておらず、
 >   `test_docs_drift.py` はこの文書について「教える型 ⊆ RENDERERS」のみを検査するため影響なし。
 
-### S5系列: 📋 約50型の分野別バッチ【状況: S5a〜S5g 完了。分野別バッチは一区切り】
+### S5系列: 📋 約50型の分野別バッチ【状況: S5a〜S5h 完了。type_catalog.mdの📋は実質ゼロ】
 
 1セッション=1分野を目安に、S3 で見直した優先順位に沿って並べ替えて実施する。
 
@@ -255,6 +255,10 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
   pixar_story_spine / aida_funnel / jtbd_statement / annotated_chart / before_after_metric
 - **S5g 個人・イベント・ライフ（7型）【完了】**: elevator_pitch / event_timetable / okr /
   maturity_model / recipe_step / travel_itinerary / smart_goal
+- **S5h tsundoku新規候補（6型）【完了】**: type_catalog.md §4「tsundoku知見由来の
+  新規候補」がS5a〜S5gのどのバッチにも割り当てられずに残っていたため、ユーザー承認の
+  上でS5hとして追加した: pictogram_array / dot_matrix_chart / org_chart /
+  ranking_list / faq_qa / mission_vision_values
 
 各バッチの完了条件は S4 と同じ（型カタログ整合・snapshot 更新・examples 追加・CI green）。
 
@@ -504,6 +508,42 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 >   `mission_vision_values` がどのS5バッチにも割り当てられておらず📋のまま残っている
 >   ことが判明した。S5g完了をもって「型カタログの📋が完全に無くなった」わけではない点に
 >   留意（この6型の実装要否・後続バッチ「S5h」の起案はユーザー判断に委ねる）。
+
+> **S5h 実施時の補足（2026-08-15）**:
+> - ユーザーに「S5gで残った6型をS5hとして実装するか」を確認し、承認を得て着手した
+>   （S1〜S5gと同じ調査→計画モード→実装→PRの手順を踏襲）。着手前調査でRENDERERSとの
+>   名前衝突が無いことを確認済み。
+> - **最も重要な設計判断**: type_catalog.mdは執筆時点で `pictogram_array`/
+>   `dot_matrix_chart` を「grid_2d variant候補」と示唆していたが、これは不採用と判断
+>   した。実物のISOTYPE図解／ドットマトリクスの発想どおり「1個中1個」で100個描くと、
+>   test_invariants.py の **S2（1スライドのshape数<80）に単独で抵触する**（実機検証で
+>   確認）。実物のISOTYPE図解も可読性のため通常10〜20個程度（1アイコン=5〜10%）に
+>   留めるのが一般的であり、既定20・上限25個にクランプする粗い粒度が実務的にも正しい
+>   表現と判断した。2型は共通実装 `_render_unit_grid`（`render_charts_shapes.py`）＋
+>   薄いラッパー2登録とし、単一の値のみ扱う設計（複数系列比較はbar_chart等の役割と
+>   割り切り対象外）にすることでshape数リスクを構造的に避けた。highlightもaccent塗りの
+>   面積リスクを避けるため下部の割合テキストの文字色のみに反映した（ユニット自体の
+>   塗りは常にmain/base_2、accent塗りは一切使わない設計）。
+> - `org_chart` も当初カタログの「nodes_and_connectors/tree variant候補」という
+>   示唆どおりにはせず、既存`tree`関数（`render_relations.py`）に直接
+>   `render_org_chart` を追記する形にした（`nodes_and_connectors`の既存レイアウト
+>   機構では多段階層のレベル計算・親子接続を表現できないため）。DSLは`rows`の値を
+>   上司参照とし（sequence_diagram等のfrom/to規約と同じ「位置引数として読む」考え方。
+>   ラベル文字列は自由）、レベル計算は各ノードから親を辿って算出（循環参照は歩数上限で
+>   打ち切り、無限ループを防止）。ノード10・レベル3の上限で安全性とシンプルさを優先。
+> - `ranking_list` はS5gで確立した`event_timetable`と同じ「バッジ＋内容の行リスト」
+>   流儀を踏襲し、バッジを時刻ではなく自動採番の順位数字に変えた。配置は汎用リスト系が
+>   集まる`render_more.py`にした（`render_life.py`はS5g固有のテーマのため）。
+> - `faq_qa`/`mission_vision_values` は labeled_blocks への数行追記のみで完了
+>   （faq_qaは既存の「labels=None→col.titleをラベルに使う」フォールバック挙動を
+>   明示variantとして登録しただけで新規コード不要）。
+> - type-selection-guide.mdに残っていた `org_chart`/`mission_vision_values`/
+>   `ranking_list`/`faq_qa` の📋（新規候補）表記4箇所を実装済みの表記に更新し、
+>   `org_chart`の重複表記（tree行・組織図行の2箇所）も整理した。
+> - `RENDERERS` は160→166型（`examples/isotype_org_demo.slide` を新規追加し、
+>   経費精算SaaSの調査・体制・比較を題材に6型を実演）。
+> - `docs/system_prompt.md` は変更不要と判断した（S4以降と同じ、型名を列挙しない非網羅文書）。
+> - **これで type_catalog.md の📋は実質ゼロになり、S5系列（分野別バッチ）は完走した**。
 
 ## 進め方の運用ルール
 
