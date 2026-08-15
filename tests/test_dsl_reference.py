@@ -3,10 +3,7 @@
 スキル(dsl-reference.md)が LLM に教える型と、本体 slidegen のレンダラ登録型が食い違うと
 2方向の事故になる: (a) 教える型が未登録 → 生成DSLが描画できない、(b) RENDERERS にある型を
 教え忘れる → その型が永久にAIの選択肢から漏れる（デザイン取り込みでの再構成先にもならない）。
-ここを機械的に固定する（backlog #2: chart型の⊆保証を全型の⊆/⊇＝同値保証に拡張）。
-
-旧 frontend/src/prompts.ts の DSL_REFERENCE を skills/slidegen/references/dsl-reference.md へ
-移設した際、読み取り先を付け替えたもの（S1）。抽出ロジック自体は無変更。
+ここを機械的に固定する（chart型の⊆保証を全型の⊆/⊇＝同値保証に拡張したもの）。
 """
 from pathlib import Path
 import re

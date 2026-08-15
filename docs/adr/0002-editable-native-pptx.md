@@ -1,8 +1,8 @@
-# 0004. 出力は編集可能なネイティブ pptx とし、画像化しない
+# 0002. 出力は編集可能なネイティブ pptx とし、画像化しない
 
 - ステータス: 採用 (Accepted)
 - 日付: 2026-06-28
-- 関連: [docs/ppt_design_doc.md §2-bis](../ppt_design_doc.md), [0003](0003-browser-pyodide-rendering.md), `slidegen/render.py`, `slidegen/theme.py`
+- 関連: [docs/ppt_design_doc.md §2-bis](../ppt_design_doc.md), `slidegen/render.py`, `slidegen/theme.py`
 
 > 本 ADR は設計ドキュメント [ppt_design_doc.md](../ppt_design_doc.md) §2-bis の決定を、発見しやすいよう
 > ADR として**要約**したもの（詳細・チェックリストは §2-bis を正とする）。

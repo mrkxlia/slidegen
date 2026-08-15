@@ -9,9 +9,9 @@ render_tech_diagrams.py — 技術資料の図解系個別型（S5c）。
 - er_diagram      : ER図（エンティティ＝属性リストカード、リレーション＝直線＋カーディナリティ）
 
 設計思想：標準プリセット図形のみ・回転禁止（type_catalog.md §6）。sequence_diagram/
-state_transition/er_diagram はいずれも「Mermaid流用」と型カタログに注記されているが、
-実際にMermaidでレンダリングして画像を貼ることはしない（ADR 0004の画像化絶対禁止と
-正面衝突するため）。標準図形（矩形・直線コネクタ・テキスト）の組み合わせのみで表現する。
+state_transition/er_diagram も Mermaid でレンダリングして画像を貼ることはしない
+（ADR 0002 の画像化絶対禁止と正面衝突するため）。標準図形（矩形・直線コネクタ・テキスト）の
+組み合わせのみで表現する。
 
 sequence_diagram / state_transition / er_diagram に共通する記法規約：
   「from/to の rows を持つ col ＝ 接続（メッセージ/遷移/リレーション）を表すブロック」。

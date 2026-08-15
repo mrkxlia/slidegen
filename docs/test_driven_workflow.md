@@ -16,7 +16,7 @@
    │      └─ モンタージュ生成 (第2層): 目視チェックリスト  │
    │  6. モンタージュを見て意図と合っているか確認 (第3層)    │
    │      └─ 違えば 3 か 4 に戻る                           │
-   │  7. system_prompt.md に新型の書式を追記                │
+   │  7. dsl-reference.md に新型の書式を追記                │
    └────────────────────────────────────────────────────┘
 ```
 
@@ -96,9 +96,11 @@ make check TYPE=pyramid_inverted
 これで第1層 pytest が走り、続いて第2層モンタージュが生成される。
 モンタージュを開いて目視確認。違和感があればステップ2か3に戻る。
 
-### ステップ5: system_prompt.md を更新
+### ステップ5: dsl-reference.md を更新
 
-新型をAIが選べるように、`docs/system_prompt.md` の判断テーブルと型一覧に1行足す。
+新型をAIが選べるように、`skills/slidegen/references/dsl-reference.md` に記法の説明と例を足す
+（**必須**。`tests/test_dsl_reference.py` が「教える型 ≡ RENDERERS」を CI で機械保証する）。
+`docs/system_prompt.md` は代表型のみの設計参照ドキュメントのため、追記は任意。
 
 ---
 
