@@ -40,10 +40,10 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 
 ---
 
-## 2. 実装済みの型（`RENDERERS` に計160型）
+## 2. 実装済みの型（`RENDERERS` に計166型）
 
 > **真実は `slidegen/render.py` の `RENDERERS`**（`uv run python -c "import slidegen,slidegen.render as r;print(len(r.RENDERERS))"`
-> → 160）。本書は分類のための見取り図で、以下のセクション3も含め多くが既に ✅ 実装済み。
+> → 166）。本書は分類のための見取り図で、以下のセクション3も含め多くが既に ✅ 実装済み。
 > 数の手入力は古くなりやすいので、網羅確認は `RENDERERS` を参照すること。
 
 ### ベース構成（既存）
@@ -149,13 +149,18 @@ tsundoku library の資料作成ノウハウ記事5本（詳細出典は
 [type-selection-guide.md](../skills/slidegen/references/type-selection-guide.md) を参照）。
 
 ✅ area_chart（累積面グラフ。line_chart系ネイティブチャート。S5a, 2026-08 実装。§4参照）
-📋 pictogram_array（人型ピクトグラム配列＝ISOTYPE chart。grid_2d variant候補）
-📋 dot_matrix_chart（10×10等のドットマトリクスで割合を面的に示す。grid_2d variant候補）
-📋 org_chart（多段階層の組織図。nodes_and_connectors/tree variant候補。既存 tree は親+フラットな
-  子1段のみのため、多段の報告ラインを示す型として現行未収録の穴）
-📋 ranking_list（ランキング表。labeled_blocks/table variant候補）
-📋 faq_qa（Q&A。labeled_blocks variant候補）
-📋 mission_vision_values（MVV提示。labeled_blocks variant候補。既存 brand_pillars に近い3固定ロール版）
+✅ pictogram_array / dot_matrix_chart（単一値のユニットグリッド。当初grid_2d variant候補と
+  示唆していたが、100個描くとS2のshape数上限<80に抵触するため、既定20・上限25個に
+  クランプした自前描画の共通実装（render_charts_shapes.py）を採用。S5h, 2026-08）
+✅ org_chart（多段階層の組織図。rowsの値を上司参照とし、既存treeの1段限定を拡張する形で
+  render_relations.pyに実装。ノード10・レベル3上限。S5h, 2026-08）
+✅ ranking_list（S5h, 2026-08。render_more.pyに実装。順位バッジは自動採番）
+✅ faq_qa / mission_vision_values（labeled_blocks variant追記のみ。S5h, 2026-08）
+
+**この節は S5h 完了により空になった**（当初示唆の実装先＝grid_2d/nodes_and_connectors/
+labeled_blocks/tableのvariant候補のうち、pictogram_array・dot_matrix_chart・org_chartは
+実装時の判断で別モジュールの自前実装を採用した。詳細は実行計画 S5h セクションの
+実施時の補足を参照）。
 
 ❌ キャプチャ画像の羅列・拠点の地図表示・導入実績のロゴ壁
    （画像依存が強く「ネイティブ図形のみ・画像化しない」設計思想＝§6 と不整合の可能性が高い）

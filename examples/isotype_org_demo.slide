@@ -1,0 +1,76 @@
+# S5h: tsundoku新規候補6型の実証（pictogram_array / dot_matrix_chart / org_chart /
+# ranking_list / faq_qa / mission_vision_values）。type_catalog.mdの📋が実質ゼロになる最終バッチ。
+
+slide dot_matrix_chart
+  kicker "顧客調査"
+  headline "導入企業の満足度"
+  total "20"
+  foot "20個中M個を塗ったドットマトリクス"
+  col "満足（4点以上）" highlight
+    "14"
+
+---
+
+slide pictogram_array
+  kicker "アンケート結果"
+  headline "経理担当者の10人に7人が回答"
+  foot "人型の代わりに縦長の角丸長方形で簡略表現"
+  col "撮るだけで精算したいと回答"
+    "7"
+
+---
+
+slide org_chart
+  kicker "体制"
+  headline "開発本部の組織図"
+  foot "rowsの1つ目の値が上司参照になる。上限ノード10・レベル3"
+  col "CEO"
+  col "CTO"
+    上司 "CEO"
+  col "COO"
+    上司 "CEO"
+  col "エンジニアリング部長"
+    上司 "CTO"
+  col "デザイン部長"
+    上司 "CTO"
+  col "セールス部長" highlight
+    上司 "COO"
+
+---
+
+slide ranking_list
+  kicker "市場調査"
+  headline "経費精算SaaS満足度ランキング"
+  foot "順位バッジは自動採番"
+  col "ExpenseFlow" highlight
+    "4.8"
+  col "競合A"
+    "4.2"
+  col "競合B"
+    "3.9"
+
+---
+
+slide faq_qa
+  kicker "よくある質問"
+  headline "ExpenseFlow導入前のFAQ"
+  foot "col.titleが質問、linesが回答"
+  col "既存の会計システムと連携できますか"
+    "主要な会計システムとAPI連携できます"
+  col "無料トライアルはありますか"
+    "14日間無料でお試しいただけます"
+  col "導入にどれくらい時間がかかりますか"
+    "最短即日で利用開始できます"
+
+---
+
+slide mission_vision_values
+  kicker "企業理念"
+  headline "私たちのMission / Vision / Values"
+  foot "brand_pillarsの3固定ロール版"
+  col
+    "経理業務から単純作業をなくす"
+  col
+    "誰もが本質的な仕事に集中できる世界"
+  col
+    "現場目線／シンプルさ／誠実さ"

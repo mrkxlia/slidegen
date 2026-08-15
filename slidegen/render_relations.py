@@ -225,6 +225,87 @@ def render_tree(slide, data: Slide, theme):
 
 
 # ---------------------------------------------------------------------------
+# org_chart — 多段階層の組織図（tree の1段版を拡張。S5h）
+#   col "CEO"
+#   col "CTO"
+#     上司 "CEO"       # rows[0]の値＝上司の名前（ラベルは自由）。無ければルート扱い
+# 上限: ノード10・レベル3（安全・シンプルさ優先。循環参照はレベル計算時に打ち切る）
+# ---------------------------------------------------------------------------
+_ORG_CHART_MAX_NODES = 10
+_ORG_CHART_MAX_LEVELS = 3
+
+
+def render_org_chart(slide, data: Slide, theme):
+    top = render_header(slide, data, theme)
+    render_foot(slide, data, theme)
+    blocks = data.blocks[:_ORG_CHART_MAX_NODES]
+    n = len(blocks)
+    if n == 0:
+        return
+
+    names = [b.title for b in blocks]
+    parent_of = {}
+    for b in blocks:
+        p = b.rows[0][1] if b.rows else None
+        parent_of[b.title] = p if p in names else None
+
+    level = {}
+    for name in names:
+        depth, cur, seen = 0, name, set()
+        while parent_of.get(cur) and depth < _ORG_CHART_MAX_LEVELS - 1 and cur not in seen:
+            seen.add(cur)
+            cur = parent_of[cur]
+            depth += 1
+        level[name] = depth
+
+    by_level = {}
+    for b in blocks:
+        by_level.setdefault(level[b.title], []).append(b)
+    max_level = max(by_level)
+    n_levels = max_level + 1
+
+    bottom = SLIDE_H - Inches(0.7)
+    avail_h = bottom - top
+    row_gap = Inches(0.4)
+    node_h = min(Inches(0.8), (avail_h - row_gap * (n_levels - 1)) / n_levels)
+    node_w = Inches(2.0)
+    gap = Inches(0.25)
+
+    positions = {}
+    for lv in range(n_levels):
+        row_blocks = by_level.get(lv, [])
+        m = len(row_blocks)
+        if m == 0:
+            continue
+        cw = min(node_w, columns_geometry(CONTENT_W, m, gap))
+        row_w = cw * m + gap * (m - 1)
+        x0 = MARGIN + (CONTENT_W - row_w) / 2
+        y = top + lv * (node_h + row_gap)
+        for i, b in enumerate(row_blocks):
+            x = x0 + i * (cw + gap)
+            positions[b.title] = (x, y, cw)
+
+    # 接続線を先に描き、ノードを後から重ねて線端を隠す（3c/state_transitionと同じ手法）
+    for b in blocks:
+        parent = parent_of.get(b.title)
+        if parent and parent in positions:
+            px, py, pw = positions[parent]
+            cx_, cy_, cwc = positions[b.title]
+            ln = slide.shapes.add_connector(
+                2, int(px + pw / 2), int(py + node_h), int(cx_ + cwc / 2), int(cy_))
+            ln.line.color.rgb = theme.rgb("rule")
+            ln.line.width = Pt(1.5)
+
+    for b in blocks:
+        x, y, cw = positions[b.title]
+        color = "accent" if b.highlight else "main"
+        add_rect(slide, int(x), int(y), int(cw), int(node_h), theme, color, rounded=True)
+        add_text(slide, int(x), int(y), int(cw), int(node_h), theme, b.title,
+                 size=13, color_name="on_main", bold=True,
+                 align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+
+
+# ---------------------------------------------------------------------------
 # formula — 数式型（A × B = C / A + B = C のように要素関係を式で示す）
 #   props["operator"]: "x" (×) / "+" (+) / "=" の繰り返し（"x,x,=" など）
 #   デフォルトは要素間 "x"、最後 "="。要素数 2〜4。
@@ -377,6 +458,7 @@ R.register("matrix", render_matrix)
 R.register("cycle", render_cycle)
 R.register("pyramid", render_pyramid)
 R.register("tree", render_tree)
+R.register("org_chart", render_org_chart)
 R.register("formula", render_formula)
 R.register("timeline", render_timeline)
 R.register("image_left", render_image_left)

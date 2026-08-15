@@ -152,6 +152,49 @@ def render_takeaways_emoji(slide, data: Slide, theme):
 
 
 # ---------------------------------------------------------------------------
+# ranking_list（順位バッジ(自動採番)＋項目名＋値の行リスト。S5h）
+#   col "ExpenseFlow"   # title=項目名（DSL記述順=順位）
+#     "4.8"              # lines[0]=値（任意）
+# ---------------------------------------------------------------------------
+_RANKING_LIST_MAX = 8
+
+
+def render_ranking_list(slide, data: Slide, theme):
+    top = render_header(slide, data, theme)
+    render_foot(slide, data, theme)
+    rows = data.blocks[:_RANKING_LIST_MAX]
+    n = len(rows)
+    if n == 0:
+        return
+
+    bottom = SLIDE_H - Inches(0.7)
+    y0 = top + Inches(0.1)
+    gap = Inches(0.12)
+    rh = min(Inches(0.65), (bottom - y0 - gap * (n - 1)) / n)
+    badge_w = Inches(0.7)
+
+    for i, b in enumerate(rows):
+        y = y0 + i * (rh + gap)
+        color = "accent" if b.highlight else "main"
+        add_rect(slide, int(MARGIN), int(y), int(badge_w), int(rh), theme, color, rounded=True)
+        add_text(slide, int(MARGIN), int(y), int(badge_w), int(rh), theme, str(i + 1),
+                 size=18, color_name="on_main", bold=True,
+                 align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+        dx = MARGIN + badge_w + Inches(0.2)
+        value_w = Inches(1.4) if b.lines else Inches(0)
+        name_w = CONTENT_W - badge_w - Inches(0.2) - value_w
+        add_rect(slide, int(dx), int(y), int(name_w), int(rh), theme, "base_2", rounded=True)
+        add_text(slide, int(dx + Inches(0.15)), int(y), int(name_w - Inches(0.3)), int(rh),
+                 theme, b.title, size=14, color_name="ink", bold=True,
+                 align=PP_ALIGN.LEFT, anchor=MSO_ANCHOR.MIDDLE)
+        if b.lines:
+            vx = dx + name_w + Inches(0.1)
+            add_text(slide, int(vx), int(y), int(value_w - Inches(0.1)), int(rh), theme,
+                     b.lines[0], size=16, color_name=("accent" if b.highlight else "main"),
+                     bold=True, align=PP_ALIGN.RIGHT, anchor=MSO_ANCHOR.MIDDLE)
+
+
+# ---------------------------------------------------------------------------
 # pros_cons（メリット・デメリット）— 2カラム、左メリット(main)/右デメリット(muted)
 # ---------------------------------------------------------------------------
 def render_pros_cons(slide, data: Slide, theme):
@@ -269,6 +312,7 @@ R.register("section", render_section)
 R.register("bullets", render_bullets)
 R.register("cards", render_cards)
 R.register("takeaways_emoji", render_takeaways_emoji)
+R.register("ranking_list", render_ranking_list)
 R.register("pros_cons", render_pros_cons)
 R.register("table", render_table)
 R.register("quote", render_quote)

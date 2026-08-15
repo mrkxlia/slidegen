@@ -14,9 +14,8 @@ S3: tsundoku 知識抽出＋デザインガイドライン＝**完了**。S4: 5�
 S5a: チャート系10型実装＝**完了**。S5b: ビジネスフレーム9型実装＝**完了**。
 S5c: 技術資料10型実装＝**完了**。S5d: 日本の登壇文化4型実装＝**完了**。
 S5e: 教育・学術8型実装＝**完了**。S5f: ストーリー・マーケ＋データ補助7型実装＝**完了**。
-S5g: 個人・イベント・ライフ7型実装＝**完了**。S5系列はこれで一区切り。ただし
-type_catalog.md §4「tsundoku知見由来の新規候補」6型（pictogram_array等）は
-どのバッチにも未割当のまま残っている）。
+S5g: 個人・イベント・ライフ7型実装＝**完了**。S5h: tsundoku新規候補6型実装＝**完了**。
+これで type_catalog.md の📋が実質ゼロになった）。
 **リポジトリは S2 で public 化した**（履歴のシークレット監査済み・クリーン。
 詳細は実行計画 S2 セクションの実施時補足）。
 
@@ -48,7 +47,7 @@ type_catalog.md §4「tsundoku知見由来の新規候補」6型（pictogram_arr
 
 ## ディレクトリ
 
-- `slidegen/` … コアライブラリ。型は継続的に追加され現在 `RENDERERS` に**計160型**登録済みだが、
+- `slidegen/` … コアライブラリ。型は継続的に追加され現在 `RENDERERS` に**計166型**登録済みだが、
   **レンダ規約（編集可能なネイティブ要素・theme経由・登録は `register`/`register_many`）と public API は不変**。
   ネイティブchart は `render_charts.py`(複数形)が正
   （`bar_chart`/`line_chart`/`stacked_bar`/`stacked_100_bar`/`bar_horizontal`/`clustered_bar`/`area_chart`、
@@ -82,7 +81,13 @@ type_catalog.md §4「tsundoku知見由来の新規候補」6型（pictogram_arr
   個人・イベント・ライフ型（S5g, 2026-08）は `smart_goal`/`elevator_pitch`＝
   `labeled_blocks` variant、`recipe_step`＝`split_layout` variant、
   `travel_itinerary`/`okr`＝`columns_with_header` variant（`lead`がヘッダー帯）、
-  `event_timetable`/`maturity_model`＝新規 `render_life.py`。
+  `event_timetable`/`maturity_model`＝新規 `render_life.py`。tsundoku新規候補型
+  （S5h, 2026-08）は `faq_qa`/`mission_vision_values`＝`labeled_blocks` variant、
+  `pictogram_array`/`dot_matrix_chart`＝`render_charts_shapes.py` の共通実装
+  `_render_unit_grid`（単一値のユニットグリッド。既定20・上限25個にクランプ。
+  100個描くとS2のshape数上限に抵触するため）、`org_chart`＝`render_relations.py`
+  に追記（既存`tree`の1段限定をrows経由の上司参照で多段へ拡張）、`ranking_list`＝
+  `render_more.py` に追記。
 - `skills/slidegen/` … Agent Skill 本体。`SKILL.md`（frontmatter はオープン仕様6フィールドのみ。
   **型名は列挙しない** — `tests/test_plugin_manifests.py` が機械ガード）、`scripts/slidegen.sh`
   （リポジトリ内外どちらでも動くレンダラッパー。内: `uv run slidegen`、外: `uvx --from git+...`）、
@@ -96,7 +101,7 @@ type_catalog.md §4「tsundoku知見由来の新規候補」6型（pictogram_arr
   `tests/test_plugin_manifests.py` で同期保証。
 - `tests/` … `test_invariants.py`（構造インバリアント）、`test_dsl_reference.py`
   （dsl-reference.md ≡ RENDERERS の同値ガード）、`test_examples.py`（examples/*.slide の parse/render 回帰）、
-  `test_visual_regression.py`（全160型の図形ツリースナップショット）、`test_docs_drift.py`
+  `test_visual_regression.py`（全166型の図形ツリースナップショット）、`test_docs_drift.py`
   （system_prompt.md/type_catalog.md のドリフト検知）等。
 - `tools/` … `new_type.py`（新型の雛形生成）、`visual.py`（ビジュアル回帰用モンタージュ生成）。
 - `docs/` … 要件補助・仕様補助・ADR・設計・型カタログ・方針転換ロードマップ（`docs/plans/`）。
@@ -129,5 +134,5 @@ make validate-skill   # Agent Skill/プラグインマニフェスト検証（sk
 
 課題・ロードマップは [docs/backlog.md](docs/backlog.md) に集約。方針転換の進捗は
 [docs/plans/2026-08-agent-skills-transition.md](docs/plans/2026-08-agent-skills-transition.md)
-（S5g: 個人・イベント・ライフ7型実装＝完了。S5系列は一区切りだが、
-type_catalog.md §4「tsundoku知見由来の新規候補」6型は未割当のまま残る）。
+（S5h: tsundoku新規候補6型実装＝完了。type_catalog.md の📋は実質ゼロになり、
+S5系列の分野別バッチはこれで完走した）。

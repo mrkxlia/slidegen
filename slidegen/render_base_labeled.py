@@ -155,6 +155,14 @@ VARIANTS = {
         "labels": ["For｜対象顧客", "Who｜課題・ニーズ", "Our Product｜提供価値", "Unlike｜差別化"],
         "layout": "col", "accent_idx": 3,
     },
+    # tsundoku新規候補(S5h) ---------------------------------------------------
+    "faq_qa": {  # col.title=質問（ヘッダー帯に表示）、lines=回答
+        "labels": None, "layout": "col", "accent_idx": None,
+    },
+    "mission_vision_values": {  # brand_pillars(自由N)の3固定ロール版
+        "labels": ["Mission｜使命", "Vision｜展望", "Values｜価値観"],
+        "layout": "row", "accent_idx": None,
+    },
     # ビジネスフレーム(S5b) --------------------------------------------------
     "4p": {
         "labels": ["Product｜製品", "Price｜価格", "Place｜流通", "Promotion｜販促"],

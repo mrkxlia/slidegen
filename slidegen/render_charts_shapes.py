@@ -29,7 +29,7 @@ from . import render as R
 from .render import (add_rect, add_text, add_hline, render_header, render_foot,
                      SLIDE_W, SLIDE_H, MARGIN, CONTENT_W)
 from .parser import Slide
-from .render_util import parse_number, columns_geometry
+from .render_util import parse_number, columns_geometry, fill_shape
 
 _log = logging.getLogger(__name__)
 
@@ -755,6 +755,84 @@ def render_annotated_chart(slide, data: Slide, theme):
                      align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
 
 
+# ---------------------------------------------------------------------------
+# pictogram_array / dot_matrix_chart（1つの値を「N個中M個を塗った単位アイコンの
+#   グリッド」で示す。共通実装＋薄いラッパー2型。実物のISOTYPE図解も可読性のため
+#   通常10〜20個程度に留めるのが一般的なため、total は既定20・上限25にクランプする
+#   （100個描くと単独でS2のshape数上限<80に抵触するため。粗い粒度＝1アイコンが
+#   複数%を表す、が実務的にも正しい表現）。単一の値のみ扱う（複数系列比較は
+#   bar_chart等の役割とし対象外）。highlight はaccent塗りの面積リスクを避けるため
+#   下部の割合テキストの文字色のみに反映する（ユニット自体の塗りは常にmain/base_2）。
+# ---------------------------------------------------------------------------
+_UNIT_GRID_DEFAULT_TOTAL = 20
+_UNIT_GRID_MAX_TOTAL = 25
+_UNIT_GRID_COLS = 10
+
+
+def _render_unit_grid(slide, data: Slide, theme, *, unit_shape, aspect):
+    top = render_header(slide, data, theme)
+    render_foot(slide, data, theme)
+    if not data.blocks:
+        return
+    blk = data.blocks[0]
+
+    total_raw = parse_number(data.props.get("total", str(_UNIT_GRID_DEFAULT_TOTAL)),
+                              context="pictogram/dot_matrix total")
+    total = int(total_raw) if total_raw > 0 else _UNIT_GRID_DEFAULT_TOTAL
+    if total > _UNIT_GRID_MAX_TOTAL:
+        _log.warning("pictogram/dot_matrix の total=%s は上限%sにクランプします。",
+                     total, _UNIT_GRID_MAX_TOTAL)
+        total = _UNIT_GRID_MAX_TOTAL
+    total = max(1, total)
+
+    value = parse_number(blk.lines[0], context="pictogram/dot_matrix") if blk.lines else 0.0
+    filled = max(0, min(int(round(value)), total))
+
+    bottom = SLIDE_H - Inches(0.7)
+    label_h = Inches(0.4)
+    pct_h = Inches(0.35)
+    grid_top = top + label_h + Inches(0.1)
+    grid_h = bottom - grid_top - pct_h - Inches(0.1)
+
+    if blk.title:
+        add_text(slide, int(MARGIN), int(top), int(CONTENT_W), int(label_h), theme, blk.title,
+                 size=14, color_name="ink", bold=True, align=PP_ALIGN.CENTER)
+
+    cols = min(_UNIT_GRID_COLS, total)
+    rows = -(-total // cols)  # 切り上げ除算
+    gap = Inches(0.08)
+    cell_w = columns_geometry(CONTENT_W, cols, gap)
+    cell_h = (grid_h - gap * (rows - 1)) / rows if rows else grid_h
+    unit_w = min(cell_w, cell_h / aspect) * 0.82
+    unit_h = unit_w * aspect
+    grid_w_actual = cell_w * cols + gap * (cols - 1)
+    grid_x0 = MARGIN + (CONTENT_W - grid_w_actual) / 2
+
+    for i in range(total):
+        r, c = divmod(i, cols)
+        cx = grid_x0 + c * (cell_w + gap) + cell_w / 2
+        cy = grid_top + r * (cell_h + gap) + cell_h / 2
+        ux, uy = cx - unit_w / 2, cy - unit_h / 2
+        color = "main" if i < filled else "base_2"
+        shp = slide.shapes.add_shape(unit_shape, int(ux), int(uy), int(unit_w), int(unit_h))
+        fill_shape(shp, theme, color, no_shadow=True)
+
+    pct_text = f"{filled} / {total}"
+    add_text(slide, int(MARGIN), int(grid_top + grid_h + Inches(0.1)), int(CONTENT_W), int(pct_h),
+             theme, pct_text, size=13, color_name=("accent" if blk.highlight else "muted"),
+             bold=blk.highlight, align=PP_ALIGN.CENTER)
+
+
+def render_dot_matrix_chart(slide, data: Slide, theme):
+    _render_unit_grid(slide, data, theme, unit_shape=MSO_SHAPE.OVAL, aspect=1.0)
+
+
+def render_pictogram_array(slide, data: Slide, theme):
+    # 人型の代わりに縦長の角丸長方形で簡易的に示す（標準プリセット図形のみ・カスタム
+    # ジオメトリ禁止のためFREEFORM等での人型シルエットは採用しない）。
+    _render_unit_grid(slide, data, theme, unit_shape=MSO_SHAPE.ROUNDED_RECTANGLE, aspect=1.8)
+
+
 R.register("bullet", render_bullet)
 R.register("funnel", render_funnel)
 R.register("football_field", render_football_field)
@@ -763,3 +841,5 @@ R.register("marimekko", render_marimekko)
 R.register("treemap", render_treemap)
 R.register("sankey", render_sankey)
 R.register("annotated_chart", render_annotated_chart)
+R.register("dot_matrix_chart", render_dot_matrix_chart)
+R.register("pictogram_array", render_pictogram_array)
