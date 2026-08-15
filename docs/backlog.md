@@ -3,7 +3,7 @@
 > 立て直しエンゲージメントで洗い出した技術的負債・課題を**優先度順**にまとめる。
 > 個人/学習プロジェクトのスコープに合わせ、過剰な作り込みは避ける方針。
 > 関連: [requirements.md](../requirements.md) / [spec.md](../spec.md) / [docs/adr/](adr/)
-> 最終更新: 2026-08-15（**方針転換ロードマップ S5e（教育・学術8型実装）完了**。
+> 最終更新: 2026-08-15（**方針転換ロードマップ S5f（ストーリー・マーケ＋データ補助7型実装）完了**。
 > S1（CF撤去＋DSLリファレンス移設）完了に伴い、Web アプリ前提だった既存項目は Closed 化済み）
 
 ## 🔴 最優先: 方針転換（Web アプリ撤去 → Agent Skills/Plugin 化）
@@ -90,7 +90,20 @@ S5系列（📋約50型・分野別バッチ）の順で、1セッション=1PR�
   描画しない（縦一列のみ）ことも判明したため、新規ジオメトリとして実装した。
   `RENDERERS` は138→146型。詳細・実施時の判断は
   [実行計画](plans/2026-08-agent-skills-transition.md) の S5e セクション参照。
-- S5f以降（📋約9型・分野別バッチ）: 未着手。
+- **S5f: ✅ 完了**（ストーリー・マーケ＋データ補助7型のうち5型
+  `golden_circle`/`storybrand_sb7`/`pixar_story_spine`/`jtbd_statement`は
+  `labeled_blocks` variant追記、`aida_funnel`は`nodes_and_connectors`の既存
+  `funnel`レイアウト＋固定ラベルのvariant追記のみで実装。残り2型は新規小実装：
+  `before_after_metric`（`render_data_support.py`。before_afterの2パネル＋中央矢印と
+  stat_trioの大数字表示を組み合わせ）、`annotated_chart`（`render_charts_shapes.py`。
+  ネイティブChart APIにはデータ点への注釈コールアウトを正確配置する手段が無いため、
+  S5aと同じ自前描画方針で実装）。golden_circleの正式な同心円（Simon Sinek）は
+  回転・カスタムジオメトリ禁止の下でテキスト配置が破綻しやすいため縦積みに簡略化、
+  storybrand_sb7（7要素）はcols=4グリッド（4+3配置、cols=3の3+3+1より空白が少ない）を
+  採用。`RENDERERS` は146→153型。詳細・実施時の判断は
+  [実行計画](plans/2026-08-agent-skills-transition.md) の S5f セクション参照。
+- S5g（個人・イベント・ライフ。📋約7型。当初スナップショットの件数のため実数は
+  type_catalog.md §4「個人・イベント・ライフ」参照）: 未着手。S5系列はS5gが最後の見込み。
 
 **新規（S2 由来）:**
 - PyPI 公開の検討（`uvx --from git+...` を GitHub 依存から解放し、バージョン解決も速くなる）。

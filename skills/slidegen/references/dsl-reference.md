@@ -23,7 +23,7 @@ slide <型名>
 型ごとの差は「col にタイトルが要るか」「col の行数」「用途」だけ。下記カタログの
 用途を見て型名を選び、中身（headline/col の文言）だけを書けばよい。
 
-## 型カタログ（RENDERERS 全146型。用途で型名を選ぶ）
+## 型カタログ（RENDERERS 全153型。用途で型名を選ぶ）
 - title / section / agenda / quote / bullets … 表紙・章扉・目次・引用・箇条書き
 - compare(2〜4) / cards(2〜6) / kpi(1〜4) / process(3〜6) / pros_cons(2) / table / persona_card
   / speaker_intro_card / takeaways_emoji(2〜6)
@@ -40,18 +40,24 @@ slide <型名>
 - 5e / kwl … 教育フレーム（5E・KWL）
 - worked_example / theorem_proof / imrad_overview … 問題-解法・定理-証明（col2つ固定）・
     論文構成（Introduction-Methods-Results-Discussion）
+- golden_circle / jtbd_statement … Why-How-What（同心円を縦積みに簡略化）・
+    Job to be Done（When-I want to-So I can の3ブロック）
+- storybrand_sb7(7要素固定) … StoryBrand（Character-Problem-Guide-Plan-CTA-Success-Failure）
+- pixar_story_spine(7要素固定) … Pixarのストーリースパイン（時系列7ビート・横一列）
 - split_layout(基底) / before_after / problem_solution / dual_hero / image_text … 左右分割：対比・課題解決・2要素並置・画像+文
 - hypothesis_prediction / limitations_future / flashcard … 左右分割：仮説と予測・限界と展望・用語カード
+- before_after_metric … Before/After の大数字2値比較（中央矢印。下記参照）
 - grid_2d(基底) / comparison_matrix / scorecard_compare / raci / heatmap_matrix / decision_matrix / plain_grid
   / priority_matrix_2x2 / quiz_mcq / mandala_chart / sdg_grid / conjugation_table
   / slo_sli_table / incident_severity_table
     … 行×列のセル（評価記号◎○△×・スコア比較・責任分担・色濃淡評価・意思決定基準・単純グリッド・
       優先度2x2・4択クイズ・マンダラチャート・SDGs一覧・活用表・SLI一覧・インシデント重大度表。
       書き方は下記参照）
-- nodes_and_connectors(基底) / process_flow / value_chain / cycle_loop / pdca / flow_branching / funnel_steps
-  / cloud_architecture / prisma_flow / consort_flow
-    … ノード+矢印（横並びフロー・バリューチェーン・循環・PDCA・分岐フロー・ファネル・
-      クラウド構成の左→右ティア・文献選定フロー・臨床試験フロー。書き方は下記参照）
+- nodes_and_connectors(基底) / process_flow / value_chain / cycle_loop / pdca / funnel_steps / aida_funnel
+- flow_branching / cloud_architecture / prisma_flow / consort_flow
+    … ノード+矢印（横並びフロー・バリューチェーン・循環・PDCA・定性ファネル・AIDA集客
+      ファネル・分岐フロー・クラウド構成の左→右ティア・文献選定フロー・臨床試験フロー。
+      数値必須の定量ファネルは `funnel` を使う。書き方は下記参照）
 - hero_canvas(基底) / big_fact / stat_trio / tagline / takahashi / ted_idea / break_slide / statement / cta_recruit
     … 単一フォーカス（巨大数字1つ／3つの数字並置／一言コピー／高橋メソッド／TED型メッセージ／休憩幕間／宣言文／採用CTA。書き方は下記参照）
 - columns_with_header(基底) / policy_3col / know_dontknow / editorial_cols / numbered_columns / data_limitations
@@ -71,7 +77,7 @@ slide <型名>
     を使う）・共感マップ（col の数・順序が固定。下記参照）
 - bullet(上限4) … 目標vs実績のバレットグラフ（ゲージの代替。箇条書きの bullets とは別の型。下記参照）
 - funnel(上限6) … 定量ファネル（段ごとに幅が減るバー。定性の段のみなら nodes_and_connectors 系の
-    funnel_steps を使う。下記参照）
+    funnel_steps、AIDA固定ラベルなら aida_funnel を使う。下記参照）
 - football_field(上限6) … 評価手法ごとのレンジを横バーで比較（M&Aのvaluation football field。下記参照）
 - harvey_ball_table(行5×列5上限) … 定性比較を●◐○の4段階記号で表現（comparison_matrixと同じ書き方。下記参照）
 - marimekko(列5×セグメント4上限) … 列幅=規模・縦は構成比100%積み上げのマリメッコチャート（下記参照）
@@ -87,6 +93,8 @@ slide <型名>
       標準図形のみで構成しMermaidレンダリング画像は使わない。下記参照）
 - data_source_footer … 出典付きの主張（headline+message+source。col は使わない。下記参照）
 - abstract_slide … 論文アブストラクト（abstract本文＋keywordsチップ。col は使わない。下記参照）
+- annotated_chart(上限8) … 自前描画の棒グラフ＋注釈コールアウト（ネイティブChartには
+    注釈を付けられないため。下記参照）
 
 ## hero_canvas 系の書き方（big_fact 等は col ではなく専用プロパティ）
 slide big_fact
@@ -661,3 +669,44 @@ slide consort_flow
   col
     "n = 280"
     理由 "適格基準を満たさず n=20"
+
+## golden_circle / storybrand_sb7 / pixar_story_spine / jtbd_statement（col の数と順序が固定）
+
+golden_circle は col を3つ（Why→How→Whatの順。正式な同心円ではなく縦積みで表現）、
+storybrand_sb7 は7つ（Character→Problem→Guide→Plan→CTA→Success→Failureの順。4列グリッド）、
+pixar_story_spine は7つ（時系列の物語ビート順・横一列）、jtbd_statement は3つ
+（When→I want to→So I canの順）で書く。順序を守ればcolにタイトルは不要。
+
+slide storybrand_sb7
+  headline "プロダクトのStoryBrand"
+  col
+    "経理担当者"
+  col
+    "レシート照合に月40時間かかる"
+
+slide pixar_story_spine
+  headline "プロダクトが生まれるまで"
+  col
+    "とある経理担当者がいた"
+  col
+    "毎月レシートの山と格闘していた"
+
+## annotated_chart の書き方（col=カテゴリ、lines[0]=値、rowsの1つ目の値が注釈になる）
+
+slide annotated_chart
+  headline "月次アクティブユーザー数の推移"
+  unit "万人"
+  col "1月"       # col.title = カテゴリ
+    "8"            # lines[0] = 値（棒の高さ）
+  col "2月" highlight
+    "12"
+    理由 "キャンペーン終了で急落"    # rows → 棒の上に引き出し線付きコールアウト
+
+## before_after_metric の書き方（col.title=大きな数値、lines[0]=キャプション）
+
+slide before_after_metric
+  headline "処理時間を劇的に短縮"
+  col "5分"
+    "手動での確認作業"
+  col "30秒" highlight
+    "自動化後の処理時間"

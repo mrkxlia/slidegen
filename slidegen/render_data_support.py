@@ -3,6 +3,7 @@ render_data_support.py — データ補助の個別型。
 
 - data_source_footer : 本文＋下部に出典/期間/N/注を明示する帯。全定量スライドに付けたいプリミティブ。
 - waterfall          : 増減分解（開始→増減→着地）。ネイティブ図形の積み木で表現。
+- before_after_metric: 数値のBefore→After比較（大数字2つ＋中央矢印。S5f）。
 
 設計思想：標準図形のみ。色は theme 経由。
 """
@@ -11,6 +12,7 @@ import logging
 
 from pptx.util import Inches
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
+from pptx.enum.shapes import MSO_SHAPE
 
 from . import render as R
 from .render import (add_rect, add_text, render_header, render_foot,
@@ -133,5 +135,56 @@ def render_waterfall(slide, data: Slide, theme):
                  align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.TOP)
 
 
+# ---------------------------------------------------------------------------
+# before_after_metric（Before/After の大数字2値比較。中央に矢印）
+#   col "5分"          # title=大きな数値
+#     "手動での確認作業"  # lines[0]=キャプション
+#   col "30秒" highlight
+#     "自動化後の処理時間"
+# ---------------------------------------------------------------------------
+_BAM_LABELS = ["Before｜変更前", "After｜変更後"]
+_BAM_COLORS = ["muted", "main"]
+
+
+def render_before_after_metric(slide, data: Slide, theme):
+    top = render_header(slide, data, theme)
+    render_foot(slide, data, theme)
+    blocks = data.blocks[:2]
+    if len(blocks) < 2:
+        return
+    bottom = SLIDE_H - Inches(0.7)
+    avail_h = bottom - top
+    gap = Inches(0.5)
+    pw = (CONTENT_W - gap) / 2
+
+    for i, blk in enumerate(blocks):
+        x = MARGIN + i * (pw + gap)
+        add_rect(slide, int(x), int(top), int(pw), int(avail_h), theme, "base_2", rounded=True)
+        head_h = Inches(0.5)
+        head_color = "accent" if blk.highlight else _BAM_COLORS[i]
+        add_rect(slide, int(x), int(top), int(pw), int(head_h), theme, head_color, rounded=True)
+        add_text(slide, int(x), int(top), int(pw), int(head_h), theme, _BAM_LABELS[i],
+                 size=15, color_name="on_main", bold=True,
+                 align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+        num_color = "accent" if blk.highlight else "main"
+        add_text(slide, int(x), int(top + head_h), int(pw), int(avail_h * 0.45), theme,
+                 blk.title, size=48, color_name=num_color, bold=True,
+                 align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+        caption = blk.lines[0] if blk.lines else ""
+        if caption:
+            add_text(slide, int(x), int(top + head_h + avail_h * 0.5), int(pw), int(avail_h * 0.35),
+                     theme, caption, size=14, color_name="muted",
+                     align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.TOP)
+
+    cx = MARGIN + pw + gap / 2
+    cy = top + avail_h / 2
+    aw, ah = Inches(0.44), Inches(0.36)
+    arr = slide.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW,
+                                  int(cx - aw / 2), int(cy - ah / 2), int(aw), int(ah))
+    arr.fill.solid(); arr.fill.fore_color.rgb = theme.rgb("muted")
+    arr.line.fill.background(); arr.shadow.inherit = False
+
+
 R.register("data_source_footer", render_data_source_footer)
 R.register("waterfall", render_waterfall)
+R.register("before_after_metric", render_before_after_metric)

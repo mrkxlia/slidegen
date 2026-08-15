@@ -126,6 +126,26 @@ VARIANTS = {
         "labels": ["Introduction｜緒言", "Methods｜方法", "Results｜結果", "Discussion｜考察"],
         "layout": "row", "accent_idx": None,
     },
+    # ストーリー・マーケ(S5f) -------------------------------------------------
+    "golden_circle": {  # 正式な同心円は回転/カスタムジオメトリ禁止下で困難なため縦積みに簡略化
+        "labels": ["Why｜なぜ", "How｜どう", "What｜何を"],
+        "layout": "col", "accent_idx": 0,
+    },
+    "storybrand_sb7": {
+        "labels": ["Character｜主人公", "Problem｜問題", "Guide｜導き手", "Plan｜計画",
+                   "Call to Action｜行動喚起", "Success｜成功", "Failure｜避けたい失敗"],
+        "layout": "grid", "cols": 4, "accent_idx": 4,
+    },
+    "pixar_story_spine": {
+        "labels": ["導入｜Once upon a time", "日常｜Every day", "転機｜Until one day",
+                   "展開1｜Because of that", "展開2｜Because of that",
+                   "結末｜Until finally", "その後｜Ever since then"],
+        "layout": "row", "accent_idx": 2,
+    },
+    "jtbd_statement": {
+        "labels": ["状況｜When", "動機｜I want to", "成果｜So I can"],
+        "layout": "row", "accent_idx": 2,
+    },
     # ビジネスフレーム(S5b) --------------------------------------------------
     "4p": {
         "labels": ["Product｜製品", "Price｜価格", "Place｜流通", "Promotion｜販促"],

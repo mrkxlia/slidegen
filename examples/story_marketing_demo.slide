@@ -1,0 +1,111 @@
+# S5f: ストーリー・マーケ＋データ補助7型の実証（golden_circle / storybrand_sb7 /
+# pixar_story_spine / aida_funnel / jtbd_statement / annotated_chart / before_after_metric）。
+
+slide golden_circle
+  kicker "ブランディング"
+  headline "私たちのGolden Circle"
+  foot "同心円は縦積みに簡略化（Why→How→What）"
+  col
+    "誰もが自分のペースで学べる世界をつくる"
+  col
+    "現場の課題から逆算したシンプルな設計"
+  col
+    "経費精算SaaS「ExpenseFlow」"
+
+---
+
+slide storybrand_sb7
+  kicker "マーケティング"
+  headline "プロダクトのStoryBrand"
+  foot "7要素・4列グリッド"
+  col
+    "経理担当者"
+  col
+    "レシート照合に月40時間かかる"
+  col
+    "10年の業務改善実績を持つチーム"
+  col
+    "撮るだけで精算が終わる仕組みを提案"
+  col highlight
+    "今すぐ無料トライアルに申し込む"
+  col
+    "月次決算が5営業日で完了する"
+  col
+    "手作業のまま残業が続く"
+
+---
+
+slide pixar_story_spine
+  kicker "プロダクトストーリー"
+  headline "ExpenseFlowが生まれるまで"
+  foot "7つのストーリービート・横一列"
+  col
+    "とある経理担当者がいた"
+  col
+    "毎月レシートの山と格闘していた"
+  col
+    "あるとき撮るだけで精算できるアプリを試した"
+  col
+    "だから精算時間が月40時間から2時間に減った"
+  col
+    "だから経理チーム全体の残業も減った"
+  col
+    "ついに月次決算が5営業日で終わるようになった"
+  col
+    "それ以来、経理は分析に時間を使えるようになった"
+
+---
+
+slide aida_funnel
+  kicker "集客"
+  headline "ExpenseFlowの集客ファネル"
+  foot "funnel_stepsと同じ実装・AIDA固定ラベル"
+  col
+    "SNS広告で存在を知る"
+  col
+    "導入事例記事を読む"
+  col
+    "無料トライアルに興味を持つ"
+  col highlight
+    "有料プランに申し込む"
+
+---
+
+slide jtbd_statement
+  kicker "顧客理解"
+  headline "経理担当者のJob to be Done"
+  foot "When/I want to/So I canの3ブロック"
+  col
+    "月末にレシートが山積みになったとき"
+  col
+    "撮るだけで経費精算を終わらせたい"
+  col
+    "月次決算を5営業日で締められる"
+
+---
+
+slide annotated_chart
+  kicker "分析"
+  headline "月次アクティブユーザー数の推移"
+  unit "万人"
+  foot "1つ目のrowが注釈コールアウトになる"
+  col "1月"
+    "8"
+  col "2月"
+    "12"
+  col "3月" highlight
+    "7"
+    理由 "キャンペーン終了で急落"
+  col "4月"
+    "10"
+
+---
+
+slide before_after_metric
+  kicker "導入効果"
+  headline "経費精算の処理時間を劇的に短縮"
+  foot "大数字2つ＋中央矢印"
+  col "40時間/月"
+    "手動でのレシート照合"
+  col "2時間/月" highlight
+    "ExpenseFlow導入後"
