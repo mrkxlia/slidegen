@@ -3,7 +3,7 @@
 > 立て直しエンゲージメントで洗い出した技術的負債・課題を**優先度順**にまとめる。
 > 個人/学習プロジェクトのスコープに合わせ、過剰な作り込みは避ける方針。
 > 関連: [requirements.md](../requirements.md) / [spec.md](../spec.md) / [docs/adr/](adr/)
-> 最終更新: 2026-08-15（**方針転換ロードマップ S5c（技術資料10型実装）完了**。
+> 最終更新: 2026-08-15（**方針転換ロードマップ S5d（日本の登壇文化4型実装）完了**。
 > S1（CF撤去＋DSLリファレンス移設）完了に伴い、Web アプリ前提だった既存項目は Closed 化済み）
 
 ## 🔴 最優先: 方針転換（Web アプリ撤去 → Agent Skills/Plugin 化）
@@ -70,7 +70,17 @@ S5系列（📋約50型・分野別バッチ）の順で、1セッション=1PR�
   方式に統一。`type_catalog.md` の陳腐化した重複📋（`api_endpoint_table`）もあわせて
   是正。`RENDERERS` は124→134型。詳細・実施時の判断は
   [実行計画](plans/2026-08-agent-skills-transition.md) の S5c セクション参照。
-- S5d以降（📋約21型・分野別バッチ）: 未着手。
+- **S5d: ✅ 完了**（当初計画の「7型」のうち2つ（`chapter_number_strip`/
+  `haikei_kadai_kaiketsu_kouka`）が既存実装（`chapter_band`/`haikei`）と重複と判明し、
+  正味4型 `speaker_intro_card`/`cta_recruit`/`takeaways_emoji`/`houkoku_sodan_irai` を
+  実装。`houkoku_sodan_irai` は `labeled_blocks` variant追記、`cta_recruit` は
+  `hero_canvas` に新mode追加、`takeaways_emoji` は `render_more.py` に新規関数、
+  `speaker_intro_card` は `render_frameworks3.py` に新規関数（`persona_card` のOVAL写真
+  意匠を単一フォーカスへ簡略化）。`cta_recruit` の連絡先バーは全幅0.75"だとP2上限（8%）を
+  事前計算で超過すると判明し、幅0.85倍・高さ0.65"に調整して実装。カタログの重複2件も
+  あわせて是正。`RENDERERS` は134→138型。詳細・実施時の判断は
+  [実行計画](plans/2026-08-agent-skills-transition.md) の S5d セクション参照。
+- S5e以降（📋約17型・分野別バッチ）: 未着手。
 
 **新規（S2 由来）:**
 - PyPI 公開の検討（`uvx --from git+...` を GitHub 依存から解放し、バージョン解決も速くなる）。

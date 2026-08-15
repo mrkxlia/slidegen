@@ -229,7 +229,7 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 >   ドキュメントで、`grid_2d` 系は comparison_matrix を含め元々一切掲載されておらず、
 >   `test_docs_drift.py` はこの文書について「教える型 ⊆ RENDERERS」のみを検査するため影響なし。
 
-### S5系列: 📋 約50型の分野別バッチ【状況: S5a/S5b/S5c 完了、S5d以降 未着手】
+### S5系列: 📋 約50型の分野別バッチ【状況: S5a/S5b/S5c/S5d 完了、S5e以降 未着手】
 
 1セッション=1分野を目安に、S3 で見直した優先順位に沿って並べ替えて実施する。
 
@@ -247,7 +247,8 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 - **S5c 技術資料（10型）【完了】**: code_diff / sql_result / sequence_diagram / state_transition /
   er_diagram / layered_stack / cloud_architecture / c4_context / slo_sli_table /
   incident_severity_table。
-- **S5d 日本の登壇文化（7型）**
+- **S5d 日本の登壇文化（正味4型。当初スナップショット「7型」のうち2つは既存実装と重複）
+  【完了】**: speaker_intro_card / cta_recruit / takeaways_emoji / houkoku_sodan_irai
 - **S5e 教育・学術（8型）**
 - **S5f ストーリー・マーケ＋データ補助（7型）**
 - **S5g 個人・イベント（7型）**
@@ -373,6 +374,38 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 >   矛盾表記で残存）もあわせて是正した。
 > - `RENDERERS` は124→134型（`examples/tech_diagrams_demo.slide` を新規追加し、経費精算SaaSの
 >   技術資料を題材に10型を1枚ずつ実演）。
+> - `docs/system_prompt.md` は変更不要と判断した（S4以降と同じ、型名を列挙しない非網羅文書）。
+
+> **S5d 実施時の補足（2026-08-15）**:
+> - 着手前の調査で、計画に書かれた「7型」のうち `chapter_number_strip`（章番号帯）が
+>   既存 `chapter_band`（`render_base_band.py:39`）と、`haikei_kadai_kaiketsu_kouka`
+>   （背景-課題-解決策-効果）が既存 `haikei`（`render_base_labeled.py:73-76`）と
+>   完全に同一意味論であると判明した。type_catalog.md §4「日本の登壇・ビジネス文化」の
+>   6つの📋のうち2つがこの重複で、S4/S5cで清掃した「実装済みなのに📋のまま残る陳腐化」と
+>   同種と判断し、正味4型のみを実装した（計画自身が「型名列挙・件数は当初調査時点の
+>   スナップショット」と明記しており、type_catalog.mdを正とする運用どおり）。
+> - 4型を実装コストで分けた。(A) `houkoku_sodan_irai` は `labeled_blocks`
+>   （`render_base_labeled.py`）の VARIANTS へ `haikei` と同型で4行追記のみ。
+>   (B) `cta_recruit` は `hero_canvas`（`render_base_hero.py`）に新mode `"cta"` を追加
+>   （`trio` が既に blocks を使う前例だったため自然に拡張できた）。`framed_canvas`
+>   （式次第・賞状等の儀礼文書美学）はCTAの訴求力と噛み合わないため不採用と判断。
+>   (C) `takeaways_emoji` は `render_more.py` に新規関数（`cards` のグリッド計算をそのまま
+>   流用し、chip四角を絵文字テキストに置換）。`cards` はvariant機構を持たない直登録
+>   スタイルのため、variant化ではなく新規関数として追加した。(D) `speaker_intro_card` は
+>   `render_frameworks3.py` に新規関数（`persona_card` のOVAL写真+頭文字パターンを
+>   単一フォーカス構成へ簡略化。`persona_card` の薄いラッパー化はジオメトリ・variant受け皿が
+>   無く不適と判断し独立実装にした）。
+> - `cta_recruit` の連絡先バーは、設計段階で「全幅×高さ0.75"」だと面積比8.95%となり
+>   P2上限（8%）を超過すると事前計算で判明したため、実装前に幅をCONTENT_W×0.85・
+>   高さ0.65"に調整した（面積比約6.6%）。S5cで発生後に気づいた反省を活かし、今回は
+>   実装前に計算で確認してから着手した。
+> - 絵文字（takeaways_emoji）の描画に技術的制約は無いことを確認した
+>   （Yu Gothicにカラー絵文字グリフが無くてもOS/PowerPoint側のフォールバックで表示される。
+>   本環境のNoto Color Emojiで`make visual`の目視確認も可能）。
+> - `type_catalog.md` §4「日本の登壇・ビジネス文化」の重複2件（`chapter_number_strip`/
+>   `haikei_kadai_kaiketsu_kouka`）をカタログから削除した。
+> - `RENDERERS` は134→138型（`examples/presentation_culture_demo.slide` を新規追加し、
+>   技術カンファレンス登壇を題材に4型を実演）。
 > - `docs/system_prompt.md` は変更不要と判断した（S4以降と同じ、型名を列挙しない非網羅文書）。
 
 ## 進め方の運用ルール

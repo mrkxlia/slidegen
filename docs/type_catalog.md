@@ -40,10 +40,10 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 
 ---
 
-## 2. 実装済みの型（`RENDERERS` に計134型）
+## 2. 実装済みの型（`RENDERERS` に計138型）
 
 > **真実は `slidegen/render.py` の `RENDERERS`**（`uv run python -c "import slidegen,slidegen.render as r;print(len(r.RENDERERS))"`
-> → 134）。本書は分類のための見取り図で、以下のセクション3も含め多くが既に ✅ 実装済み。
+> → 138）。本書は分類のための見取り図で、以下のセクション3も含め多くが既に ✅ 実装済み。
 > 数の手入力は古くなりやすいので、網羅確認は `RENDERERS` を参照すること。
 
 ### ベース構成（既存）
@@ -117,9 +117,11 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 ✅ slo_sli_table / incident_severity_table（S5c, 2026-08）
 
 ### 日本の登壇・ビジネス文化（②③調査）
-📋 speaker_intro_card / cta_recruit / chapter_number_strip（登壇サンドイッチ）
-✅ takahashi（高橋メソッド。takahashi_oneword は統合済み）／ 📋 takeaways_emoji
-✅ policy_3col ／ 📋 houkoku_sodan_irai / haikei_kadai_kaiketsu_kouka
+✅ speaker_intro_card / cta_recruit（登壇サンドイッチの冒頭・締め。S5d, 2026-08）
+✅ takahashi（高橋メソッド。takahashi_oneword は統合済み）／ ✅ takeaways_emoji（S5d, 2026-08）
+✅ policy_3col ／ ✅ houkoku_sodan_irai（S5d, 2026-08）
+（chapter_number_strip は実装済み chapter_band と、haikei_kadai_kaiketsu_kouka は
+  実装済み haikei と同一意味論のためカタログから削除。S5d, 2026-08）
 
 ### 教育・学術（③調査）
 📋 frayer_model / worked_example / theorem_proof / flashcard

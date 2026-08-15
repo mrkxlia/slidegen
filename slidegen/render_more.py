@@ -120,6 +120,38 @@ def render_cards(slide, data: Slide, theme):
 
 
 # ---------------------------------------------------------------------------
+# takeaways_emoji（絵文字+短文のグリッド）— cards と同じグリッド計算。chip四角の代わりに
+#   col.title の絵文字を大きく中央表示する。highlightは絵文字の文字色をaccent化で表現
+#   （セル塗りにすると面積が大きくP2を超過しやすいため。S5cで確立した判断を踏襲）。
+# ---------------------------------------------------------------------------
+def render_takeaways_emoji(slide, data: Slide, theme):
+    top = render_header(slide, data, theme)
+    render_foot(slide, data, theme)
+    n = len(data.blocks)
+    if n == 0:
+        return
+    cols = 2 if n <= 4 else 3
+    rows = (n + cols - 1) // cols
+    gap = Inches(0.3)
+    cell_w = columns_geometry(CONTENT_W, cols, gap)
+    bottom = SLIDE_H - Inches(0.7)
+    cell_h = columns_geometry(bottom - top, rows, gap)
+    for i, blk in enumerate(data.blocks):
+        r, c = divmod(i, cols)
+        x = MARGIN + c * (cell_w + gap)
+        y = top + r * (cell_h + gap)
+        add_rect(slide, x, y, cell_w, cell_h, theme, "base_2", rounded=True)
+        emoji = blk.title or "・"
+        add_text(slide, x, y + Inches(0.15), cell_w, Inches(0.7), theme, emoji,
+                 size=32, color_name=("accent" if blk.highlight else "ink"),
+                 align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+        if blk.lines:
+            add_text(slide, x + Inches(0.25), y + Inches(0.95), cell_w - Inches(0.5),
+                     cell_h - Inches(1.1), theme, " ".join(blk.lines), size=13,
+                     color_name="ink", align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.TOP)
+
+
+# ---------------------------------------------------------------------------
 # pros_cons（メリット・デメリット）— 2カラム、左メリット(main)/右デメリット(muted)
 # ---------------------------------------------------------------------------
 def render_pros_cons(slide, data: Slide, theme):
@@ -236,6 +268,7 @@ R.register("title", render_title)
 R.register("section", render_section)
 R.register("bullets", render_bullets)
 R.register("cards", render_cards)
+R.register("takeaways_emoji", render_takeaways_emoji)
 R.register("pros_cons", render_pros_cons)
 R.register("table", render_table)
 R.register("quote", render_quote)
