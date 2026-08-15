@@ -9,6 +9,8 @@ render_frameworks3.py — ビジネスフレーム個別型 第3弾（S5b）。
 - bcg_matrix   : PPM（花形/問題児/金のなる木/負け犬の固定2x2。自由軸の matrix とは別型）
 - empathy_map  : 共感マップ（上段2x2＝Think&Feel/See/Hear/Say&Do ＋ 下段 Pain/Gain の6ブロック）
 - persona_card : ペルソナカード（左：写真プレースホルダ＋属性、右：ゴール等の縦積みカード）
+- tam_sam_som  : 市場規模の入れ子円（下端揃えのOVAL3つ。TAM→SAM→SOMの順で3ブロック固定。
+                 外部記事由来の追加型、2026-08）
 
 設計思想：標準図形のみ。色は theme 経由。固定の意味論を持つので専用実装（前例：
 render_frameworks.py の swot / render_frameworks2.py の bmc）。
@@ -424,6 +426,62 @@ def render_speaker_intro_card(slide, data: Slide, theme):
                             theme, items, size=13, anchor=MSO_ANCHOR.TOP, bullet=(len(items) > 1))
 
 
+# ---------------------------------------------------------------------------
+# tam_sam_som — 市場規模の入れ子円（外部記事由来の追加型）
+#   col "TAM｜市場全体"      # title=ラベル
+#     "1.2兆円"              # lines[0]=金額・規模
+#   （TAM→SAM→SOMの順で最大3ブロック。2ブロックなら2重円）
+# 下端揃えの同心円。各円の露出上部帯にラベル＋値を置く。SOM=accent塗りだが
+# 径が小さくP2（accent面積8%上限）には抵触しない（bbox約3平方in≒3%）。
+# ---------------------------------------------------------------------------
+_TAM_RATIOS = [1.0, 0.62, 0.36]
+_TAM_COLORS = ["base_2", "main", "accent"]
+_TAM_TEXT_COLORS = ["ink", "on_main", "on_main"]
+
+def render_tam_sam_som(slide, data: Slide, theme):
+    top = render_header(slide, data, theme)
+    render_foot(slide, data, theme)
+    blocks = data.blocks[:3]
+    n = len(blocks)
+    if n == 0:
+        return
+
+    bottom = SLIDE_H - Inches(0.7)
+    baseline = bottom - Inches(0.15)
+    d1 = baseline - top - Inches(0.1)
+    cx = MARGIN + CONTENT_W / 2
+
+    diameters = [int(d1 * _TAM_RATIOS[i]) for i in range(n)]
+    for i in range(n):
+        d = diameters[i]
+        shp = slide.shapes.add_shape(
+            MSO_SHAPE.OVAL, int(cx - d / 2), int(baseline - d), d, d)
+        fill_shape(shp, theme, _TAM_COLORS[i], no_shadow=True)
+
+    # ラベル＋値は「この円の上端〜内側の円の上端」の露出帯へ（最内円は円の中心部へ）。
+    # 円の上端付近は弦幅が急激に狭くなり、テキストが円の外（背景色の境界）にはみ出すため、
+    # 帯の上から22%を空けて配置し、テキスト幅もその位置での弦幅に合わせる。
+    for i in range(n):
+        d = diameters[i]
+        band_top = baseline - d
+        band_h = (d - diameters[i + 1]) if i < n - 1 else d * 0.6
+        r = d / 2
+        inset = band_h * 0.22
+        chord = 2 * (max(r * r - (r - inset) ** 2, 0)) ** 0.5
+        tw = int(chord * 0.92) if chord else int(d * 0.5)
+        text_top = band_top + inset
+        label_h = int((band_h - inset) * 0.5)
+        add_text(slide, int(cx - tw / 2), int(text_top), tw, label_h, theme,
+                 blocks[i].title, size=12, color_name=_TAM_TEXT_COLORS[i], bold=True,
+                 align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.BOTTOM)
+        value = blocks[i].lines[0] if blocks[i].lines else ""
+        if value:
+            add_text(slide, int(cx - tw / 2), int(text_top + label_h), tw,
+                     int(band_h - inset - label_h), theme, value, size=16,
+                     color_name=_TAM_TEXT_COLORS[i], bold=True,
+                     align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.TOP)
+
+
 R.register("vpc", render_vpc)
 R.register("five_forces", render_five_forces)
 R.register("3c", render_three_c)
@@ -431,3 +489,4 @@ R.register("bcg_matrix", render_bcg_matrix)
 R.register("empathy_map", render_empathy_map)
 R.register("persona_card", render_persona_card)
 R.register("speaker_intro_card", render_speaker_intro_card)
+R.register("tam_sam_som", render_tam_sam_som)

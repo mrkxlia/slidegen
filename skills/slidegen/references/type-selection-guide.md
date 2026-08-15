@@ -56,6 +56,8 @@
 | ファイブフォース分析（業界構造の5つの競争要因） | `five_forces` | |
 | 顧客への共感マップを示す | `empathy_map` | Think&Feel/See/Hear/Say&Do＋Pain/Gainの6ブロック |
 | カスタマージャーニーを示す | `journey_map` | |
+| 市場規模（TAM/SAM/SOM）を示す | `tam_sam_som` | 入れ子円3つ固定 |
+| レーン別のロードマップ・工程計画を示す | `roadmap` | 期間をまたぐスパンバー。単一レーンなら `timeline` |
 
 ## 分類B: 要素間に関係がない（グラフ・事例・型が決まっているもの）
 

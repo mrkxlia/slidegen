@@ -1,0 +1,30 @@
+# 外部記事由来の追加2型の実証（tam_sam_som / roadmap）。
+# パワポ研のIR資料実例解説記事との照合で見つかったギャップ2型（2026-08）。
+
+slide tam_sam_som
+  kicker "市場規模"
+  headline "経費精算SaaSの市場規模の見立て"
+  foot "下端揃えの入れ子円。TAM→SAM→SOMの順で3ブロック固定"
+  col "TAM｜経費精算市場全体"
+    "1.2兆円"
+  col "SAM｜中堅企業向けSaaS"
+    "3,000億円"
+  col "SOM｜獲得可能シェア"
+    "150億円"
+
+---
+
+slide roadmap
+  kicker "事業計画"
+  headline "2026年度プロダクトロードマップ"
+  periods "Q1" "Q2" "Q3" "Q4"
+  foot "rowsの期間指定（単一 or 開始-終了の範囲）がスパンバーになる"
+  col "プロダクト"
+    Q1-Q2 "OCR精度改善"
+    Q3-Q4 "API公開"
+  col "セールス" highlight
+    Q2 "パートナー開拓"
+    Q3-Q4 "エンタープライズ展開"
+  col "コーポレート"
+    Q1 "エンジニア採用2名"
+    Q2-Q3 "ISMS認証取得"
