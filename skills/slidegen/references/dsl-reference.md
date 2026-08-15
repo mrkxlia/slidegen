@@ -23,7 +23,7 @@ slide <型名>
 型ごとの差は「col にタイトルが要るか」「col の行数」「用途」だけ。下記カタログの
 用途を見て型名を選び、中身（headline/col の文言）だけを書けばよい。
 
-## 型カタログ（RENDERERS 全124型。用途で型名を選ぶ）
+## 型カタログ（RENDERERS 全134型。用途で型名を選ぶ）
 - title / section / agenda / quote / bullets … 表紙・章扉・目次・引用・箇条書き
 - compare(2〜4) / cards(2〜6) / kpi(1〜4) / process(3〜6) / pros_cons(2) / table / persona_card … 比較・カード・指標・手順・メリデメ・表・ペルソナカード（下記参照）
 - matrix / cycle / pyramid / tree / formula / timeline / image_left … 対応表・循環・階層・樹形図・数式・年表・画像+文
@@ -39,10 +39,14 @@ slide <型名>
 - hypothesis_prediction / limitations_future … 左右分割：仮説と予測・限界と展望
 - grid_2d(基底) / comparison_matrix / scorecard_compare / raci / heatmap_matrix / decision_matrix / plain_grid
   / priority_matrix_2x2 / quiz_mcq / mandala_chart / sdg_grid / conjugation_table
+  / slo_sli_table / incident_severity_table
     … 行×列のセル（評価記号◎○△×・スコア比較・責任分担・色濃淡評価・意思決定基準・単純グリッド・
-      優先度2x2・4択クイズ・マンダラチャート・SDGs一覧・活用表。書き方は下記参照）
+      優先度2x2・4択クイズ・マンダラチャート・SDGs一覧・活用表・SLI一覧・インシデント重大度表。
+      書き方は下記参照）
 - nodes_and_connectors(基底) / process_flow / value_chain / cycle_loop / pdca / flow_branching / funnel_steps
-    … ノード+矢印（横並びフロー・バリューチェーン・循環・PDCA・分岐フロー・ファネル）
+  / cloud_architecture
+    … ノード+矢印（横並びフロー・バリューチェーン・循環・PDCA・分岐フロー・ファネル・
+      クラウド構成の左→右ティア）
 - hero_canvas(基底) / big_fact / stat_trio / tagline / takahashi / ted_idea / break_slide / statement
     … 単一フォーカス（巨大数字1つ／3つの数字並置／一言コピー／高橋メソッド／TED型メッセージ／休憩幕間／宣言文。書き方は下記参照）
 - columns_with_header(基底) / policy_3col / know_dontknow / editorial_cols / numbered_columns / data_limitations
@@ -69,8 +73,12 @@ slide <型名>
 - sankey(左4×右4×フロー8上限) … 左右2段の簡易フロー図（下記参照）
 - journey_map / pricing_tiers … カスタマージャーニー（stages必須。下記参照）・料金プラン比較（col highlight で推奨プラン強調）
 - value_chain … バリューチェーン（nodes_and_connectors 系。上記参照）
-- code_block / terminal / api_endpoint_table
-    … ソースコード・ターミナル出力・API仕様一覧（col の行がコード/コマンド行、または title=HTTPメソッド。下記参照）
+- code_block / terminal / api_endpoint_table / code_diff / sql_result
+    … ソースコード・ターミナル出力・API仕様一覧・差分表示・クエリと結果テーブル
+      （col の行がコード/コマンド行、または title=HTTPメソッド。下記参照）
+- layered_stack / c4_context / sequence_diagram / state_transition / er_diagram
+    … 技術資料の図解系（技術スタックの層・C4コンテキスト図・シーケンス図・状態遷移図・ER図。
+      標準図形のみで構成しMermaidレンダリング画像は使わない。下記参照）
 - data_source_footer … 出典付きの主張（headline+message+source。col は使わない。下記参照）
 
 ## hero_canvas 系の書き方（big_fact 等は col ではなく専用プロパティ）
@@ -436,3 +444,137 @@ slide sdg_grid
 mandala_chart / sdg_grid の注意：この2型は row_label が無いため `col ... highlight` は
 描画に反映されない（無視される）。強調は必ず本文中の `{ }` を使う。
 また sdg_grid は公式の17色を使わない（本DSLの配色制約は常に自社テーマ内の色で統一する）。
+
+## grid_2d 系：slo_sli_table / incident_severity_table（comparison_matrix と同じ書き方）
+
+slo_sli_table（行=SLI名、列=目標・実績等。状態悪化などの強調は行ごと highlight）:
+slide slo_sli_table
+  headline "主要SLIの状況"
+  columns "SLO目標" "直近実績" "エラーバジェット残" "状態"
+  col "API可用性" highlight
+    "99.9%" "99.95%" "62%" "◎"
+  col "レイテンシP95"
+    "200ms以下" "180ms" "80%" "○"
+
+incident_severity_table（行=SEV1〜4等、列=定義・初動SLA等。SEV1などを highlight で強調）:
+slide incident_severity_table
+  headline "インシデント重大度の定義"
+  columns "定義" "初動SLA" "エスカレーション"
+  col "SEV1" highlight
+    "全ユーザー影響のサービス停止" "15分以内" "即時・役員報告"
+  col "SEV2"
+    "一部機能の重大な障害" "30分以内" "オンコール担当"
+
+## code_diff の書き方（行頭 +/- で追加・削除を色分け。code_block と同じ col 構造）
+
+slide code_diff
+  headline "タイムアウト設定を追加"
+  lang "diff — retry.py"
+  col
+    "     def fetch(url):"      # 先頭が +/- 以外＝文脈行
+    "-        return requests.get(url)"       # 削除行（先頭 -）
+    "+        return requests.get(url, timeout=5)"  # 追加行（先頭 +）
+
+## sql_result の書き方（query は複数値propで複数行のクエリ。col=結果テーブルの列）
+
+slide sql_result
+  headline "アクティブユーザー数トップ5"
+  query "SELECT user_id, count(*) AS cnt" "FROM events" "GROUP BY user_id"  # 複数値=複数行
+  col "user_id"        # col.title = 結果テーブルの列名。lines = その列の値（上から順に行）
+    "1001"
+    "1002"
+  col "cnt"
+    "42"
+    "7"
+
+## cloud_architecture の書き方（nodes_and_connectors 系。process_flow と同じ書き方）
+
+col ×2〜6（左→右のティア。ブロック矢印で連結）:
+slide cloud_architecture
+  headline "配信基盤のアーキテクチャ"
+  col "クライアント"
+    "ブラウザ / モバイルアプリ"
+  col "CDN/Edge"
+    "Cloudflare"
+  col "データ" highlight
+    "D1 / R2"
+
+## layered_stack の書き方（col 記述順＝上から積む層。上限6層）
+
+slide layered_stack
+  headline "システムのレイヤー構成"
+  col "プレゼンテーション層" highlight
+    "React / Next.js"
+  col "アプリケーション層"
+    "Node.js API"
+  col "データ層"
+    "PostgreSQL"
+
+## c4_context の書き方（1つ目の col=中心システム（常に強調）、以降=周辺アクター。上限6）
+
+slide c4_context
+  headline "受注システムのコンテキスト"
+  col "受注システム"           # 1つ目 = 中心（常にaccent。highlight不要）
+    "注文の受付と状態管理を担う"
+  col "利用者"
+    "Webブラウザから発注"
+  col "決済代行"
+    "Stripe API 経由で課金"
+
+## sequence_diagram / state_transition / er_diagram の共通規約
+## （from/to の rows を持つ col ＝ 接続を表すブロック）
+
+この3型は「Mermaid流用」とカタログに注記があるが、実際にMermaidでレンダリングして画像を
+貼ることはしない（画像化は絶対禁止のため）。標準図形（矩形・直線・テキスト）のみで組む。
+
+3型に共通する記法：ブロック内に `from "名前"` / `to "名前"` の行（rows）を書くと、
+そのcolは「接続（メッセージ/遷移/リレーション）」として扱われる。自己接続（from=to）は
+現状非対応（描画されない）。
+
+### sequence_diagram の書き方（participants=参加者。上限5。col記述順=時系列）
+
+slide sequence_diagram
+  headline "ログイン処理のシーケンス"
+  participants "ユーザー" "API" "DB"    # 縦のライフラインになる（順に左から配置）
+  col
+    from "ユーザー"
+    to "API"
+    "ログイン要求"                       # メッセージ文（lines[0]）
+  col highlight
+    from "API"
+    to "DB"
+    "認証情報を照会"
+
+### state_transition の書き方（states=状態。上限6。円周上に自動配置）
+
+slide state_transition
+  headline "注文ステータスの状態遷移"
+  states "受付" "処理中" "発送済" "完了" "キャンセル"
+  col
+    from "受付"
+    to "処理中"
+    "決済確認"                           # 遷移ラベル（lines[0]）
+  col highlight
+    from "処理中"
+    to "キャンセル"
+    "取消"
+
+states の並び順の注意：分岐が2つ以上ある状態（3つ以上の遷移を持つ状態）が存在すると、
+円周配置では線が他の状態の近くを通ることがある（任意グラフの交差回避は行わない v1の
+単純化）。**頻出する遷移が隣り合うように states を書く**と交差が減る（例: 分岐元の状態と
+その主な行き先を states 上で隣接させる）。
+
+### er_diagram の書き方（from/to を持たない col=エンティティ、持つ col=リレーション）
+
+slide er_diagram
+  headline "受注管理のER図"
+  col "顧客"                # エンティティ（col.title=名前、lines=属性一覧。上限8）
+    "{PK} customer_id"      # PK/FK等の強調は本文中の { } を使う
+    "name"
+  col "注文"
+    "{PK} order_id"
+    "{FK} customer_id"
+  col                       # リレーション（from/toを持つ。上限10）
+    from "顧客"
+    to "注文"
+    "1" "N"                 # 左右のカーディナリティ（lines[0]/lines[1]。省略可）

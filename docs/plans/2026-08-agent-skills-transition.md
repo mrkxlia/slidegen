@@ -229,7 +229,7 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 >   ドキュメントで、`grid_2d` 系は comparison_matrix を含め元々一切掲載されておらず、
 >   `test_docs_drift.py` はこの文書について「教える型 ⊆ RENDERERS」のみを検査するため影響なし。
 
-### S5系列: 📋 約50型の分野別バッチ【状況: S5a/S5b 完了、S5c以降 未着手】
+### S5系列: 📋 約50型の分野別バッチ【状況: S5a/S5b/S5c 完了、S5d以降 未着手】
 
 1セッション=1分野を目安に、S3 で見直した優先順位に沿って並べ替えて実施する。
 
@@ -244,8 +244,9 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
   area_chart を追加。ユーザー承認済み）。
 - **S5b ビジネスフレーム（9型）【完了】**: lean_canvas / vpc / five_forces / 3c / 4p / pestel /
   bcg_matrix / empathy_map / persona_card
-- **S5c 技術資料（10型）**: code_diff / sql_result / layered_stack 等。**Mermaid 前提の図系
-  （sequence_diagram / er_diagram 等）は着手前に方式の設計判断（ADR 候補）を先行させる**。
+- **S5c 技術資料（10型）【完了】**: code_diff / sql_result / sequence_diagram / state_transition /
+  er_diagram / layered_stack / cloud_architecture / c4_context / slo_sli_table /
+  incident_severity_table。
 - **S5d 日本の登壇文化（7型）**
 - **S5e 教育・学術（8型）**
 - **S5f ストーリー・マーケ＋データ補助（7型）**
@@ -318,6 +319,61 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 > - `RENDERERS` は115→124型（`examples/frameworks3_demo.slide` を新規追加し、経費精算SaaSを
 >   題材に9型を1枚ずつ実演）。
 > - `docs/system_prompt.md` は変更不要と判断した（S4/S5a と同じ、型名を列挙しない非網羅文書）。
+
+> **S5c 実施時の補足（2026-08-15）**:
+> - **Mermaidの設計判断**（着手前に先行させると計画に明記されていた点）: 調査の結果、
+>   `type_catalog.md` §0 凡例の「Mermaid流用」は当初 `docs/ppt_design_doc.md` の MNP構想で
+>   「Mermaid構文をDSL表記のヒントとして流用する」という意味であり、Mermaidでレンダリングして
+>   画像として貼る方式ではないと判明した（ADR 0004の画像化絶対禁止と正面衝突するため、画像化は
+>   事実上不可能）。`sequence_diagram`/`state_transition`/`er_diagram` の3型とも標準図形
+>   （矩形・直線コネクタ・テキスト）の組み合わせのみで実装した。この判断はユーザー確認済みで、
+>   S3〜S5bの判断と同等の粒度（新規ADRは作らず本セクションに記録）にとどめた。
+> - 10型を実装コストで4グループに分けた。(A) `slo_sli_table`/`incident_severity_table` は
+>   `grid_2d`（`render_base_grid.py`）の`VARIANTS`辞書へ数行追記のみ（S4/S5bと同じ経済性）。
+>   (B) `cloud_architecture` は `nodes_and_connectors`（`render_base_nodes.py`）の既存
+>   `linear` レイアウトをラベルだけ変えて再利用（`value_chain` と同じ手法。新規コードなし）。
+>   (C) `code_diff`/`sql_result` は既存 `render_tech.py` を拡張。`_mono_text` に後方互換の
+>   任意引数 `line_colors` を追加し（未指定時は既存呼び出し=`code_block`/`terminal`の出力を
+>   1バイトも変えない。golden一致で無害を確認してから進めた）、行頭 `+`/`-` で文字色を
+>   変える `code_diff` と、クエリパネル＋本物の `add_table` の `sql_result` を追加した。
+>   (D) 専用ジオメトリが要る `layered_stack`/`c4_context`/`sequence_diagram`/`state_transition`/
+>   `er_diagram` の5型は、S5a/S5bの新モジュール前例に倣い新規 `render_tech_diagrams.py` に
+>   まとめた。
+> - **回転は使わない設計にした**。既存コード `render.py` の `process` 型に `tri.rotation=90`
+>   が残っているが、これは type_catalog.md §6「標準プリセット図形のみ使用（カスタムジオメトリ/
+>   回転/flipは禁止）」の原則と矛盾する既存の逸脱であり、新規実装（特に矢印表現が必要な
+>   sequence_diagram）では踏襲しなかった。sequence_diagram のメッセージは「参加者間は常に
+>   水平」という制約を利用し、既存の `MSO_SHAPE.RIGHT_ARROW`/`LEFT_ARROW`（five_forces等と
+>   同じ流儀）を回転せずそのまま使った。state_transition の遷移・er_diagram のリレーションは
+>   矢頭を使わず直線コネクタのみとした（`cycle` が「矢印」と呼びつつ実装は無地の直線である
+>   既存前例に倣い、方向はラベルテキストと from/to の意味論で伝える）。
+> - `sequence_diagram`/`state_transition`/`er_diagram` に共通する記法規約として、「`from`/`to`
+>   の rows を持つ col ＝ 接続（メッセージ/遷移/リレーション）を表すブロック」を新設した
+>   （er_diagram はこれを使って「from/toを持たないcol=エンティティ」との判定も行う）。
+>   dsl-referenceに一度だけ説明し3型から参照する形にした。
+> - `layered_stack`/`er_diagram` の `highlight` は、当初 accent 塗りで実装したところ
+>   （層・エンティティカードは面積が大きく）P2（accent面積8%上限）を実機テストで超過した
+>   （layered_stack 3層構成でaccent面積比16.7%）。marimekko/treemap（S5a）と同じ
+>   アウトライン枠線方式（`_add_outline_rect`。線はP2の計算対象外）に切り替えて解消した。
+> - `make visual` の目視確認で2件のジオメトリ不具合を発見・修正した（invariantsのpytestは
+>   通るが、shape座標自体は妥当なため機械テストでは検出できない類の不具合）。
+>   (1) `er_diagram`/`state_transition` はいずれも当初「中心-中心」で接続線を引いていたが、
+>   カードが隣接して並ぶ er_diagram では線のほぼ全体がカードの下に隠れ、カーディナリティ
+>   ラベルも判読不能だった。矩形境界の交点同士を結ぶ `_rect_edge_point` ヘルパーを新設し、
+>   両型に適用して解消した（あわせて er_diagram のカード間 gap も0.25"→0.45"に拡げ、線色も
+>   `rule`→`muted`にして短い線分でも視認できるようにした）。
+>   (2) `state_transition` の円周配置は、次数3以上のノード（分岐が複数ある状態）がある
+>   トポロジーでは数学的に最低1本の交差線（chordが隣接ノードの上を通る）が避けられない
+>   ことが判明した。examples の states 並び順を「頻出遷移が隣接するように書く」よう調整し
+>   （3本→1本に削減）、この制約と対処法を dsl-reference.md に明記した。
+>   円周配置＋直線接続という v1 の単純化に起因する既知の限界であり、任意グラフの
+>   完全な自動レイアウトは本DSLの設計制約（座標を書かない・標準図形のみ）の範囲外として
+>   対応しない。
+> - `type_catalog.md` の陳腐化した重複📋（`api_endpoint_table` が115行目に📋・116行目に✅の
+>   矛盾表記で残存）もあわせて是正した。
+> - `RENDERERS` は124→134型（`examples/tech_diagrams_demo.slide` を新規追加し、経費精算SaaSの
+>   技術資料を題材に10型を1枚ずつ実演）。
+> - `docs/system_prompt.md` は変更不要と判断した（S4以降と同じ、型名を列挙しない非網羅文書）。
 
 ## 進め方の運用ルール
 

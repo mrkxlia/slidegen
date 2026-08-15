@@ -49,6 +49,8 @@ VARIANTS = {
     "priority_matrix_2x2": {"mode": "plain", "row_label": True},
     "mandala_chart":       {"mode": "plain", "row_label": False, "header": False},
     "sdg_grid":            {"mode": "plain", "row_label": False, "header": False},
+    "slo_sli_table":          {"mode": "plain", "row_label": True},
+    "incident_severity_table": {"mode": "plain", "row_label": True},
 }
 
 # 評価記号 → 色の強さ(0..1)。背景の塗り分けに使う。

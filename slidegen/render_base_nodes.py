@@ -36,6 +36,7 @@ _DEFAULT = {"layout": "linear", "labels": None}
 VARIANTS = {
     "process_flow":  {"layout": "linear",   "labels": None},
     "value_chain":   {"layout": "linear",   "labels": None},
+    "cloud_architecture": {"layout": "linear", "labels": None},
     "cycle_loop":    {"layout": "circular", "labels": None},
     "pdca":          {"layout": "circular", "labels": ["Plan", "Do", "Check", "Act"]},
     "flow_branching":{"layout": "branching","labels": None},
