@@ -27,7 +27,7 @@ from pptx.enum.shapes import MSO_SHAPE
 import math
 
 from . import render as R
-from .render import add_rect, add_text, render_header, render_foot, SLIDE_H, MARGIN, CONTENT_W
+from .render import add_rect, add_text, render_header, render_foot, SLIDE_W, SLIDE_H, MARGIN, CONTENT_W
 from .parser import Slide, split_emphasis
 from .render_util import resolve_variant
 
@@ -41,6 +41,12 @@ VARIANTS = {
     "pdca":          {"layout": "circular", "labels": ["Plan", "Do", "Check", "Act"]},
     "flow_branching":{"layout": "branching","labels": None},
     "funnel_steps":  {"layout": "funnel",   "labels": None},
+    "prisma_flow": {"layout": "vertical_side",
+        "labels": ["識別｜Identification", "スクリーニング｜Screening",
+                   "適格性確認｜Eligibility", "組入れ｜Included"]},
+    "consort_flow": {"layout": "vertical_side",
+        "labels": ["組入れ｜Enrollment", "割付｜Allocation",
+                   "追跡｜Follow-up", "解析｜Analysis"]},
 }
 
 
@@ -127,6 +133,30 @@ def render_nodes_and_connectors(slide, data: Slide, theme):
                  data.props.get("center", "↻"),
                  size=20, color_name="muted", bold=True,
                  align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+
+    elif layout == "vertical_side":
+        # 縦フロー＋各段階のrowsがあれば右へ除外/脱落理由のサイドボックスを出す
+        # （PRISMA/CONSORTフロー図。b.rows は他layoutで未使用のためここで転用）
+        gap = Inches(0.45)
+        nh = min(Inches(1.1), (avail_h - gap * (n - 1)) / n)
+        nw = CONTENT_W * 0.55
+        nx = MARGIN
+        side_arrow_w = Inches(0.35)
+        side_x = nx + nw + Inches(0.15) + side_arrow_w + Inches(0.15)
+        side_w = SLIDE_W - MARGIN - side_x
+        for i, b in enumerate(nodes):
+            y = top + i * (nh + gap)
+            if i < n - 1:
+                _arrow(slide, theme, nx + nw / 2 - Inches(0.14), y + nh + Inches(0.04),
+                       Inches(0.28), gap - Inches(0.08), "down")
+            side_items = [f"{lbl}: {val}" if lbl else val for lbl, val in b.rows]
+            if side_items:
+                _arrow(slide, theme, nx + nw + Inches(0.1), y + nh / 2 - Inches(0.14),
+                       side_arrow_w, Inches(0.28), "right")
+                _node_box(slide, theme, int(side_x), int(y), int(side_w), int(nh),
+                          "除外", "；".join(side_items), accent=False)
+            _node_box(slide, theme, int(nx), int(y), int(nw), int(nh),
+                      title_of(i, b), desc_of(b), accent=b.highlight)
 
     else:  # branching（縦フロー）
         nh = min(Inches(1.0), (avail_h - Inches(0.4) * (n - 1)) / n)

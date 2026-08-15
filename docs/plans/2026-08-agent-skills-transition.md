@@ -229,7 +229,7 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 >   ドキュメントで、`grid_2d` 系は comparison_matrix を含め元々一切掲載されておらず、
 >   `test_docs_drift.py` はこの文書について「教える型 ⊆ RENDERERS」のみを検査するため影響なし。
 
-### S5系列: 📋 約50型の分野別バッチ【状況: S5a/S5b/S5c/S5d 完了、S5e以降 未着手】
+### S5系列: 📋 約50型の分野別バッチ【状況: S5a/S5b/S5c/S5d/S5e 完了、S5f以降 未着手】
 
 1セッション=1分野を目安に、S3 で見直した優先順位に沿って並べ替えて実施する。
 
@@ -249,7 +249,8 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
   incident_severity_table。
 - **S5d 日本の登壇文化（正味4型。当初スナップショット「7型」のうち2つは既存実装と重複）
   【完了】**: speaker_intro_card / cta_recruit / takeaways_emoji / houkoku_sodan_irai
-- **S5e 教育・学術（8型）**
+- **S5e 教育・学術（8型）【完了】**: frayer_model / worked_example / theorem_proof /
+  flashcard / imrad_overview / abstract_slide / prisma_flow / consort_flow
 - **S5f ストーリー・マーケ＋データ補助（7型）**
 - **S5g 個人・イベント（7型）**
 
@@ -406,6 +407,34 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 >   `haikei_kadai_kaiketsu_kouka`）をカタログから削除した。
 > - `RENDERERS` は134→138型（`examples/presentation_culture_demo.slide` を新規追加し、
 >   技術カンファレンス登壇を題材に4型を実演）。
+> - `docs/system_prompt.md` は変更不要と判断した（S4以降と同じ、型名を列挙しない非網羅文書）。
+
+> **S5e 実施時の補足（2026-08-15）**:
+> - S5dの教訓（計画の型名が既存実装と重複していた事故）を踏まえ、着手前に
+>   type_catalog.md §4「教育・学術」の8型とRENDERERSの重複・意味的重複を先に確認した。
+>   今回は型名列挙が type_catalog.md と正確に一致し、重複も無かった（S5dのような
+>   スコープ訂正は不要）。調査の副産物として、`nodes_and_connectors` の既存
+>   `flow_branching` variant が名前に反し**実際には分岐を描画していない**（縦一列＋
+>   DOWN_ARROWのみ）ことが判明した。type_catalog.mdはこのvariantを「PRISMA風」と
+>   謳っていたが実体が伴っておらず、prisma_flow/consort_flowには新規ジオメトリが
+>   必要と結論づけた（既存variant自体の修正はスコープ外として着手せず）。
+> - 8型を4グループに分けた。(A) `worked_example`/`theorem_proof`/`imrad_overview` は
+>   `labeled_blocks`（`render_base_labeled.py`）へVARIANTS追記のみ（prep/sdsと同じ
+>   layout="col"パターンを踏襲。複数ステップは自動採番せずlinesの箇条書きで表現し、
+>   既存の`process`型との差別化を保った）。(B) `flashcard` は `split_layout`
+>   （`render_base_split.py`）へbefore_afterと同型で追記。(C) `prisma_flow`/
+>   `consort_flow` は `nodes_and_connectors`（`render_base_nodes.py`）に新レイアウト
+>   `"vertical_side"` を追加。段階ブロックの`rows`（他レイアウトでは未使用だった）を
+>   除外理由のサイドボックス表示に転用し、パーサ変更なしで実現した。2型は
+>   labels違いのみの完全同一実装とし、S5dの逆パターン（同一意味論を別実装してしまう
+>   無駄）を避けた。(D) `frayer_model`/`abstract_slide` は新規 `render_education.py`
+>   （`render_frameworks.py`/`render_data_support.py`にはテーマ的に収まらないため）。
+>   `frayer_model` は `swot`（`render_frameworks.py`）と同じ固定2x2ジオメトリに、
+>   対象語ボックスを中央へ最後に重ね描き（Frayerモデルの意匠を再現）。
+> - 新規実装（グループC/D）は既存の `_node_box`/`_arrow`（ブロック矢印）のみで構成し、
+>   回転や新規シェイプ技法は使わなかった（S5cで確立した「回転不使用」判断を踏襲）。
+> - `RENDERERS` は138→146型（`examples/education_demo.slide` を新規追加し、8型を
+>   1枚ずつ実演）。
 > - `docs/system_prompt.md` は変更不要と判断した（S4以降と同じ、型名を列挙しない非網羅文書）。
 
 ## 進め方の運用ルール

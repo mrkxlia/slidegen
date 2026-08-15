@@ -69,6 +69,11 @@ VARIANTS = {
         "colors": [None, None], "ratio": (0.45, 0.55),
         "direction": "h", "connector": False,
     },
+    "flashcard": {  # S5e: 用語カード（表面=用語／裏面=定義。実際のフリップはしない）
+        "labels": ["Term｜用語", "Definition｜定義"],
+        "colors": ["main", "accent"], "ratio": (0.45, 0.55),
+        "direction": "h", "connector": False,
+    },
 }
 
 
