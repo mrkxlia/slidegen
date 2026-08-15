@@ -2,7 +2,7 @@
 
 > 本書は「**どう動くか**」を定義する。要件（なぜ/何を）は [requirements.md](requirements.md)。
 > 深掘りは各 docs にリンクし、本書は**索引兼サマリ**として薄く保つ。
-> 最終更新: 2026-08-13
+> 最終更新: 2026-08-15
 
 ---
 
@@ -16,7 +16,7 @@
   座標・色・フォント・サイズは**書けない／書かない**（デザイン制約を構造的に担保）。
 - **主なプロパティ**: `kicker` / `headline` / `foot` / `title` / `subtitle` / `source` / `categories` / `unit` / `columns` ほか。
 - **型カタログ**: 9基底 × variant × 中身。一覧は [docs/type_catalog.md](docs/type_catalog.md)、
-  網羅の**単一情報源は `slidegen/render.py` の `RENDERERS`（計 100 型）**。
+  網羅の**単一情報源は `slidegen/render.py` の `RENDERERS`（計 168 型）**。
 - **チャート型**: 専用の型名（`bar_chart`/`line_chart`/`stacked_bar`/`stacked_100_bar`/`bar_horizontal`/`clustered_bar`）を
   slide の型に使う。`categories`（横軸）＋ `col`（=系列名）配下に**数値だけの行**。詳細は
   [docs/system_prompt.md](docs/system_prompt.md)（設計参照）／ ライブ定義は
@@ -31,7 +31,7 @@
 | `render_file(input_path, output_path, *, theme, template)` | `Path` | ファイル入出力 |
 
 - `theme`: `slidegen/theme.py` の `Theme`（配色3カテゴリ 70:25:5、フォント1種、pt サイズ群）。
-  既定 `DEFAULT_THEME` は青系（main `1F3A5F`）＋赤アクセント（`E2483D`）。**※ Web UI のテーマとは別物**。
+  既定 `DEFAULT_THEME` は青系（main `1F3A5F`）＋赤アクセント（`E2483D`）。
 - `template` 指定時は potx/pptx を土台にする（未指定時は 16:9 白紙）。
 
 ## 3. CLI — `slidegen/__main__.py`（`slidegen` コマンド）

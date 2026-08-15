@@ -1,8 +1,4 @@
-"""test_examples.py — examples/*.slide の parse/render 回帰と、既定テンプレート解決の検証。
-
-旧 tests/test_chart_dsl.py（frontend/src/prompts.ts 依存の CI ガードと同居していた）から、
-prompts.ts に依存しない純Pythonのテストを分離したもの（S1）。
-"""
+"""test_examples.py — examples/*.slide の parse/render 回帰と、既定テンプレート解決の検証。"""
 from pathlib import Path
 import io
 

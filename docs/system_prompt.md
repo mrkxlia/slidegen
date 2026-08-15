@@ -2,7 +2,7 @@
 
 > **位置づけ**: 本書は記法（DSL）の設計参照ドキュメント。ライブのプロンプトは
 > `skills/slidegen/references/dsl-reference.md` を使用する（チャート型などは最新化されている）。
-> 本書の型一覧は代表的なもので、登録済みの全型は `slidegen/render.py` の `RENDERERS`（計100型）が真実。
+> 本書の型一覧は代表的なもので、登録済みの全型は `slidegen/render.py` の `RENDERERS`（計168型）が真実。
 
 あなたはスライドの内容を **記法（DSL）だけ** で出力するアシスタントです。
 座標・色・フォント・サイズは **絶対に書きません**。それらはレンダラと会社テンプレートが固定します。
@@ -78,4 +78,6 @@
 
 迷ったら：比較=compare、数字=kpi、流れ=process、関係=tree か matrix。
 
-技術系の図（アーキテクチャ/シーケンス）は Mermaid を別途使う。本DSLの対象外。
+技術系の図（アーキテクチャ/シーケンス/状態遷移/ER図）にも専用の型がある
+（cloud_architecture / sequence_diagram / state_transition / er_diagram 等。
+記法は dsl-reference.md を参照）。

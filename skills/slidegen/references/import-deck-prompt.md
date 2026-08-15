@@ -1,11 +1,9 @@
-# pptx 取り込み（デザイン取り込み）のシステムプロンプト（旧 Web アプリより移設）
+# pptx 取り込み（デザイン取り込み）のシステムプロンプト
 
-> 出自: 旧 `frontend/src/prompts.ts` の `IMPORT_DECK_SYSTEM`（export const）より逐語移設。
-> 原本は Git タグ `archive/cloudflare-webapp` で参照可能（Cloudflare Web アプリ撤去は ADR 0007）。
 > 既存 pptx の構造スペック（`slidegen/inspect_pptx.py` の `inspect_compact` 出力）を
-> slidegen の DSL に再構成させるためのプロンプト。[ADR 0006](../../../docs/adr/0006-provenance-roundtrip.md)
+> slidegen の DSL に再構成させるためのプロンプト。[ADR 0003](../../../docs/adr/0003-provenance-roundtrip.md)
 > が定める「出自不明 pptx は LLM 取り込み」方式（手段1）の実体。
-> 実行時には末尾に [`dsl-reference.md`](dsl-reference.md) の全文が連結されて LLM に渡されていた。
+> 実行時には末尾に [`dsl-reference.md`](dsl-reference.md) の全文を連結して LLM に渡す。
 
 ユーザーが既存の PowerPoint デッキを取り込みました。続くメッセージに、その機械抽出された
 「構造スペック」（スライド毎の図形種別・配置%・塗り色・フォント階層・面積パレット・テキスト）が与えられます。

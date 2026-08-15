@@ -1,258 +1,40 @@
 # slidegen 課題・ネクストアクション（backlog）
 
-> 立て直しエンゲージメントで洗い出した技術的負債・課題を**優先度順**にまとめる。
-> 個人/学習プロジェクトのスコープに合わせ、過剰な作り込みは避ける方針。
+> 現役の課題・将来項を**優先度順**にまとめる。個人/学習プロジェクトのスコープに合わせ、
+> 過剰な作り込みは避ける方針。完了した課題の記録は [history.md](history.md) に移す
+> （本ファイルには現役項目だけを残す）。
 > 関連: [requirements.md](../requirements.md) / [spec.md](../spec.md) / [docs/adr/](adr/)
-> 最終更新: 2026-08-15（**方針転換ロードマップ S5h（tsundoku新規候補6型実装）完了。
-> type_catalog.md の📋が実質ゼロになり、S5系列（分野別バッチ）は完走した**。
-> その後、外部記事（パワポ研のIR実例解説）との照合で見つかったギャップ2型
-> `tam_sam_som`/`roadmap` を単発追加（S5系列外。`RENDERERS` 166→168型）。
-> S1（CF撤去＋DSLリファレンス移設）完了に伴い、Web アプリ前提だった既存項目は Closed 化済み）
+> 最終更新: 2026-08-15
 
-## 🔴 最優先: 方針転換（Web アプリ撤去 → Agent Skills/Plugin 化）
+## 機能の将来項（中）
 
-**実行計画（正）**: [docs/plans/2026-08-agent-skills-transition.md](plans/2026-08-agent-skills-transition.md)
+- **pptx → DSL の決定的双方向化**（[ADR 0003](adr/0003-provenance-roundtrip.md) の将来項）:
+  slidegen 生成 pptx に DSL ソースを埋め込み（プロベナンス方式）、PowerPoint での手編集を
+  LLM を介さず元の DSL へ機械的に反映する。比較器は `tests/test_visual_regression.py` の
+  図形ツリー正規化シリアライザを流用できる。現状 `sync` は文言差分のみ対応。
+- **技術図 Mermaid 連携**（設計の MNP 構想にあるが未実装）。
+- **i18n**（現状 日本語のみ）。
 
-Cloudflare 構成（`frontend/` `gateway/` と CD）を撤去し、純Python ライブラリ＋**Agent Skills（オープン仕様）＋
-Claude Code / Agent Plugins 1.0 両対応プラグイン**の構成へ転換する。あわせて未実装型（📋約50型）の
-実装を進め、[tsundoku](https://github.com/mrkxlia/tsundoku) の知見をスキルに反映する。
-S1（CF撤去＋DSLリファレンス移設）→ S2（Skill/Plugin化）→ S3（tsundoku知識抽出）→ S4（🔜5型）→
-S5系列（📋約50型・分野別バッチ）の順で、1セッション=1PRを目安に進める。詳細・各セッションの完了条件は
-上記ロードマップ参照。
+## 配布・運用（中〜低）
 
-- **S1: ✅ 完了**（[ADR 0007](adr/0007-retire-webapp-agent-skills.md)、`frontend/`/`gateway/` 削除、
-  DSL リファレンス等を `skills/slidegen/references/` へ移設、CI 縮小）。これに伴い下記 #1 の Web 前提部分・
-  #3・#6・7c、#5 の Web 専用項目を Closed 化した。
-  - **S1 後片付け（リポジトリ外・Cloudflare 側リソース）(2026-08-13)**: 完了条件にリポジトリ外リソースの
-    削除が含まれておらず追跡漏れだったところ、ユーザー指摘で発覚・対応。
-    Pages プロジェクト `slidegen`（slidegen-ezt.pages.dev）と GitHub secrets
-    `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID` は**削除済み**。Worker/KV は元々未作成と確認。
-    残作業は下記「🟡 ユーザー作業（Cloudflare ダッシュボード）」を参照。
-- **S2: ✅ 完了**（`skills/slidegen/SKILL.md`・`scripts/slidegen.sh` レンダラッパー・
-  `plugin.json`／`.claude-plugin/plugin.json`・`marketplace.json`・LICENSE(MIT) を追加。
-  `tests/test_plugin_manifests.py` でマニフェスト整合を機械保証。CI に skills-ref validate を追加。
-  リポジトリを public 化）。詳細・実施時の判断は
-  [実行計画](plans/2026-08-agent-skills-transition.md) の S2 セクション参照。
-- **S3: ✅ 完了**（tsundoku library のノウハウ記事5本を知識抽出し、
-  `skills/slidegen/references/design-guidelines.md`（デザイン原則）と
-  `references/type-selection-guide.md`（型の逆引き）を新設。SKILL.md から両方を参照。
-  `docs/type_catalog.md` §4 に新規📋候補7型と❌候補を追記、既存📋列の優先順位も見直した）。
-  詳細・実施時の判断は [実行計画](plans/2026-08-agent-skills-transition.md) の S3 セクション参照。
-- **S4: ✅ 完了**（`priority_matrix_2x2` / `quiz_mcq` / `mandala_chart` / `sdg_grid` /
-  `conjugation_table` の5型を `grid_2d`（`slidegen/render_base_grid.py`）の variant として実装。
-  列見出し帯の有無を切り替える `header` トグルを新設（`mandala_chart`/`sdg_grid` で使用）。
-  セル単位の強調は既存の `{ }` インライン強調で表現（新規カラーモードは追加せず）。
-  `sdg_grid` は SDGs公式17色を採用せず自社テーマ内の色に統一（`swot` の4色正規化と同じ判断）。
-  `type_catalog.md` の陳腐化した📋（`policy_3col`/`brand_pillars`/`pricing_tiers`/`takahashi`）も
-  あわせて是正。`RENDERERS` は100→105型。詳細・実施時の判断は
-  [実行計画](plans/2026-08-agent-skills-transition.md) の S4 セクション参照。
-- **S5a: ✅ 完了**（チャート系10型 `area_chart`/`scatter`/`bubble`（ネイティブChart、
-  `render_charts.py`）・`bullet`/`funnel`/`football_field`/`harvey_ball_table`/`marimekko`/
-  `treemap`/`sankey`（図形描画、新規 `render_charts_shapes.py`）を実装。harvey_ball_table は
-  MSO_SHAPE.PIE の adjustments を実機検証（`[162,0]`=25%/`[162,54]`=50%/`[162,108]`=75%、
-  12時起点・回転不使用）した上で採用。marimekko/treemap の highlight は accent 塗りだと
-  P2（accent面積8%上限）を超過しやすいためアウトライン枠線＋識別ラベルの文字色のみで表現。
-  `RENDERERS` は105→115型。詳細・実施時の判断は
-  [実行計画](plans/2026-08-agent-skills-transition.md) の S5a セクション参照。
-- **S5b: ✅ 完了**（ビジネスフレーム9型 `lean_canvas`/`vpc`/`five_forces`/`3c`/`4p`/`pestel`/
-  `bcg_matrix`/`empathy_map`/`persona_card` を実装。`lean_canvas` は `bmc` と共通ジオメトリを
-  共有（`render_frameworks2.py` に `_render_canvas9` を抽出）、`4p`/`pestel` は既存
-  `labeled_blocks` の variant 追記のみ、残り6型は新規 `render_frameworks3.py`。
-  `bcg_matrix` は自由軸の `matrix` とは別の独立型（固定象限・固定軸ラベル）とした。
-  `RENDERERS` は115→124型。詳細・実施時の判断は
-  [実行計画](plans/2026-08-agent-skills-transition.md) の S5b セクション参照。
-- **S5c: ✅ 完了**（技術資料10型 `code_diff`/`sql_result`（`render_tech.py` 拡張）・
-  `slo_sli_table`/`incident_severity_table`（`grid_2d` variant）・`cloud_architecture`
-  （`nodes_and_connectors` variant）・`layered_stack`/`c4_context`/`sequence_diagram`/
-  `state_transition`/`er_diagram`（新規 `render_tech_diagrams.py`）を実装。
-  カタログ上「Mermaid流用」と注記されていた3型（sequence_diagram/state_transition/
-  er_diagram）は、着手前にMermaidレンダリング画像を貼る方式ではなく標準図形合成で
-  実装する方針をユーザー確認済み（ADR 0004の画像化絶対禁止と衝突するため。新規ADRは
-  作らず実施時の補足に記録）。`layered_stack`/`er_diagram` の highlight は面積が大きく
-  accent塗りだとP2（8%上限）を超過するため、marimekko/treemap と同じアウトライン枠線
-  方式に統一。`type_catalog.md` の陳腐化した重複📋（`api_endpoint_table`）もあわせて
-  是正。`RENDERERS` は124→134型。詳細・実施時の判断は
-  [実行計画](plans/2026-08-agent-skills-transition.md) の S5c セクション参照。
-- **S5d: ✅ 完了**（当初計画の「7型」のうち2つ（`chapter_number_strip`/
-  `haikei_kadai_kaiketsu_kouka`）が既存実装（`chapter_band`/`haikei`）と重複と判明し、
-  正味4型 `speaker_intro_card`/`cta_recruit`/`takeaways_emoji`/`houkoku_sodan_irai` を
-  実装。`houkoku_sodan_irai` は `labeled_blocks` variant追記、`cta_recruit` は
-  `hero_canvas` に新mode追加、`takeaways_emoji` は `render_more.py` に新規関数、
-  `speaker_intro_card` は `render_frameworks3.py` に新規関数（`persona_card` のOVAL写真
-  意匠を単一フォーカスへ簡略化）。`cta_recruit` の連絡先バーは全幅0.75"だとP2上限（8%）を
-  事前計算で超過すると判明し、幅0.85倍・高さ0.65"に調整して実装。カタログの重複2件も
-  あわせて是正。`RENDERERS` は134→138型。詳細・実施時の判断は
-  [実行計画](plans/2026-08-agent-skills-transition.md) の S5d セクション参照。
-- **S5e: ✅ 完了**（教育・学術8型のうち3型 `worked_example`/`theorem_proof`/
-  `imrad_overview` は `labeled_blocks` variant追記、`flashcard` は `split_layout`
-  variant追記、`prisma_flow`/`consort_flow` は `nodes_and_connectors` の新レイアウト
-  `vertical_side`（縦フロー＋段階の`rows`から除外理由サイドボックスを生成。labels違いの
-  同一実装で2型分の実装重複を回避）、`frayer_model`/`abstract_slide` は新規
-  `render_education.py`。着手前調査でS5dのような型名重複が無いことを確認済み。
-  `nodes_and_connectors` の既存 `flow_branching` variant が名前に反し実際には分岐を
-  描画しない（縦一列のみ）ことも判明したため、新規ジオメトリとして実装した。
-  `RENDERERS` は138→146型。詳細・実施時の判断は
-  [実行計画](plans/2026-08-agent-skills-transition.md) の S5e セクション参照。
-- **S5f: ✅ 完了**（ストーリー・マーケ＋データ補助7型のうち5型
-  `golden_circle`/`storybrand_sb7`/`pixar_story_spine`/`jtbd_statement`は
-  `labeled_blocks` variant追記、`aida_funnel`は`nodes_and_connectors`の既存
-  `funnel`レイアウト＋固定ラベルのvariant追記のみで実装。残り2型は新規小実装：
-  `before_after_metric`（`render_data_support.py`。before_afterの2パネル＋中央矢印と
-  stat_trioの大数字表示を組み合わせ）、`annotated_chart`（`render_charts_shapes.py`。
-  ネイティブChart APIにはデータ点への注釈コールアウトを正確配置する手段が無いため、
-  S5aと同じ自前描画方針で実装）。golden_circleの正式な同心円（Simon Sinek）は
-  回転・カスタムジオメトリ禁止の下でテキスト配置が破綻しやすいため縦積みに簡略化、
-  storybrand_sb7（7要素）はcols=4グリッド（4+3配置、cols=3の3+3+1より空白が少ない）を
-  採用。`RENDERERS` は146→153型。詳細・実施時の判断は
-  [実行計画](plans/2026-08-agent-skills-transition.md) の S5f セクション参照。
-- **S5g: ✅ 完了**（個人・イベント・ライフ7型のうち5型 `smart_goal`/`elevator_pitch`は
-  `labeled_blocks` variant追記、`recipe_step`は`split_layout` variant追記、
-  `travel_itinerary`/`okr`は`columns_with_header` variant追記（`lead`をヘッダー帯・
-  Objective帯として利用）のみで実装。残り2型は新規小実装（`render_life.py`）：
-  `event_timetable`（時刻バッジ＋内容の行リスト。既存`program`＝式次第とは時刻列の
-  有無で差別化、type-selection-guideに相互参照を明記）、`maturity_model`（横方向N段階・
-  右ほど成熟してカードが階段状に高くなる新規ジオメトリ。highlightは面積が大きい段の
-  accent塗りだとP2上限を超過しやすいためlayered_stack等と同じアウトライン枠線方式で
-  実装）。`RENDERERS` は153→160型。詳細・実施時の判断は
-  [実行計画](plans/2026-08-agent-skills-transition.md) の S5g セクション参照。
-- **S5h: ✅ 完了**（type_catalog.md §4「tsundoku知見由来の新規候補」（S3, 2026-08で発見）
-  の6型 `pictogram_array`/`dot_matrix_chart`/`org_chart`/`ranking_list`/`faq_qa`/
-  `mission_vision_values` を、S5gまでで未割当のまま残っていたのをユーザー承認の上で
-  実装。`faq_qa`/`mission_vision_values`は`labeled_blocks` variant追記のみ。
-  `pictogram_array`/`dot_matrix_chart`は当初カタログで示唆されていた「grid_2d
-  variant候補」を不採用とし、`render_charts_shapes.py`の共通実装
-  `_render_unit_grid`を新規実装した（実物のISOTYPE図解のように100個描くと
-  test_invariants.pyのS2＝1スライドshape数上限<80に単独で抵触するため、既定20・
-  上限25個にクランプする粗い粒度で表現。単一の値のみ扱う設計とし複数系列比較は
-  対象外にしてshape数リスクを構造的に避けた）。`org_chart`は既存`tree`（親1+子1段
-  限定）を、`rows`の値を上司参照とする多段階層版として`render_relations.py`に
-  追記（ノード10・レベル3上限、循環参照はレベル計算時に打ち切り）。`ranking_list`は
-  `render_more.py`に追記（順位バッジは自動採番）。`RENDERERS` は160→166型。
-  これで type_catalog.md の📋は実質ゼロになり、**S5系列（分野別バッチ）は完走した**。
-  詳細・実施時の判断は
-  [実行計画](plans/2026-08-agent-skills-transition.md) の S5h セクション参照。
-- **外部記事由来2型（S5系列外の単発追加）: ✅ 完了**（2026-08-15。パワポ研の記事
-  「【徹底解説】パワポの図形機能を使ったスライド例と編集方法」（note.com/powerpoint_jp、
-  上場企業IR資料の実例解説）と既存166型を照合した結果、紹介パターンの大半はカバー済みで
-  ギャップは2型のみだった: `tam_sam_som`（市場規模の入れ子円。`render_frameworks3.py`）と
-  `roadmap`（レーン×期間のスパンバー。journey_mapのグリッド様式を踏襲して
-  `render_frameworks2.py`に追記。期間指定 "Q1"/"Q1-Q3" を該当列にまたがるバーとして描画）。
-  記事中の円グラフ・扇型強調は design-guidelines.md §4 の非推奨判断を維持して不採用、
-  頂点編集・図形結合はカスタムジオメトリ禁止原則のため不採用。あわせて評価した
-  Slideland（slideland.tech、実例スライドの画像ギャラリー）は画像事例集でありテキスト
-  知識ではないため知識抽出の対象外と判断した。`RENDERERS` は166→168型。
-  type_catalog.md §4「外部記事由来の追加型」参照）。
+- **PyPI 公開の検討**: `uvx --from git+...` を GitHub 依存から解放し、バージョン解決も速くなる。
+- **skills-ref の commit SHA ピン留めの定期更新**: `Makefile` の `validate-skill` が参照する
+  agentskills リポジトリの SHA ピンは、破壊的変更を CI で拾わないためのトレードオフ。
+  放置すると古いまま固定されるため定期的に更新する。
 
-**新規（S2 由来）:**
-- PyPI 公開の検討（`uvx --from git+...` を GitHub 依存から解放し、バージョン解決も速くなる）。
-- `Makefile` の `validate-skill` が参照する skills-ref の commit SHA ピン留めの定期更新
-  （agentskills リポジトリの破壊的変更を CI で拾わないためのトレードオフ。放置すると古いまま固定される）。
+## 🟡 ユーザー作業（外部サービスの後片付け。Claude からは操作不可・未実施）
 
-**🟡 ユーザー作業（Cloudflare ダッシュボード。Claude からは操作不可・未実施）:**
-- Zero Trust チーム `mrxlia`（`mrxlia.cloudflareaccess.com`）の Access アプリ削除
+旧構成で使っていた外部リソースの後片付け（経緯は [history.md](history.md) 参照）:
+
+- Cloudflare Zero Trust チーム `mrxlia`（`mrxlia.cloudflareaccess.com`）の Access アプリ削除
   （旧 Pages プロジェクト向け、AUD `5ac4a021…17c03`）とそのポリシー。
 - 旧 GitHub secrets に入れていた Cloudflare API トークン本体の失効
   （dash.cloudflare.com → My Profile → API Tokens。Pages:Edit スコープ）。
 - LLM API キー（GEMINI_API_KEY / OPENROUTER_API_KEY、任意で OPENAI/ANTHROPIC）のローテーション検討
-  （Pages プロジェクト削除で環境変数としては消滅済みだが、キー自体の失効は別途要判断）。
+  （環境変数としては消滅済みだが、キー自体の失効は別途要判断）。
 
-## このエンゲージメントで解消済み
+## 意図的に対応しないもの（記録）
 
-- 要件/仕様の不在 → [requirements.md](../requirements.md) / [spec.md](../spec.md) を新設。
-- 全体像の把握しづらさ → [README.md](../README.md) を再編（アーキ図・2成果物・ドキュメント地図）。
-- 設計判断の未記録 → ADR [0003](adr/0003-browser-pyodide-rendering.md)/[0004](adr/0004-editable-native-pptx.md)/[0005](adr/0005-multi-provider-sse-fallback.md) を追加。
-- ドキュメント乖離（「残るは実デプロイ」だが稼働中／旧「コンテナ backend」記述）→ README・CLAUDE を修正。
-- Streamlit 風 UI → 会話起点ワークスペースに刷新（[ADR 直下のビュー層]、`frontend/src/{App,components,styles}`）。
-
----
-
-## 優先度サマリ
-
-| # | 優先 | 課題 | 状況 |
-|---|---|---|---|
-| 1 | **高** | モデルカタログの陳腐化 | 🔵 Closed（S1: gateway 撤去により対象消滅。[ADR 0007](adr/0007-retire-webapp-agent-skills.md)） |
-| 2 | **高** | DSL 解説と実装のドリフト（chart 以外は未ガード） | ✅ 完了 (PR #14。S1 で読み取り先を dsl-reference.md へ付け替え) |
-| 3 | 中 | ビュー回帰の自動ガードが無い（e2e が CI 外） | 🔵 Closed（S1: frontend 撤去により対象消滅） |
-| 4 | 中 | 100型のビジュアル回帰が目視のみ | ✅ 完了（図形ツリースナップショット・全型） |
-| 5 | 中 | 未実装の機能バックログ | 🟡 一部（potx連携・はみ出し検出 完了。Web専用項目は S1 で Closed。下記） |
-| 6 | 中 | フロントのビュー層にテストが無い | 🔵 Closed（S1: frontend 撤去により対象消滅） |
-| 7 | 低 | 軽微な負債（雛形TODO・古いコメント・wheel名 等） | 🟡 大半 (PR #14: 7b / PR #17: 7c・7d・7e。7c は S1 で対象消滅・Closed。残: 7a は温存) |
-
----
-
-## P1（高）
-
-### 1. モデルカタログの陳腐化対策 — 🔵 Closed（S1: 対象消滅）
-- **Closed (S1, 2026-08-13)**: `gateway/` を含む Cloudflare Web アプリを撤去したため、`gateway/src/providers.ts` の
-  `CATALOG` 自体が存在しなくなった。2026-10-16 期日で予定していた gemini-2.5 系モデルの削除タスク、
-  `docs/model-catalog.md`（更新手順書）は対象ごと不要になり削除した。詳細は
-  [ADR 0007](adr/0007-retire-webapp-agent-skills.md)。
-- 以下は撤去前の実施記録（履歴として保持）:
-  - **実施 (PR #14)**: `reliableForDsl` フラグを `providers.ts` に追加し `/api/models` で配信、frontend は純関数 `pickDslFallback`（カタログ順＋フラグ）で選ぶよう一般化し特定ID依存を撤去。
-  - **実施 (2026-07-03)**: カタログを棚卸し（`or-deepseek-r1` は OpenRouter から消滅していたため `openai/gpt-oss-120b:free` に置換）。
-
-### 2. DSL 解説（人間向け）と実装のドリフト検知 — ✅ 完了 (PR #14 + docs ガード)
-- **実施 (PR #14)**: (b) を採用。`test_chart_dsl.py` に「`prompts.ts` が教える全型 ⊆ RENDERERS」を追加（slide 例＋スラッシュ列のクリーン token・43型）。
-- **実施 (2026-07-03)**: 残っていた docs 側も `tests/test_docs_drift.py` で CI ガード。
-  `system_prompt.md`（型一覧＋判断テーブル・18型）は素直に ⊆ RENDERERS、
-  `type_catalog.md` はロードマップ文書のため **✅ マーク付きセグメントのみ**抽出（行内の ✅/📋 混在に対応・70型）して ⊆ RENDERERS。
-  🔜/📋/❌ は設計上未実装なので対象外。これで backlog #2 は全面完了。
-- **何**: DSL の単一情報源は宣言済み（`docs/system_prompt.md` 冒頭＝「ライブは prompts.ts、全型の真実は RENDERERS」）。ただし `tests/test_chart_dsl.py` が機械ガードするのは **chart 型の一致＋全 examples の parse/render** のみ。**chart 以外の型一覧・記法ルールの解説**（`system_prompt.md` / `type_catalog.md` / `prompts.ts`）は `RENDERERS` と乖離しても検知されない → AI に誤った型/記法を教える事故になりうる。
-- **対応案**: (a) `RENDERERS` から型一覧/リファレンスを**生成**して docs/prompts に流す。または (b) 「`prompts.ts`・`type_catalog.md` が教える型 ⊆ `RENDERERS`」を `test_chart_dsl.py` と同様に全型へ拡張するドリフト検知テストを追加。
-
----
-
-## P2（中）
-
-### 3. ビュー回帰の自動ガード（e2e を CI に） — 🔵 Closed（S1: 対象消滅）
-- **Closed (S1, 2026-08-13)**: 課題の対象だった `frontend/e2e/` `frontend/test/` ごと Web アプリを撤去したため
-  消滅。[ADR 0007](adr/0007-retire-webapp-agent-skills.md)。
-- 以下は撤去前の実施記録（履歴として保持）:
-  - **実施 (PR #14)**: `@testing-library`+jsdom の `components.test.tsx` で一次ガード＋`.gitignore` 追加。
-
-### 4. 100型のビジュアル回帰の自動化 — ✅ 完了
-- **実施**: 案B（図形ツリースナップショット）で**全100型**を自動ガード。`tests/test_visual_regression.py` が各型を最小入力でレンダし、正規化した図形ツリー（種別・座標・塗り/線色・テキスト・フォント、表/チャート構造）を golden `tests/__snapshots__/visual_regression.json` と型ごとに比較。純Python・LibreOffice 不要・環境非依存。golden はコミット済みで Git diff で差分が読める。更新は `make snapshot-update`（=`SLIDEGEN_UPDATE_SNAPSHOTS=1`）。CI は `pytest tests/` 全体を回すため自動でガードに入る。`test_snapshot_covers_all_renderers` が golden⇔RENDERERS の増減を強制検知。
-- **案Aへのフォールバック**: 図形ツリー不変でも崩れる回帰（描画順の重なり等）を取りこぼす場合は画像スナップショット（`tools/visual.py` の LibreOffice 経路）へ移行する旨をテスト先頭 docstring に明記。
-- **何（元の課題）**: 第1層 `tests/test_invariants.py`（構造）はあったが、見た目の回帰は `tools/visual.py` のモンタージュ**目視**のみだった。
-
-### 5. 未実装の機能バックログ
-
-**現役（純Python ライブラリのスコープ内）:**
-- ✅ potx 本連携（`slidegen/theme.py` の直値 → potx テーマ色参照。ADR 0004 ルール3の本実装）。
-  → **完了**: `theme.py` に `theme_from_potx()` を追加（accent1→main / accent2→main_2 / accent6→accent の一般 OOXML マッピング、読めなければ DEFAULT_THEME にフェイルセーフ）。`build()`/`api.py` の `theme` を None センチネル化し、template 提供かつ theme 未指定なら自動抽出。
-- pptx → DSL シリアライザ（編集の双方向化。現状 `sync` は**文言差分のみ**）。
-  → 🟡 **スコープ判断 (2026-07-03) → ADR化 (2026-07-05)**: 責務分離の方針を
-  **[ADR 0006](adr/0006-provenance-roundtrip.md)** として正式化。
-  任意 pptx は「デザイン取り込み」（LLM インポート、実装済み。`inspect_pptx.inspect_compact` で
-  構造抽出 → `IMPORT_DECK_SYSTEM`（S1 で `skills/slidegen/references/import-deck-prompt.md` へ移設）
-  で DSL 再構成。Step2/3 で TABLE/CHART/GROUP 抽出とプロンプトの型カタログを強化）。
-  自アプリ生成 pptx の**決定的双方向化**（プロベナンス方式：生成時に DSL ソースを埋め込み、
-  `test_visual_regression.py` の図形ツリー比較器を流用して差分反映 + 全100型ラウンドトリップ検証）は
-  ADR 0006 に記載の将来項として引き続き未実装。
-- 技術図 **Mermaid** 連携（設計の MNP 構想にあるが未実装）。
-- ✅ テキストはみ出しの物理検出を第1層へ（現状は境界 overflow まで）。
-  → **完了**: `tests/test_invariants.py` に `S3`（TEXT_BOX の水平/垂直はみ出しヒューリスティック）を追加。word_wrap=False は横幅、折り返しは高さで判定（code_block 等の意図的 no-wrap を誤検知しない）。
-- i18n（現状 日本語のみ）。
-
-**🔵 Closed（S1, 2026-08-13）— Web アプリ前提のため対象消滅（[ADR 0007](adr/0007-retire-webapp-agent-skills.md)）:**
-- 本物のサムネイル（サーバ側 LibreOffice 等でブラウザの pptx→画像 不可を補う想定だった。ADR 0003 の代替案）。
-- 会社テンプレ/設定の **IndexedDB 永続化**（ブラウザのセッション限り保存を補う想定だった）。
-- ✅ 添付画像のマルチモーダル活用（`frontend/src/image.ts`・`gateway` のプロバイダ別変換。実装ごと撤去）。
-
-> 補足: 上記 potx連携 / はみ出し検出と、新規の **DSL 静的バリデーション**（`slidegen/dsl_validator.py`：未知型を build 前に検出し CLI を exit 1、誤記法/空スライドは警告）は、別レポ由来の指示書 `current-improvements-for-another.md` を当repo向けに要否判定して取り込んだもの。ハードコード型カタログ版の validator や内部リファクタ（render_common 等）は当repoの方針（真実は RENDERERS・過剰作り込み回避）に合わないため不採用。
-
-### 6. フロントのビュー層テスト — 🔵 Closed（S1: 対象消滅）
-- **Closed (S1, 2026-08-13)**: 課題の対象だった `frontend/` ごと Web アプリを撤去したため消滅。
-  [ADR 0007](adr/0007-retire-webapp-agent-skills.md)。
-- 以下は撤去前の実施記録（履歴として保持）:
-  - **実施 (PR #14)**: `frontend/test/components.test.tsx` で TopBar/ConversationPane/DeckPane を prop 駆動検証（+7、jsdom 局所化）。
-
----
-
-## P3（低・軽微）
-
-- **7a.** `slidegen/scaffold_type.py` の `# TODO: レイアウト(...)に従って配置を実装`（雛形のレイアウト未実装）。 → 🔵 温存（新型を起こす際に人間が埋める**生成テンプレート内のガイド用プレースホルダ**であり本体の未実装ではない。消すとガイドが失われるため意図的に残す）。
-- **7b.** 移植元 python（`slidegen_app.py` / `agent_prompts.py` / `ingest.py` / `llm_providers.py`）を指すコメントが各 TS に残る（既に不在で、新規参加者に紛らわしい）。文言を「移植済み」等へ。 → ✅ 完了 (PR #14)
-- **7c.** wheel 名 `slidegen-0.1.0-py3-none-any.whl` が `frontend/src/render/renderClient.ts` の既定値と `tools/build_wheel.sh` に分散。version bump 時に複数箇所更新が要る（micropip の basename 解釈制約も絡む）。 → 🔵 Closed（S1, 2026-08-13）: `frontend/` `tools/build_wheel.sh` `tests/test_version_sync.py` を Web アプリごと撤去したため対象消滅（[ADR 0007](adr/0007-retire-webapp-agent-skills.md)）。撤去前は PR #17 で `test_version_sync.py` による CI ガードを実施していた。
-- **7d.** `Makefile` は bare `python3` 前提（要 venv 有効化。README に注記済み）。`uv run` ラッパに寄せると事故が減る。 → ✅ 完了 (PR #17: 全ターゲットを `uv run --extra dev python` 化＝ADR 0002 統一。README の venv 注記も解消)。
-- **7e.** `build-system` は setuptools（`pyproject.toml`）。ADR 0002 は uv 統一だが、これはビルド**フロント**の話で整合（`uv build` がこの backend を呼ぶ）。誤解防止に一言コメントしてもよい。 → ✅ 完了 (PR #17: `[build-system]` に 1 行コメント追記)。
+- `slidegen/scaffold_type.py` の `# TODO: レイアウト(...)に従って配置を実装` は、新型を起こす際に
+  人間が埋める**生成テンプレート内のガイド用プレースホルダ**であり本体の未実装ではない。
+  消すとガイドが失われるため意図的に残す。

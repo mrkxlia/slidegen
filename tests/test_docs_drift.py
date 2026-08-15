@@ -1,13 +1,13 @@
 """test_docs_drift.py — 人間向け DSL 解説 docs が教える型 ⊆ 実レンダラ、を保証する CI ガード。
 
-backlog #2 の残課題。ライブプロンプト(prompts.ts)は test_chart_dsl.py がガード済みだが、
+ライブの DSL リファレンス（dsl-reference.md）は test_dsl_reference.py がガードするが、
 設計参照ドキュメント（docs/system_prompt.md / docs/type_catalog.md）が RENDERERS と乖離しても
 検知されず、AI や新規参加者に「存在しない型」を教える事故になりうる。
 
 抽出の方針（誤検知したら docs でなく抽出規則側を絞る）:
 - system_prompt.md: 実装済み型のみ教える文書 → 型一覧の箇条書き（バッククォート）と
   判断テーブル右列を素直に抽出して ⊆ RENDERERS。
-- type_catalog.md: ロードマップ文書（✅/🔜/📋/❌ が混在、行内にも混在）→ **✅ セグメントのみ**対象。
+- type_catalog.md: ステータス付きカタログ（✅/❌ が混在、行内にも混在）→ **✅ セグメントのみ**対象。
   各行をステータス絵文字で分割し、✅ 直後のセグメントから
   (a) 先頭の型トークン、(b) スラッシュ区切りの型列（2個以上）を抽出する。
   テーブル行は「✅ セルを持つ行の第1セル」を型とみなす。

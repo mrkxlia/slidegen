@@ -1,41 +1,19 @@
 # CLAUDE.md — プロジェクト状態と設計メモ
 
 slidegen ＝ DSL から **編集可能な PowerPoint(.pptx)** を生成する純Python ライブラリ＋CLI。
+スライド作成ロジックは **Agent Skills（オープン仕様）＋プラグイン**として同梱し、
+Claude Code に限らず各 AI エージェントから利用できる。
 
-## 現在の状態（2026-08）
+## 現在の状態
 
-2026-08 まで、これに加えて Cloudflare 無料枠で動く「AI と壁打ちしてスライドを作る Web アプリ」
-（`frontend/`＋`gateway/`）を併設していたが、**撤去した**（[ADR 0007](docs/adr/0007-retire-webapp-agent-skills.md)）。
-撤去後は、スライド作成ロジックを **Agent Skills（オープン仕様）＋プラグイン**として一般化し、
-Claude Code に限らず各 AI エージェントから利用可能にする方針転換を進めている。
-正となる実行計画は [docs/plans/2026-08-agent-skills-transition.md](docs/plans/2026-08-agent-skills-transition.md)
-（S1: Cloudflare 撤去＋DSLリファレンス移設＝**完了**。S2: Agent Skill＋両対応プラグイン化＝**完了**。
-S3: tsundoku 知識抽出＋デザインガイドライン＝**完了**。S4: 5型実装（grid_2d variant）＝**完了**。
-S5a: チャート系10型実装＝**完了**。S5b: ビジネスフレーム9型実装＝**完了**。
-S5c: 技術資料10型実装＝**完了**。S5d: 日本の登壇文化4型実装＝**完了**。
-S5e: 教育・学術8型実装＝**完了**。S5f: ストーリー・マーケ＋データ補助7型実装＝**完了**。
-S5g: 個人・イベント・ライフ7型実装＝**完了**。S5h: tsundoku新規候補6型実装＝**完了**。
-これで type_catalog.md の📋が実質ゼロになった）。
-**リポジトリは S2 で public 化した**（履歴のシークレット監査済み・クリーン。
-詳細は実行計画 S2 セクションの実施時補足）。
-
-- Web アプリが LLM に渡していたプロンプト資産（DSL リファレンス・壁打ちフェーズの各システムプロンプト・
-  pptx 取り込み用プロンプト）は `skills/slidegen/references/` へ移設済み（`dsl-reference.md` /
-  `phase-prompts.md` / `import-deck-prompt.md`）。壁打ちフローの要点は `skills/slidegen/SKILL.md`
-  本文に編み込み済み（`phase-prompts.md` は出自保存用に残置、SKILL.md からは参照しない）。
-- S3 で tsundoku（記事クリップ Vault）のノウハウ記事から知識抽出した
-  `references/design-guidelines.md`（デザイン原則）・`references/type-selection-guide.md`
-  （内容に応じた型の逆引き）を追加済み。SKILL.md から参照している。
-- `skills/slidegen/` は Agent Skills オープン仕様に準拠したスキル本体（`SKILL.md` /
-  `scripts/slidegen.sh` レンダラッパー / `references/`）。ルートの `plugin.json`
-  （Agent Plugins 1.0）と `.claude-plugin/plugin.json` + `marketplace.json`（Claude Code）が
-  同じ `skills/` を共有する両対応プラグイン構成。
-- Web アプリ撤去直前の状態は Git タグ `archive/cloudflare-webapp` から参照・復元できる。
+- public リポジトリ。`RENDERERS` に**計168型**登録済み（型カタログの📋＝未実装は実質ゼロ）。
 - 要件/仕様は [requirements.md](requirements.md) / [spec.md](spec.md)。設計判断は `docs/adr/`
-  （0002 uv 統一、0004 編集可能pptx必達、0006 pptx↔DSL 責務分離、0007 Web アプリ撤去。
-  0001/0003/0005 は 0007 により Superseded。索引は [docs/adr/README.md](docs/adr/README.md)）。
+  （0001 uv 統一、0002 編集可能pptx必達、0003 pptx↔DSL 責務分離。
+  索引は [docs/adr/README.md](docs/adr/README.md)）。
 - 検証状況: Python(pytest) green（テスト総数は増減するため本ファイルには書かない。実数は CI 実行結果を参照）。
   CI は `uv build` + `pytest` 中心（`.github/workflows/ci.yml`）。
+- **過去の経緯（旧構成・移行の記録）は [docs/history.md](docs/history.md) に集約**。
+  本ファイルを含む現行ドキュメントには経緯を書かない。
 
 ## アーキテクチャ
 
@@ -47,71 +25,65 @@ S5g: 個人・イベント・ライフ7型実装＝**完了**。S5h: tsundoku新
 
 ## ディレクトリ
 
-- `slidegen/` … コアライブラリ。型は継続的に追加され現在 `RENDERERS` に**計168型**登録済みだが、
+- `slidegen/` … コアライブラリ。型は継続的に追加されるが、
   **レンダ規約（編集可能なネイティブ要素・theme経由・登録は `register`/`register_many`）と public API は不変**。
-  ネイティブchart は `render_charts.py`(複数形)が正
-  （`bar_chart`/`line_chart`/`stacked_bar`/`stacked_100_bar`/`bar_horizontal`/`clustered_bar`/`area_chart`、
-  DSL は `categories` + `col` + 数値行。`scatter`/`bubble` は `col` の各行が x,y 点）。
-  図形描画チャート型（`bullet`/`funnel`/`football_field`/`harvey_ball_table`/`marimekko`/`treemap`/
-  `sankey`）は `render_charts_shapes.py` が正（S5a, 2026-08 実装。waterfall/narrative_curve と
-  同じ「標準プリセット図形の積み木」方針）。ビジネスフレーム型は3モジュールに分かれる：
-  `render_frameworks.py`（`swot`/`venn2`）、`render_frameworks2.py`（`bmc`/`lean_canvas`/
-  `journey_map`/`pricing_tiers`。`lean_canvas` は `bmc` と共通ジオメトリ `_render_canvas9`を共有）、
-  `render_frameworks3.py`（`vpc`/`five_forces`/`3c`/`bcg_matrix`/`empathy_map`/`persona_card`、
-  S5b, 2026-08 実装）。`4p`/`pestel` は `render_base_labeled.py` の `labeled_blocks` variant。
-  技術資料型は `render_tech.py`（`code_block`/`terminal`/`api_endpoint_table`/`code_diff`/
-  `sql_result`）と、図解系の新規 `render_tech_diagrams.py`（`layered_stack`/`c4_context`/
-  `sequence_diagram`/`state_transition`/`er_diagram`。S5c, 2026-08 実装。3型はカタログ上
-  「Mermaid流用」と注記されているが実装はMermaidレンダリングではなく標準図形合成のみ）。
-  `slo_sli_table`/`incident_severity_table` は `grid_2d`、`cloud_architecture` は
-  `nodes_and_connectors` の variant。日本の登壇文化型（S5d, 2026-08）は
-  `houkoku_sodan_irai`＝`labeled_blocks` variant、`cta_recruit`＝`hero_canvas` の新mode、
-  `takeaways_emoji`＝`render_more.py` に新規関数、`speaker_intro_card`＝
-  `render_frameworks3.py` に新規関数（`persona_card` のOVAL写真意匠を単一フォーカスへ簡略化）。
-  教育・学術型（S5e, 2026-08）は `worked_example`/`theorem_proof`/`imrad_overview`＝
-  `labeled_blocks` variant、`flashcard`＝`split_layout` variant、`prisma_flow`/`consort_flow`＝
-  `nodes_and_connectors` の新レイアウト `vertical_side`（縦フロー＋rows由来の除外サイド
-  ボックス。labels違いのみの同一実装）、`frayer_model`/`abstract_slide`＝新規
-  `render_education.py`。ストーリー・マーケ＋データ補助型（S5f, 2026-08）は
-  `golden_circle`/`storybrand_sb7`/`pixar_story_spine`/`jtbd_statement`＝
-  `labeled_blocks` variant、`aida_funnel`＝`nodes_and_connectors` の既存 `funnel` レイアウト
-  ＋固定ラベル、`before_after_metric`＝`render_data_support.py` に新規関数、
-  `annotated_chart`＝`render_charts_shapes.py` に新規関数（ネイティブChart APIには
-  データ点への注釈コールアウトを正確配置する手段が無いため自前描画）。
-  個人・イベント・ライフ型（S5g, 2026-08）は `smart_goal`/`elevator_pitch`＝
-  `labeled_blocks` variant、`recipe_step`＝`split_layout` variant、
-  `travel_itinerary`/`okr`＝`columns_with_header` variant（`lead`がヘッダー帯）、
-  `event_timetable`/`maturity_model`＝新規 `render_life.py`。tsundoku新規候補型
-  （S5h, 2026-08）は `faq_qa`/`mission_vision_values`＝`labeled_blocks` variant、
-  `pictogram_array`/`dot_matrix_chart`＝`render_charts_shapes.py` の共通実装
-  `_render_unit_grid`（単一値のユニットグリッド。既定20・上限25個にクランプ。
-  100個描くとS2のshape数上限に抵触するため）、`org_chart`＝`render_relations.py`
-  に追記（既存`tree`の1段限定をrows経由の上司参照で多段へ拡張）、`ranking_list`＝
-  `render_more.py` に追記。外部記事由来の追加型（2026-08、パワポ研のIR実例解説記事との
-  照合で見つかったギャップ2型）は `tam_sam_som`＝`render_frameworks3.py` に追記
-  （下端揃えの入れ子円3つ）、`roadmap`＝`render_frameworks2.py` に追記
-  （journey_mapのグリッド様式＋期間をまたぐスパンバー）。
+  型と実装モジュールの対応（主なもの）:
+  - ネイティブchart は `render_charts.py`(複数形)が正
+    （`bar_chart`/`line_chart`/`stacked_bar`/`stacked_100_bar`/`bar_horizontal`/`clustered_bar`/`area_chart`、
+    DSL は `categories` + `col` + 数値行。`scatter`/`bubble` は `col` の各行が x,y 点）。
+  - 図形描画チャート型（`bullet`/`funnel`/`football_field`/`harvey_ball_table`/`marimekko`/`treemap`/
+    `sankey`/`annotated_chart`）は `render_charts_shapes.py` が正（waterfall/narrative_curve と
+    同じ「標準プリセット図形の積み木」方針。`annotated_chart` はネイティブChart APIに
+    データ点への注釈コールアウトを正確配置する手段が無いため自前描画）。
+    `pictogram_array`/`dot_matrix_chart` も同モジュールの共通実装 `_render_unit_grid`
+    （単一値のユニットグリッド。既定20・上限25個にクランプ。100個描くと
+    インバリアント S2 の shape 数上限に抵触するため）。
+  - ビジネスフレーム型は3モジュール：`render_frameworks.py`（`swot`/`venn2`）、
+    `render_frameworks2.py`（`bmc`/`lean_canvas`/`journey_map`/`pricing_tiers`/`roadmap`。
+    `lean_canvas` は `bmc` と共通ジオメトリ `_render_canvas9` を共有、`roadmap` は
+    journey_map のグリッド様式＋期間をまたぐスパンバー）、`render_frameworks3.py`
+    （`vpc`/`five_forces`/`3c`/`bcg_matrix`/`empathy_map`/`persona_card`/`speaker_intro_card`/
+    `tam_sam_som`。`tam_sam_som` は下端揃えの入れ子円3つ）。
+    `4p`/`pestel` は `render_base_labeled.py` の `labeled_blocks` variant。
+  - 技術資料型は `render_tech.py`（`code_block`/`terminal`/`api_endpoint_table`/`code_diff`/
+    `sql_result`）と図解系の `render_tech_diagrams.py`（`layered_stack`/`c4_context`/
+    `sequence_diagram`/`state_transition`/`er_diagram`。いずれも Mermaid レンダリングではなく
+    標準図形合成のみ）。`slo_sli_table`/`incident_severity_table` は `grid_2d`、
+    `cloud_architecture` は `nodes_and_connectors` の variant。
+  - `labeled_blocks`（`render_base_labeled.py`）variant の型は多数：`houkoku_sodan_irai`/
+    `worked_example`/`theorem_proof`/`imrad_overview`/`golden_circle`/`storybrand_sb7`/
+    `pixar_story_spine`/`jtbd_statement`/`smart_goal`/`elevator_pitch`/`faq_qa`/
+    `mission_vision_values` 等。
+  - そのほか：`cta_recruit`＝`hero_canvas` の mode、`flashcard`/`recipe_step`＝`split_layout`
+    variant、`travel_itinerary`/`okr`＝`columns_with_header` variant（`lead`がヘッダー帯）、
+    `prisma_flow`/`consort_flow`＝`nodes_and_connectors` のレイアウト `vertical_side`
+    （縦フロー＋rows由来の除外サイドボックス。labels違いのみの同一実装）、
+    `aida_funnel`＝`nodes_and_connectors` の `funnel` レイアウト＋固定ラベル、
+    `frayer_model`/`abstract_slide`＝`render_education.py`、`event_timetable`/`maturity_model`＝
+    `render_life.py`、`before_after_metric`＝`render_data_support.py`、
+    `takeaways_emoji`/`ranking_list`＝`render_more.py`、`org_chart`＝`render_relations.py`
+    （既存`tree`の1段限定を rows 経由の上司参照で多段へ拡張）。
 - `skills/slidegen/` … Agent Skill 本体。`SKILL.md`（frontmatter はオープン仕様6フィールドのみ。
   **型名は列挙しない** — `tests/test_plugin_manifests.py` が機械ガード）、`scripts/slidegen.sh`
   （リポジトリ内外どちらでも動くレンダラッパー。内: `uv run slidegen`、外: `uvx --from git+...`）、
   `references/`（**DSL リファレンスの正本は `dsl-reference.md`**、CI ガード
-  `tests/test_dsl_reference.py` の対象。`phase-prompts.md`・`import-deck-prompt.md` に加え、
-  S3 で追加した `design-guidelines.md`・`type-selection-guide.md` も同居。両ファイルが SKILL.md から
-  参照されていることと、`type-selection-guide.md` の型名 ⊆ `RENDERERS` は
+  `tests/test_dsl_reference.py` の対象。`import-deck-prompt.md`（pptx 取り込み用プロンプト）、
+  `design-guidelines.md`（デザイン原則）・`type-selection-guide.md`（型の逆引き）も同居。
+  後2者が SKILL.md から参照されていることと、`type-selection-guide.md` の型名 ⊆ `RENDERERS` は
   `tests/test_plugin_manifests.py` が機械ガードする）。
 - ルート `plugin.json`（Agent Plugins 1.0）・`.claude-plugin/plugin.json` +
   `marketplace.json`（Claude Code）… プラグインマニフェスト。version は `pyproject.toml` と
   `tests/test_plugin_manifests.py` で同期保証。
 - `tests/` … `test_invariants.py`（構造インバリアント）、`test_dsl_reference.py`
   （dsl-reference.md ≡ RENDERERS の同値ガード）、`test_examples.py`（examples/*.slide の parse/render 回帰）、
-  `test_visual_regression.py`（全168型の図形ツリースナップショット）、`test_docs_drift.py`
+  `test_visual_regression.py`（全型の図形ツリースナップショット）、`test_docs_drift.py`
   （system_prompt.md/type_catalog.md のドリフト検知）等。
 - `tools/` … `new_type.py`（新型の雛形生成）、`visual.py`（ビジュアル回帰用モンタージュ生成）。
-- `docs/` … 要件補助・仕様補助・ADR・設計・型カタログ・方針転換ロードマップ（`docs/plans/`）。
+- `docs/` … 要件補助・仕様補助・ADR・設計・型カタログ・開発の経緯（`history.md`）。
 
 ## ローカル開発（要点）
 
-Python は **uv に統一**（`uv build` / `uv run`、`pip`/`python -m build` は使わない。ADR 0002）。
+Python は **uv に統一**（`uv build` / `uv run`、`pip`/`python -m build` は使わない。ADR 0001）。
 ```bash
 uv sync                                   # 仮想環境＋依存
 uv run --extra dev pytest tests/ -q       # 本体テスト
@@ -130,12 +102,11 @@ make validate-skill   # Agent Skill/プラグインマニフェスト検証（sk
 - **`skills/slidegen/SKILL.md` には型名を列挙しない**。型カタログの正本は dsl-reference.md
   一本に保つ（`tests/test_plugin_manifests.py` の `test_skill_md_does_not_enumerate_type_names`
   が `slide <型>` の実例が無いことを機械ガードする）。
-- Python は **uv 統一**（`build` をランタイム依存に入れない。ADR 0002）。
+- Python は **uv 統一**（`build` をランタイム依存に入れない。ADR 0001）。
 - public API（`render_text` / `render_to_bytes` / `render_file`）とレンダ規約は不変。
+- 過去の経緯は [docs/history.md](docs/history.md) だけに書く。現行ドキュメントには
+  「以前は〜だった」形式の記述を持ち込まない。
 
 ## 次にやること
 
-課題・ロードマップは [docs/backlog.md](docs/backlog.md) に集約。方針転換の進捗は
-[docs/plans/2026-08-agent-skills-transition.md](docs/plans/2026-08-agent-skills-transition.md)
-（S5h: tsundoku新規候補6型実装＝完了。type_catalog.md の📋は実質ゼロになり、
-S5系列の分野別バッチはこれで完走した）。
+課題・ロードマップは [docs/backlog.md](docs/backlog.md) に集約。

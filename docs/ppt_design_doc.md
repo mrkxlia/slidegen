@@ -189,25 +189,6 @@ MNPの教え「**まず良い表現型を作ってからAI化する**」に沿�
 
 ---
 
-## 6. 現在地（2026-05）
-
-- [x] 問題の特定（§1）
-- [x] 解の方針＝3層の責任分界（§2）
-- [x] **必達要件：pptxはPowerPointで編集可能（§2-bis）— 確定**
-- [x] デザイン制約＝「魂」の中核（§3）— 確定。26則・39パターン由来の補強ルール取り込み済み。
-- [x] 型カタログ（§4）— 全18型を実装：
-      - 基本: compare / kpi / process
-      - 構成: title / section / agenda / quote / bullets / cards / pros_cons / table
-      - **関係図(39パターン由来)**: matrix / cycle / pyramid / tree / formula / timeline / image_left
-- [x] DSLの記法仕様：HTMLで描画検証 → pptx生成まで完了（§5-2）
-- [x] パーサー実装（記法→ネイティブpptx）— §2-bis の5ルール厳守
-- [x] **②型を作るワークフロー**：Web/画像/pptx → 記法 or 新型（docs/type_authoring.md）
-- [x] **pptxインスペクタ**：既存pptxから構造を抽出（slidegen.inspect_pptx）
-- [x] **スキャフォルダ**：型スペック→render関数雛形（slidegen.scaffold_type）
-- [ ] potxの具体的な紐づけ（社内Claude Codeで実装）
-
----
-
 ## 付録A：参考にした考え方の出典メモ
 
 - 中間記法パターン（MNP）: AIにDSLを操作させる実装思想（DSL/パーサー/シリアライザー/システムプロンプトの4要素）

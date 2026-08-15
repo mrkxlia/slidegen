@@ -16,7 +16,8 @@
 ## レベル①：記法の逆生成（既存型に当てはめる）
 
 ほとんどのスライドはこれで足りる。Claude（ビジョン可）に画像/URL/抽出結果を見せ、
-`docs/system_prompt.md`（魂）と現在の型一覧を渡して「対応する記法を書いて」と頼む。
+`skills/slidegen/references/dsl-reference.md`（DSL リファレンスの正本）を渡して
+「対応する記法を書いて」と頼む。
 
 ### 入力別の前処理
 - **画像**：そのまま Claude に見せる（ビジョンで構造を読む）。
@@ -26,7 +27,7 @@
 
 ### 当てはめのプロンプト例
 ```
-次のスライドを、添付の type 一覧と system_prompt.md のルールに従って
+次のスライドを、添付の dsl-reference.md のルールに従って
 記法(.slide)に変換して。新しい色やレイアウトは作らず、一番近い既存typeを選ぶこと。
 出力は記法のみ。
 [ここに 画像 / inspect結果JSON / 説明 ]
@@ -71,8 +72,10 @@ python -m slidegen.scaffold_type typespec.json -o slidegen/render_feature_grid.p
 ### Step 4. __init__.py で読み込み
 `render_more` と同様に `from . import render_feature_grid` を追加（import副作用で登録）。
 
-### Step 5. system_prompt.md に型の書式を追記
-AIがその型の記法を書けるよう、使い方と例を1ブロック足す。
+### Step 5. dsl-reference.md に型の書式を追記
+AIがその型の記法を書けるよう、`skills/slidegen/references/dsl-reference.md` に使い方と例を
+1ブロック足す（**必須**。`tests/test_dsl_reference.py` が「教える型 ≡ RENDERERS」を CI で
+機械保証しており、怠ると CI が落ちる）。
 
 ### Step 6. QA
 サンプル記法を1枚作り、生成→画像化→目視（pptx skillのVisual QA手順）。
