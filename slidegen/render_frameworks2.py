@@ -5,10 +5,13 @@ render_frameworks2.py — ビジネスフレーム個別型 第2弾。
 - lean_canvas  : リーンキャンバス（bmc と同一ジオメトリ・ラベルのみ差し替え）
 - journey_map  : カスタマージャーニー（横スイムレーン：ステージ×行）
 - pricing_tiers: 料金プラン（N列カード、中央を強調）
+- roadmap      : ロードマップ（レーン×期間のスパンバー。journey_map のグリッドを踏襲しつつ
+                 セル文字ではなく期間をまたぐバーを描く。外部記事由来の追加型、2026-08）
 
 設計思想：標準図形のみ。色は theme 経由。固定の意味論を持つので専用実装。
 """
 from __future__ import annotations
+import logging
 from pptx.util import Inches
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 
@@ -16,6 +19,8 @@ from . import render as R
 from .render import add_rect, add_text, render_header, render_foot, SLIDE_H, MARGIN, CONTENT_W
 from .parser import Slide, split_emphasis
 from .render_util import block_items, add_items_text, columns_geometry
+
+_log = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -170,6 +175,103 @@ def render_journey_map(slide, data: Slide, theme):
 
 
 # ---------------------------------------------------------------------------
+# roadmap（レーン×期間のスパンバー。外部記事由来の追加型）
+#   periods "Q1" "Q2" "Q3" "Q4"   # 列見出し（省略時はrowsの期間指定から導出）
+#   col "プロダクト"               # title=レーン名。highlightでバーをaccentに
+#     Q1-Q2 "OCR精度改善"          # rows: (期間指定, 施策名)。"Q1"単一 or "開始-終了"範囲
+#     Q3-Q4 "API公開"
+# 期間名が periods に見つからない場合は警告ログ＋そのバーをスキップ。
+# レーン内の複数バーはサブ行に分けて縦に並べる（期間が重なっても衝突しない）。
+# ---------------------------------------------------------------------------
+_ROADMAP_MAX_LANES = 4
+_ROADMAP_MAX_BARS_PER_LANE = 4
+
+def _roadmap_span(label: str, periods: list[str]):
+    """期間指定を (開始index, 終了index) に解決する。解決不能なら None。"""
+    if label in periods:
+        i = periods.index(label)
+        return i, i
+    if "-" in label:
+        start, end = label.split("-", 1)
+        if start in periods and end in periods:
+            i, j = periods.index(start), periods.index(end)
+            return min(i, j), max(i, j)
+    return None
+
+def render_roadmap(slide, data: Slide, theme):
+    top = render_header(slide, data, theme)
+    render_foot(slide, data, theme)
+    lanes = data.blocks[:_ROADMAP_MAX_LANES]
+    if not lanes:
+        return
+
+    periods = data.props.get("periods_list")
+    if periods is None:
+        single = data.props.get("periods")
+        periods = [single] if single else None
+    if not periods:
+        # rowsの期間指定（範囲は両端に分解）から出現順に導出
+        periods = []
+        for b in lanes:
+            for label, _ in b.rows:
+                for name in label.split("-", 1):
+                    if name and name not in periods:
+                        periods.append(name)
+    if not periods:
+        return
+    ncol = len(periods)
+
+    bottom = SLIDE_H - Inches(0.7)
+    avail_h = bottom - top
+    gap = Inches(0.08)
+    label_w = Inches(1.6)
+    grid_w = CONTENT_W - label_w
+    cw = columns_geometry(grid_w, ncol, gap)
+    header_h = Inches(0.5)
+    nrow = len(lanes)
+    rh = (avail_h - header_h - gap * nrow) / nrow
+
+    # 期間見出し（journey_mapのステージ見出しと同じ様式）
+    x0 = MARGIN + label_w
+    for j in range(ncol):
+        x = x0 + j * (cw + gap)
+        add_rect(slide, int(x), int(top), int(cw), int(header_h), theme, "main", rounded=True)
+        add_text(slide, int(x), int(top), int(cw), int(header_h), theme, periods[j],
+                 size=12, color_name="on_main", bold=True,
+                 align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+
+    for i, b in enumerate(lanes):
+        y = top + header_h + gap + i * (rh + gap)
+        add_rect(slide, int(MARGIN), int(y), int(label_w - gap), int(rh), theme,
+                 "main_3", rounded=True)
+        add_text(slide, int(MARGIN + Inches(0.1)), int(y), int(label_w - gap - Inches(0.2)),
+                 int(rh), theme, b.title, size=12, color_name="ink", bold=True,
+                 align=PP_ALIGN.LEFT, anchor=MSO_ANCHOR.MIDDLE)
+        add_rect(slide, int(x0), int(y), int(grid_w), int(rh), theme, "base_2", rounded=True)
+
+        entries = []
+        for label, value in b.rows[:_ROADMAP_MAX_BARS_PER_LANE]:
+            span = _roadmap_span(label, periods)
+            if span is None:
+                _log.warning("roadmap の期間指定 %r は periods %s に解決できないためスキップします。",
+                             label, periods)
+                continue
+            entries.append((span, value))
+        if not entries:
+            continue
+        sub_h = (rh - gap * (len(entries) + 1)) / len(entries)
+        for k, ((j0, j1), value) in enumerate(entries):
+            bx = x0 + j0 * (cw + gap)
+            bw = cw * (j1 - j0 + 1) + gap * (j1 - j0)
+            by = y + gap + k * (sub_h + gap)
+            color = "accent" if b.highlight else "main"
+            add_rect(slide, int(bx), int(by), int(bw), int(sub_h), theme, color, rounded=True)
+            add_text(slide, int(bx + Inches(0.08)), int(by), int(bw - Inches(0.16)),
+                     int(sub_h), theme, value, size=11, color_name="on_main", bold=True,
+                     align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+
+
+# ---------------------------------------------------------------------------
 # pricing_tiers（料金プラン：N列カード、highlightで強調）
 # 記法：
 #   col "Free"
@@ -225,4 +327,5 @@ def render_pricing_tiers(slide, data: Slide, theme):
 R.register("bmc", render_bmc)
 R.register("lean_canvas", render_lean_canvas)
 R.register("journey_map", render_journey_map)
+R.register("roadmap", render_roadmap)
 R.register("pricing_tiers", render_pricing_tiers)

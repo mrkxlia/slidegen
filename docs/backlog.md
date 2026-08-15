@@ -5,6 +5,8 @@
 > 関連: [requirements.md](../requirements.md) / [spec.md](../spec.md) / [docs/adr/](adr/)
 > 最終更新: 2026-08-15（**方針転換ロードマップ S5h（tsundoku新規候補6型実装）完了。
 > type_catalog.md の📋が実質ゼロになり、S5系列（分野別バッチ）は完走した**。
+> その後、外部記事（パワポ研のIR実例解説）との照合で見つかったギャップ2型
+> `tam_sam_som`/`roadmap` を単発追加（S5系列外。`RENDERERS` 166→168型）。
 > S1（CF撤去＋DSLリファレンス移設）完了に伴い、Web アプリ前提だった既存項目は Closed 化済み）
 
 ## 🔴 最優先: 方針転換（Web アプリ撤去 → Agent Skills/Plugin 化）
@@ -129,6 +131,17 @@ S5系列（📋約50型・分野別バッチ）の順で、1セッション=1PR�
   これで type_catalog.md の📋は実質ゼロになり、**S5系列（分野別バッチ）は完走した**。
   詳細・実施時の判断は
   [実行計画](plans/2026-08-agent-skills-transition.md) の S5h セクション参照。
+- **外部記事由来2型（S5系列外の単発追加）: ✅ 完了**（2026-08-15。パワポ研の記事
+  「【徹底解説】パワポの図形機能を使ったスライド例と編集方法」（note.com/powerpoint_jp、
+  上場企業IR資料の実例解説）と既存166型を照合した結果、紹介パターンの大半はカバー済みで
+  ギャップは2型のみだった: `tam_sam_som`（市場規模の入れ子円。`render_frameworks3.py`）と
+  `roadmap`（レーン×期間のスパンバー。journey_mapのグリッド様式を踏襲して
+  `render_frameworks2.py`に追記。期間指定 "Q1"/"Q1-Q3" を該当列にまたがるバーとして描画）。
+  記事中の円グラフ・扇型強調は design-guidelines.md §4 の非推奨判断を維持して不採用、
+  頂点編集・図形結合はカスタムジオメトリ禁止原則のため不採用。あわせて評価した
+  Slideland（slideland.tech、実例スライドの画像ギャラリー）は画像事例集でありテキスト
+  知識ではないため知識抽出の対象外と判断した。`RENDERERS` は166→168型。
+  type_catalog.md §4「外部記事由来の追加型」参照）。
 
 **新規（S2 由来）:**
 - PyPI 公開の検討（`uvx --from git+...` を GitHub 依存から解放し、バージョン解決も速くなる）。

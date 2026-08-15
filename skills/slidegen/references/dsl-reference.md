@@ -23,7 +23,7 @@ slide <型名>
 型ごとの差は「col にタイトルが要るか」「col の行数」「用途」だけ。下記カタログの
 用途を見て型名を選び、中身（headline/col の文言）だけを書けばよい。
 
-## 型カタログ（RENDERERS 全166型。用途で型名を選ぶ）
+## 型カタログ（RENDERERS 全168型。用途で型名を選ぶ）
 - title / section / agenda / quote / bullets … 表紙・章扉・目次・引用・箇条書き
 - compare(2〜4) / cards(2〜6) / kpi(1〜4) / process(3〜6) / pros_cons(2) / table / persona_card
   / speaker_intro_card / takeaways_emoji(2〜6) / ranking_list(上限8)
@@ -81,9 +81,10 @@ slide <型名>
 - waterfall / swot(4象限固定) / venn2(2円) / bmc(9ブロック固定) / lean_canvas(9ブロック固定)
   / frayer_model(4象限固定)
     … 増減の分解＋定番ビジネスフレーム＋用語学習の4象限（col の数・順序が意味を持つ。下記参照）
-- vpc / five_forces / 3c / bcg_matrix(2x2固定) / empathy_map … バリュープロポジションキャンバス・
-    ファイブフォース・3C分析・PPM（花形/問題児/金のなる木/負け犬の固定順。自由軸の4象限は matrix
-    を使う）・共感マップ（col の数・順序が固定。下記参照）
+- vpc / five_forces / 3c / bcg_matrix(2x2固定) / empathy_map / tam_sam_som(3固定) … バリュー
+    プロポジションキャンバス・ファイブフォース・3C分析・PPM（花形/問題児/金のなる木/負け犬の
+    固定順。自由軸の4象限は matrix を使う）・共感マップ・市場規模の入れ子円（TAM→SAM→SOMの
+    固定順。col の数・順序が固定。下記参照）
 - bullet(上限4) … 目標vs実績のバレットグラフ（ゲージの代替。箇条書きの bullets とは別の型。下記参照）
 - funnel(上限6) … 定量ファネル（段ごとに幅が減るバー。定性の段のみなら nodes_and_connectors 系の
     funnel_steps、AIDA固定ラベルなら aida_funnel を使う。下記参照）
@@ -92,7 +93,9 @@ slide <型名>
 - marimekko(列5×セグメント4上限) … 列幅=規模・縦は構成比100%積み上げのマリメッコチャート（下記参照）
 - treemap(上限8) … 面積=構成比のツリーマップ（DSL記述順＝配置順。下記参照）
 - sankey(左4×右4×フロー8上限) … 左右2段の簡易フロー図（下記参照）
-- journey_map / pricing_tiers … カスタマージャーニー（stages必須。下記参照）・料金プラン比較（col highlight で推奨プラン強調）
+- journey_map / pricing_tiers / roadmap(レーン4・バー各4上限) … カスタマージャーニー（stages必須。
+    下記参照）・料金プラン比較（col highlight で推奨プラン強調）・ロードマップ（レーン×期間の
+    スパンバー。単一レーンの時系列は timeline を使う。下記参照）
 - value_chain … バリューチェーン（nodes_and_connectors 系。上記参照）
 - code_block / terminal / api_endpoint_table / code_diff / sql_result
     … ソースコード・ターミナル出力・API仕様一覧・差分表示・クエリと結果テーブル
@@ -828,3 +831,34 @@ slide mission_vision_values
     "誰もが本質的な仕事に集中できる世界"
   col
     "現場目線／シンプルさ／誠実さ"
+
+## tam_sam_som の書き方（col 3つ固定順：TAM→SAM→SOM。title=ラベル、lines[0]=金額・規模）
+
+下端揃えの入れ子円3つで市場規模を示す。2ブロックなら2重円になる。
+
+slide tam_sam_som
+  kicker "市場規模"
+  headline "経費精算SaaSの市場規模の見立て"
+  col "TAM｜経費精算市場全体"
+    "1.2兆円"
+  col "SAM｜中堅企業向けSaaS"
+    "3,000億円"
+  col "SOM｜獲得可能シェア"
+    "150億円"
+
+## roadmap の書き方（periods=列見出し、rows の期間指定がスパンバーになる）
+
+col=レーン（上限4）、rows=(期間指定, 施策名)（レーンごと上限4）。期間指定は "Q2" の
+単一指定か "Q1-Q3" の範囲指定（開始-終了。periods 内の名前を参照）。periods に無い
+期間名のバーは警告してスキップされる。periods を省略すると rows の期間指定から出現順に
+導出される。col highlight でそのレーンのバーが accent になる。
+
+slide roadmap
+  kicker "事業計画"
+  headline "2026年度プロダクトロードマップ"
+  periods "Q1" "Q2" "Q3" "Q4"
+  col "プロダクト"
+    Q1-Q2 "OCR精度改善"
+    Q3-Q4 "API公開"
+  col "セールス" highlight
+    Q2 "パートナー開拓"
