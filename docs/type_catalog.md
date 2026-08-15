@@ -40,10 +40,10 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 
 ---
 
-## 2. 実装済みの型（`RENDERERS` に計153型）
+## 2. 実装済みの型（`RENDERERS` に計160型）
 
 > **真実は `slidegen/render.py` の `RENDERERS`**（`uv run python -c "import slidegen,slidegen.render as r;print(len(r.RENDERERS))"`
-> → 153）。本書は分類のための見取り図で、以下のセクション3も含め多くが既に ✅ 実装済み。
+> → 160）。本書は分類のための見取り図で、以下のセクション3も含め多くが既に ✅ 実装済み。
 > 数の手入力は古くなりやすいので、網羅確認は `RENDERERS` を参照すること。
 
 ### ベース構成（既存）
@@ -136,8 +136,8 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 ✅ big_fact / ✅ stat_trio ／ ✅ annotated_chart / before_after_metric（S5f, 2026-08）
 
 ### 個人・イベント・ライフ（③調査）
-✅ pricing_tiers ／ 📋 elevator_pitch / event_timetable / okr / maturity_model
-📋 recipe_step / travel_itinerary / smart_goal
+✅ pricing_tiers ／ ✅ elevator_pitch / event_timetable / okr / maturity_model（S5g, 2026-08）
+✅ recipe_step / travel_itinerary / smart_goal（S5g, 2026-08）
 
 ### tsundoku 知見由来の新規候補（S3, 2026-08）
 

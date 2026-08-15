@@ -1,0 +1,112 @@
+# S5g: 個人・イベント・ライフ7型の実証（elevator_pitch / event_timetable / okr /
+# maturity_model / recipe_step / travel_itinerary / smart_goal）。S5系列最終バッチ。
+
+slide elevator_pitch
+  kicker "自己紹介"
+  headline "ExpenseFlowのエレベーターピッチ"
+  foot "For/Who/Our Product/Unlikeの4ブロック縦積み"
+  col
+    "経理業務に追われる中小企業のバックオフィス担当者"
+  col
+    "レシート照合と申請取りまとめに月40時間かかっている"
+  col
+    "撮るだけで経費精算が終わるクラウドサービス"
+  col
+    "会計士向け高機能ツールと違い、現場担当者がそのまま使える簡単さ"
+
+---
+
+slide event_timetable
+  kicker "カンファレンス"
+  headline "ExpenseFlow導入事例セミナー タイムテーブル"
+  foot "時刻バッジ＋内容の行リスト"
+  col "10:00"
+    "開会の挨拶"
+    "主催: 山田"
+  col "10:15" highlight
+    "基調講演：経費精算のこれから"
+  col "11:00"
+    "導入事例セッション"
+  col "11:45"
+    "質疑応答・懇親会"
+
+---
+
+slide okr
+  kicker "四半期目標"
+  headline "経理部門のOKR"
+  lead "Objective: 経費精算業務の負荷を半減する"
+  foot "leadがObjective帯、colがKey Result"
+  col "月次精算時間を40時間→10時間に短縮"
+    "達成率70%（現在28時間）"
+  col "経費精算SaaSの全社導入率90%以上"
+    "達成率85%"
+  col "申請差し戻し率を10%以下に"
+    "達成率60%（現在15%）"
+
+---
+
+slide maturity_model
+  kicker "DX推進"
+  headline "経費精算業務のデータ活用成熟度"
+  foot "右ほど成熟＝カードが階段状に高くなる"
+  col "Level 1｜属人的"
+    "Excelで個別集計"
+  col "Level 2｜部分導入"
+    "一部チームがSaaS利用"
+  col "Level 3｜標準化" highlight
+    "全社で共通ダッシュボード"
+  col "Level 4｜自動化"
+    "承認フローを自動化"
+  col "Level 5｜最適化"
+    "AIによる異常検知と自動判断"
+
+---
+
+slide recipe_step
+  kicker "社内ナレッジ"
+  headline "経費精算SaaS導入手順"
+  foot "左=材料・右=手順の非対称2パネル"
+  col
+    "経理担当者アカウント"
+    "既存の経費規定"
+    "会計システムのAPIキー"
+  col
+    "1. アカウントを発行する"
+    "2. 経費規定をシステムに登録する"
+    "3. 会計システムと連携する"
+    "4. 全社員に利用案内を送る"
+
+---
+
+slide travel_itinerary
+  kicker "出張"
+  headline "導入事例取材の出張日程"
+  lead "大阪・福岡の2社を訪問する2泊3日の出張"
+  foot "col=Day見出し＋縦リスト"
+  col "Day 1"
+    "新幹線で大阪へ移動"
+    "A社にて導入事例インタビュー"
+  col "Day 2"
+    "大阪から福岡へ移動"
+    "B社にて導入事例インタビュー"
+  col "Day 3"
+    "福岡市内で写真撮影"
+    "夕方の便で帰社"
+
+---
+
+slide smart_goal
+  kicker "個人目標"
+  headline "今期のSMARTゴール"
+  foot "S/M/A/R/Tの5要素固定"
+  col
+    "経理チーム向け新機能を3件リリースする"
+  col
+    "リリース件数と利用率で計測する"
+  col
+    "既存の開発リソース内で実現可能な範囲に絞る"
+  col
+    "経理チームの負荷削減という部門目標に直結する"
+  col
+    "今期末（3ヶ月後）までに達成する"

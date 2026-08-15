@@ -229,7 +229,7 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 >   ドキュメントで、`grid_2d` 系は comparison_matrix を含め元々一切掲載されておらず、
 >   `test_docs_drift.py` はこの文書について「教える型 ⊆ RENDERERS」のみを検査するため影響なし。
 
-### S5系列: 📋 約50型の分野別バッチ【状況: S5a/S5b/S5c/S5d/S5e/S5f 完了、S5g以降 未着手】
+### S5系列: 📋 約50型の分野別バッチ【状況: S5a〜S5g 完了。分野別バッチは一区切り】
 
 1セッション=1分野を目安に、S3 で見直した優先順位に沿って並べ替えて実施する。
 
@@ -253,7 +253,8 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
   flashcard / imrad_overview / abstract_slide / prisma_flow / consort_flow
 - **S5f ストーリー・マーケ＋データ補助（7型）【完了】**: golden_circle / storybrand_sb7 /
   pixar_story_spine / aida_funnel / jtbd_statement / annotated_chart / before_after_metric
-- **S5g 個人・イベント（7型）**
+- **S5g 個人・イベント・ライフ（7型）【完了】**: elevator_pitch / event_timetable / okr /
+  maturity_model / recipe_step / travel_itinerary / smart_goal
 
 各バッチの完了条件は S4 と同じ（型カタログ整合・snapshot 更新・examples 追加・CI green）。
 
@@ -468,6 +469,41 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 > - `RENDERERS` は146→153型（`examples/story_marketing_demo.slide` を新規追加し、
 >   経費精算SaaSのマーケティングを題材に7型を実演）。
 > - `docs/system_prompt.md` は変更不要と判断した（S4以降と同じ、型名を列挙しない非網羅文書）。
+
+> **S5g 実施時の補足（2026-08-15）**:
+> - type_catalog.md §4「個人・イベント・ライフ」の📋7型がplanの「7型」と正確に一致し、
+>   S5dのような数の食い違いは無かった。着手前調査でRENDERERSとの名前衝突が無いことも
+>   確認した。意味的重複の精査では、`event_timetable`が既存`program`（式次第。自動連番
+>   のみで時刻なし）と近いが「時刻列」という差別化要素を持つため別型として妥当と判断し、
+>   type-selection-guide.mdのprogram行に相互参照を明記した。`travel_itinerary`も
+>   `journey_map`（観点レーン×ステージ）・`timeline`（1時点=1件）のどちらとも構造が
+>   異なる（日ごとにグルーピングされた複数予定）ため独自型として実装した。
+> - 7型を実装コストで分けた。(A) `smart_goal`/`elevator_pitch` は `labeled_blocks`
+>   （`render_base_labeled.py`）へVARIANTS追記のみ。(B) `recipe_step` は
+>   `split_layout`（`render_base_split.py`）へ非対称比率（材料0.4:手順0.6）で追記。
+>   手順の自動番号は付けず本文に書く運用にした（既存`process`が番号バッジ担当のため
+>   重複実装を避けた）。(C) `travel_itinerary`/`okr` は `columns_with_header`
+>   （`render_base_columns.py`）へVARIANTS追記。`okr`は`lead`プロパティを
+>   Objective帯（band="accent"）として転用し、`numbered=True`で各Key Resultに
+>   自動採番させた（既存`numbered_columns`の実装をそのまま流用、新規コード無し）。
+>   (D) `event_timetable`/`maturity_model` は新規 `render_life.py`。
+>   `maturity_model`は「横方向N段階・右ほど成熟」という既存に無い構造のため新規実装した
+>   （pyramid=縦積み幅変化、layered_stack=等幅縦積みのどちらとも別のジオメトリ）。
+>   段の高さをpyramidの段階的width計算と同じ発想でグラデーションさせ、右ほど高い
+>   「階段状」の見た目にした。
+> - `maturity_model`のhighlight（現在地レベル等）は、段の面積が大きくaccent塗りだと
+>   P2（8%上限）を超過しやすいと設計段階で判断し、layered_stack/er_diagram（S5c/S5e）
+>   と同じアウトライン枠線方式を最初から採用した（実装後に気づいて修正するのではなく、
+>   S5c/S5eの教訓を活かし事前に回避した）。
+> - `RENDERERS` は153→160型（`examples/life_events_demo.slide` を新規追加し、
+>   経費精算SaaSの導入・展開を題材に7型を実演）。
+> - `docs/system_prompt.md` は変更不要と判断した（S4以降と同じ、型名を列挙しない非網羅文書）。
+> - **S5系列（分野別バッチ）はS5gで一区切り**。ただし着手前調査で、type_catalog.md §4
+>   「tsundoku知見由来の新規候補」（S3, 2026-08で発見）の6型
+>   `pictogram_array`/`dot_matrix_chart`/`org_chart`/`ranking_list`/`faq_qa`/
+>   `mission_vision_values` がどのS5バッチにも割り当てられておらず📋のまま残っている
+>   ことが判明した。S5g完了をもって「型カタログの📋が完全に無くなった」わけではない点に
+>   留意（この6型の実装要否・後続バッチ「S5h」の起案はユーザー判断に委ねる）。
 
 ## 進め方の運用ルール
 

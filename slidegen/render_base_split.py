@@ -74,6 +74,11 @@ VARIANTS = {
         "colors": ["main", "accent"], "ratio": (0.45, 0.55),
         "direction": "h", "connector": False,
     },
+    "recipe_step": {  # S5g: 左=材料・右=手順（手順の自動番号は付けない。本文に書く運用）
+        "labels": ["材料｜Ingredients", "手順｜Steps"],
+        "colors": ["main_2", "main"], "ratio": (0.4, 0.6),
+        "direction": "h", "connector": False,
+    },
 }
 
 

@@ -120,7 +120,7 @@
 | MVV（Mission/Vision/Values）を示す | 📋 mission_vision_values（新規候補） | 当面は `brand_pillars` / `tagline` で代替 |
 | 論点を3列で整理する | `policy_3col` | |
 | フレームワークの柱を示す（ブランドピラー等） | `brand_pillars` | |
-| 式次第・進行表を示す | `program` | |
+| 式次第・進行表を示す | `program` | 時刻付きのタイムテーブルなら `event_timetable` |
 | 挨拶状・お礼状を示す | `greeting` | |
 | 賞状・認定証を示す | `certificate` | |
 | 告知・お知らせを示す | `announcement` | |
@@ -131,6 +131,13 @@
 | 絵文字付きの持ち帰りポイントを示す | `takeaways_emoji` | |
 | 用語カード（用語+定義）を示す | `flashcard` | |
 | 論文アブストラクトを示す（本文+キーワード） | `abstract_slide` | |
+| イベントのタイムテーブルを示す（時刻付き） | `event_timetable` | 時刻無しの式次第なら `program` |
+| 成熟度モデル（Level 1〜5の段階）を示す | `maturity_model` | 右ほど成熟してカードが高くなる |
+| 旅行日程表（Day単位）を示す | `travel_itinerary` | |
+| OKR（Objective+Key Results）を示す | `okr` | leadがObjective、colがKR |
+| レシピ（材料+手順）を示す | `recipe_step` | 左=材料・右=手順の非対称2パネル |
+| SMARTゴール（5要素固定）を示す | `smart_goal` | |
+| エレベーターピッチを示す | `elevator_pitch` | For-Who-Our Product-Unlikeの4ブロック |
 | 出典・脚注のフッタ帯を示す | `source_footer` | |
 | サイドバー・補足帯を示す | `sidebar` | |
 

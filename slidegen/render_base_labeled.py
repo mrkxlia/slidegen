@@ -146,6 +146,15 @@ VARIANTS = {
         "labels": ["状況｜When", "動機｜I want to", "成果｜So I can"],
         "layout": "row", "accent_idx": 2,
     },
+    # 個人・イベント・ライフ(S5g) ---------------------------------------------
+    "smart_goal": {
+        "labels": ["S｜具体的に", "M｜測定可能に", "A｜達成可能に", "R｜関連性を持って", "T｜期限を切って"],
+        "layout": "row", "accent_idx": None,
+    },
+    "elevator_pitch": {  # Geoffrey Mooreのテンプレート
+        "labels": ["For｜対象顧客", "Who｜課題・ニーズ", "Our Product｜提供価値", "Unlike｜差別化"],
+        "layout": "col", "accent_idx": 3,
+    },
     # ビジネスフレーム(S5b) --------------------------------------------------
     "4p": {
         "labels": ["Product｜製品", "Price｜価格", "Place｜流通", "Promotion｜販促"],

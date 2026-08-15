@@ -42,6 +42,8 @@ VARIANTS = {
     "numbered_columns": {"numbered": True,  "band": "main"},
     "data_limitations": {"numbered": False, "band": "accent",
                          "labels": ["限界", "影響", "緩和策"]},
+    "travel_itinerary": {"numbered": False, "band": "main"},   # S5g: col=Day見出し+縦リスト
+    "okr": {"numbered": True, "band": "accent"},   # S5g: lead=Objective、col=Key Result
 }
 
 
