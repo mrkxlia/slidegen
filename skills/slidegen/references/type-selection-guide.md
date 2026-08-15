@@ -19,6 +19,7 @@
 | 限界と次に向けた展望を左右で示す | `limitations_future` | |
 | 4象限で分類・位置づけを示す | `matrix` | |
 | SWOT分析（4象限固定） | `swot` | |
+| 用語学習の4象限（定義/特徴/具体例/非例）を示す | `frayer_model` | 中央に対象語を重ね描き |
 | PPM（花形/問題児/金のなる木/負け犬の固定2x2） | `bcg_matrix` | 自由に軸ラベルを決めたい4象限は `matrix` |
 | 意思決定基準で評価する | `decision_matrix` | |
 | 評価を◎○△×で比較する | `comparison_matrix` | |
@@ -34,6 +35,8 @@
 | 状態遷移図を示す | `state_transition` | 状態は円周上に自動配置 |
 | ER図（データモデルのエンティティ関係）を示す | `er_diagram` | col に from/to を書くとリレーションになる |
 | クラウド/システム構成図（左→右のティア）を示す | `cloud_architecture` | ノード+矢印のフロー図 |
+| システマティックレビューの文献選定フローを示す | `prisma_flow` | rowsが除外理由のサイドボックスになる |
+| 臨床試験の被験者フローを示す | `consort_flow` | prisma_flowと同一実装・ラベル違い |
 | 数式・算出方法を示す | `formula` | 相乗効果（掛け算）・組み合わせ（足し算）もこの型で表現できる |
 | 手順・ロードマップを横並びフローで示す | `process` / `process_flow` | |
 | バリューチェーンを示す | `value_chain` | |
@@ -119,6 +122,8 @@
 | 登壇者紹介を1枚で示す | `speaker_intro_card` | persona_card より単純な単一フォーカス構成 |
 | 採用CTA（訴求ポイント+連絡先）を示す | `cta_recruit` | |
 | 絵文字付きの持ち帰りポイントを示す | `takeaways_emoji` | |
+| 用語カード（用語+定義）を示す | `flashcard` | |
+| 論文アブストラクトを示す（本文+キーワード） | `abstract_slide` | |
 | 出典・脚注のフッタ帯を示す | `source_footer` | |
 | サイドバー・補足帯を示す | `sidebar` | |
 
@@ -136,7 +141,8 @@
 `feia` / `haikei` / `houkoku_sodan_irai`（分析・提案。報告・相談・依頼）、
 `kpt` / `ssc` / `fourls`（ふりかえり）、`sipoc` /
 `what_sowhat_nowwhat`（フレームワーク解説）、`4p`（マーケティングミックス）、
-`pestel`（マクロ環境分析）、`5e` / `kwl`（教育フレーム）、`know_dontknow` /
+`pestel`（マクロ環境分析）、`5e` / `kwl` / `worked_example` / `theorem_proof` /
+`imrad_overview`（教育・学術フレーム）、`know_dontknow` /
 `editorial_cols` / `numbered_columns`（コラム系）、`emotion_arc` / `story_curve` / `trend_line` /
 `sparkline_narrative`（折れ線+注釈系）は、型名自体が用途を表しているため本ガイドの逆引き表からは省略する。
 一覧は dsl-reference.md の型カタログを参照。

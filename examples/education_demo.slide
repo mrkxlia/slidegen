@@ -1,0 +1,111 @@
+# S5e: 教育・学術8型の実証（frayer_model / worked_example / theorem_proof / flashcard /
+# imrad_overview / abstract_slide / prisma_flow / consort_flow）。
+
+slide frayer_model
+  kicker "理科"
+  headline "光合成の理解"
+  term "光合成"
+  foot "中央に対象語を重ね描き"
+  col
+    "光エネルギーを化学エネルギーに変換する生物の反応"
+  col
+    "葉緑体で起こる／CO2とH2Oを使う／酸素を放出する"
+  col
+    "植物の光合成／藻類の光合成"
+  col
+    "呼吸（酸素を使ってエネルギーを取り出す逆の反応）"
+
+---
+
+slide worked_example
+  kicker "数学"
+  headline "二次方程式の解の公式"
+  foot "問題→解法の2ブロック固定"
+  col
+    "x^2 - 5x + 6 = 0 を解け"
+  col
+    "係数 a=1, b=-5, c=6 を確認する"
+    "判別式 D = b^2-4ac = 1 を計算する"
+    "x = (5±1)/2 → x=3, x=2"
+
+---
+
+slide theorem_proof
+  kicker "数学"
+  headline "ピタゴラスの定理"
+  foot "定理→証明の2ブロック固定"
+  col
+    "直角三角形の斜辺の2乗は他2辺の2乗の和に等しい"
+  col
+    "斜辺を1辺とする正方形の面積を2通りに計算する"
+    "展開して整理すると a^2+b^2=c^2 が得られる ∎"
+
+---
+
+slide flashcard
+  kicker "英単語"
+  headline "単語カード"
+  foot "表面=用語／裏面=定義"
+  col
+    "ubiquitous"
+  col
+    "至る所に存在する"
+
+---
+
+slide imrad_overview
+  kicker "論文の書き方"
+  headline "論文の構成"
+  foot "Introduction/Methods/Results/Discussionの4ブロック"
+  col
+    "背景と研究課題を提示"
+  col
+    "実験手法とデータ収集方法"
+  col
+    "得られた結果を提示"
+  col
+    "結果の解釈と今後の展望"
+
+---
+
+slide abstract_slide
+  kicker "学会発表"
+  headline "深層学習を用いた不良品検出の高精度化"
+  abstract "本研究では、製造ラインの画像から不良品を検出する深層学習モデルを提案する。従来手法と比較して検出精度を大幅に改善し、実運用環境での有効性を確認した。"
+  keywords "深層学習" "画像認識" "品質管理"
+  foot "本文1段落＋下部キーワードチップ"
+
+---
+
+slide prisma_flow
+  kicker "システマティックレビュー"
+  headline "文献の選定フロー"
+  foot "各段階のrowsが除外理由のサイドボックスになる"
+  col
+    "n = 1,200"
+    理由 "重複 n=300"
+  col
+    "n = 900"
+    理由 "対象外テーマ n=400"
+  col
+    "n = 500"
+    理由 "全文入手不可 n=50"
+  col highlight
+    "n = 450"
+
+---
+
+slide consort_flow
+  kicker "臨床試験"
+  headline "被験者フロー"
+  foot "prisma_flowと同一実装・ラベル違いのみ"
+  col
+    "n = 300"
+  col
+    "n = 280"
+    理由 "適格基準を満たさず n=20"
+  col
+    "n = 260"
+    理由 "追跡不能 n=20"
+  col highlight
+    "n = 255"

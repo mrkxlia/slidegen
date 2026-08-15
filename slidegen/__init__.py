@@ -20,6 +20,7 @@ from . import render_tech  # noqa: F401  技術系型（code_block/terminal/api_
 from . import render_tech_diagrams  # noqa: F401  技術資料の図解系(S5c)（layered_stack/c4_context/sequence_diagram/state_transition/er_diagram）
 from . import render_frameworks2  # noqa: F401  ビジネスフレーム第2弾（bmc/journey_map/pricing_tiers）
 from . import render_frameworks3  # noqa: F401  ビジネスフレーム第3弾(S5b)（vpc/five_forces/3c/bcg_matrix/empathy_map/persona_card）
+from . import render_education  # noqa: F401  教育・学術型(S5e)（frayer_model/abstract_slide）
 from .theme import Theme, DEFAULT_THEME
 from .api import render_text, render_to_bytes, render_file  # バックエンド用 public API
 

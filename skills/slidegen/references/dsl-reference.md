@@ -23,7 +23,7 @@ slide <型名>
 型ごとの差は「col にタイトルが要るか」「col の行数」「用途」だけ。下記カタログの
 用途を見て型名を選び、中身（headline/col の文言）だけを書けばよい。
 
-## 型カタログ（RENDERERS 全138型。用途で型名を選ぶ）
+## 型カタログ（RENDERERS 全146型。用途で型名を選ぶ）
 - title / section / agenda / quote / bullets … 表紙・章扉・目次・引用・箇条書き
 - compare(2〜4) / cards(2〜6) / kpi(1〜4) / process(3〜6) / pros_cons(2) / table / persona_card
   / speaker_intro_card / takeaways_emoji(2〜6)
@@ -38,8 +38,10 @@ slide <型名>
 - 4p / pestel … マーケティングミックス（Product-Price-Place-Promotion）・
     マクロ環境分析（Political-Economic-Social-Technological-Environmental-Legal）
 - 5e / kwl … 教育フレーム（5E・KWL）
+- worked_example / theorem_proof / imrad_overview … 問題-解法・定理-証明（col2つ固定）・
+    論文構成（Introduction-Methods-Results-Discussion）
 - split_layout(基底) / before_after / problem_solution / dual_hero / image_text … 左右分割：対比・課題解決・2要素並置・画像+文
-- hypothesis_prediction / limitations_future … 左右分割：仮説と予測・限界と展望
+- hypothesis_prediction / limitations_future / flashcard … 左右分割：仮説と予測・限界と展望・用語カード
 - grid_2d(基底) / comparison_matrix / scorecard_compare / raci / heatmap_matrix / decision_matrix / plain_grid
   / priority_matrix_2x2 / quiz_mcq / mandala_chart / sdg_grid / conjugation_table
   / slo_sli_table / incident_severity_table
@@ -47,9 +49,9 @@ slide <型名>
       優先度2x2・4択クイズ・マンダラチャート・SDGs一覧・活用表・SLI一覧・インシデント重大度表。
       書き方は下記参照）
 - nodes_and_connectors(基底) / process_flow / value_chain / cycle_loop / pdca / flow_branching / funnel_steps
-  / cloud_architecture
+  / cloud_architecture / prisma_flow / consort_flow
     … ノード+矢印（横並びフロー・バリューチェーン・循環・PDCA・分岐フロー・ファネル・
-      クラウド構成の左→右ティア）
+      クラウド構成の左→右ティア・文献選定フロー・臨床試験フロー。書き方は下記参照）
 - hero_canvas(基底) / big_fact / stat_trio / tagline / takahashi / ted_idea / break_slide / statement / cta_recruit
     … 単一フォーカス（巨大数字1つ／3つの数字並置／一言コピー／高橋メソッド／TED型メッセージ／休憩幕間／宣言文／採用CTA。書き方は下記参照）
 - columns_with_header(基底) / policy_3col / know_dontknow / editorial_cols / numbered_columns / data_limitations
@@ -62,7 +64,8 @@ slide <型名>
 - scatter / bubble
     … 2〜3変数の相関・分布をネイティブ散布図/バブルチャート化（categories を使わない。下記参照）
 - waterfall / swot(4象限固定) / venn2(2円) / bmc(9ブロック固定) / lean_canvas(9ブロック固定)
-    … 増減の分解＋定番ビジネスフレーム（col の数・順序が意味を持つ。下記参照）
+  / frayer_model(4象限固定)
+    … 増減の分解＋定番ビジネスフレーム＋用語学習の4象限（col の数・順序が意味を持つ。下記参照）
 - vpc / five_forces / 3c / bcg_matrix(2x2固定) / empathy_map … バリュープロポジションキャンバス・
     ファイブフォース・3C分析・PPM（花形/問題児/金のなる木/負け犬の固定順。自由軸の4象限は matrix
     を使う）・共感マップ（col の数・順序が固定。下記参照）
@@ -83,6 +86,7 @@ slide <型名>
     … 技術資料の図解系（技術スタックの層・C4コンテキスト図・シーケンス図・状態遷移図・ER図。
       標準図形のみで構成しMermaidレンダリング画像は使わない。下記参照）
 - data_source_footer … 出典付きの主張（headline+message+source。col は使わない。下記参照）
+- abstract_slide … 論文アブストラクト（abstract本文＋keywordsチップ。col は使わない。下記参照）
 
 ## hero_canvas 系の書き方（big_fact 等は col ではなく専用プロパティ）
 slide big_fact
@@ -610,3 +614,50 @@ slide speaker_intro_card
   col
     "Webフロントエンド開発に10年従事"
     "OSSコントリビューター"
+
+## frayer_model の書き方（col 4つ固定順：定義→特徴→具体例→非例。termで中央に対象語）
+
+slide frayer_model
+  headline "光合成の理解"
+  term "光合成"          # 中央に重ね描きする対象語（省略可）
+  col
+    "光エネルギーを化学エネルギーに変換する生物の反応"
+  col
+    "葉緑体で起こる／CO2とH2Oを使う／酸素を放出する"
+  col
+    "植物の光合成／藻類の光合成"
+  col
+    "呼吸（酸素を使ってエネルギーを取り出す逆の反応）"
+
+## abstract_slide の書き方（abstractは1段落・keywordsは複数値prop。col は使わない）
+
+slide abstract_slide
+  headline "深層学習を用いた不良品検出の高精度化"
+  abstract "本研究では、製造ラインの画像から不良品を検出する深層学習モデルを提案する。"
+  keywords "深層学習" "画像認識" "品質管理"
+
+## prisma_flow / consort_flow の書き方（col記述順=縦フロー。rowsが除外/脱落のサイドボックスになる）
+
+段階ごとに `lines`＝主本文（件数等）、`rows`＝除外・脱落理由（複数行可。ラベルは自由）。
+rows が無い段階はサイドボックスを描かない。上限4段階（labels固定・タイトル不要）。
+
+slide prisma_flow
+  headline "文献の選定フロー"
+  col
+    "n = 1,200"
+    理由 "重複 n=300"      # rows → 右にサイドボックスとして表示
+  col
+    "n = 900"
+    理由 "対象外テーマ n=400"
+  col highlight
+    "n = 500"
+
+consort_flow も同じ実装・ラベル違いのみ（組入れ→割付→追跡→解析）。書き方は同一：
+
+slide consort_flow
+  headline "被験者フロー"
+  col
+    "n = 300"
+  col
+    "n = 280"
+    理由 "適格基準を満たさず n=20"

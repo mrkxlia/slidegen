@@ -3,7 +3,7 @@
 > 立て直しエンゲージメントで洗い出した技術的負債・課題を**優先度順**にまとめる。
 > 個人/学習プロジェクトのスコープに合わせ、過剰な作り込みは避ける方針。
 > 関連: [requirements.md](../requirements.md) / [spec.md](../spec.md) / [docs/adr/](adr/)
-> 最終更新: 2026-08-15（**方針転換ロードマップ S5d（日本の登壇文化4型実装）完了**。
+> 最終更新: 2026-08-15（**方針転換ロードマップ S5e（教育・学術8型実装）完了**。
 > S1（CF撤去＋DSLリファレンス移設）完了に伴い、Web アプリ前提だった既存項目は Closed 化済み）
 
 ## 🔴 最優先: 方針転換（Web アプリ撤去 → Agent Skills/Plugin 化）
@@ -80,7 +80,17 @@ S5系列（📋約50型・分野別バッチ）の順で、1セッション=1PR�
   事前計算で超過すると判明し、幅0.85倍・高さ0.65"に調整して実装。カタログの重複2件も
   あわせて是正。`RENDERERS` は134→138型。詳細・実施時の判断は
   [実行計画](plans/2026-08-agent-skills-transition.md) の S5d セクション参照。
-- S5e以降（📋約17型・分野別バッチ）: 未着手。
+- **S5e: ✅ 完了**（教育・学術8型のうち3型 `worked_example`/`theorem_proof`/
+  `imrad_overview` は `labeled_blocks` variant追記、`flashcard` は `split_layout`
+  variant追記、`prisma_flow`/`consort_flow` は `nodes_and_connectors` の新レイアウト
+  `vertical_side`（縦フロー＋段階の`rows`から除外理由サイドボックスを生成。labels違いの
+  同一実装で2型分の実装重複を回避）、`frayer_model`/`abstract_slide` は新規
+  `render_education.py`。着手前調査でS5dのような型名重複が無いことを確認済み。
+  `nodes_and_connectors` の既存 `flow_branching` variant が名前に反し実際には分岐を
+  描画しない（縦一列のみ）ことも判明したため、新規ジオメトリとして実装した。
+  `RENDERERS` は138→146型。詳細・実施時の判断は
+  [実行計画](plans/2026-08-agent-skills-transition.md) の S5e セクション参照。
+- S5f以降（📋約9型・分野別バッチ）: 未着手。
 
 **新規（S2 由来）:**
 - PyPI 公開の検討（`uvx --from git+...` を GitHub 依存から解放し、バージョン解決も速くなる）。

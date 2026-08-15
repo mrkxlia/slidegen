@@ -113,6 +113,19 @@ VARIANTS = {
         "labels": ["K｜知っている", "W｜知りたい", "L｜学んだ"],
         "layout": "row", "accent_idx": None,
     },
+    # 教育・学術(S5e) -------------------------------------------------------
+    "worked_example": {
+        "labels": ["問題", "解法"],
+        "layout": "col", "accent_idx": 0,
+    },
+    "theorem_proof": {
+        "labels": ["定理", "証明"],
+        "layout": "col", "accent_idx": 0,
+    },
+    "imrad_overview": {
+        "labels": ["Introduction｜緒言", "Methods｜方法", "Results｜結果", "Discussion｜考察"],
+        "layout": "row", "accent_idx": None,
+    },
     # ビジネスフレーム(S5b) --------------------------------------------------
     "4p": {
         "labels": ["Product｜製品", "Price｜価格", "Place｜流通", "Promotion｜販促"],

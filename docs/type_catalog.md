@@ -40,10 +40,10 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 
 ---
 
-## 2. 実装済みの型（`RENDERERS` に計138型）
+## 2. 実装済みの型（`RENDERERS` に計146型）
 
 > **真実は `slidegen/render.py` の `RENDERERS`**（`uv run python -c "import slidegen,slidegen.render as r;print(len(r.RENDERERS))"`
-> → 138）。本書は分類のための見取り図で、以下のセクション3も含め多くが既に ✅ 実装済み。
+> → 146）。本書は分類のための見取り図で、以下のセクション3も含め多くが既に ✅ 実装済み。
 > 数の手入力は古くなりやすいので、網羅確認は `RENDERERS` を参照すること。
 
 ### ベース構成（既存）
@@ -124,8 +124,8 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
   実装済み haikei と同一意味論のためカタログから削除。S5d, 2026-08）
 
 ### 教育・学術（③調査）
-📋 frayer_model / worked_example / theorem_proof / flashcard
-📋 imrad_overview / abstract_slide / prisma_flow / consort_flow
+✅ frayer_model / worked_example / theorem_proof / flashcard（S5e, 2026-08）
+✅ imrad_overview / abstract_slide / prisma_flow / consort_flow（S5e, 2026-08）
 
 ### ストーリー・マーケ（③調査）
 📋 golden_circle / storybrand_sb7 / pixar_story_spine
