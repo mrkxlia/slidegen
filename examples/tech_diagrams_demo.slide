@@ -1,0 +1,181 @@
+# S5c: 技術資料10型の実証（code_diff / sql_result / sequence_diagram / state_transition /
+# er_diagram / layered_stack / cloud_architecture / c4_context / slo_sli_table /
+# incident_severity_table）。経費精算SaaSの技術資料を題材に10枚。
+
+slide code_diff
+  kicker "実装"
+  headline "タイムアウト設定を追加"
+  lang "diff — retry.py"
+  foot "行頭 +/- で追加・削除を色分け"
+  col
+    "     def fetch_with_retry(url, n=3):"
+    "         for i in range(n):"
+    "-            return requests.get(url)"
+    "+            return requests.get(url, timeout=5)"
+
+---
+
+slide sql_result
+  kicker "分析"
+  headline "アクティブユーザー数トップ5"
+  query "SELECT user_id, count(*) AS cnt" "FROM events" "GROUP BY user_id" "ORDER BY cnt DESC LIMIT 5"
+  foot "上=クエリ／下=結果テーブル"
+  col "user_id"
+    "1001"
+    "1002"
+    "1003"
+  col "cnt"
+    "42"
+    "37"
+    "29"
+
+---
+
+slide sequence_diagram
+  kicker "処理フロー"
+  headline "ログイン処理のシーケンス"
+  participants "ユーザー" "API" "DB"
+  foot "参加者=縦のライフライン、メッセージ=横向き矢印"
+  col
+    from "ユーザー"
+    to "API"
+    "ログイン要求"
+  col highlight
+    from "API"
+    to "DB"
+    "認証情報を照会"
+  col
+    from "DB"
+    to "API"
+    "認証結果"
+  col
+    from "API"
+    to "ユーザー"
+    "トークン発行"
+
+---
+
+slide state_transition
+  kicker "ワークフロー"
+  headline "経費精算の状態遷移"
+  states "差戻し" "下書き" "申請中" "承認済" "精算完了"
+  foot "遷移線は矢頭なし・ラベルで意味を伝える（statesは頻出遷移が隣接する順で書く）"
+  col
+    from "下書き"
+    to "申請中"
+    "申請"
+  col highlight
+    from "申請中"
+    to "承認済"
+    "承認"
+  col
+    from "申請中"
+    to "差戻し"
+    "却下"
+  col
+    from "差戻し"
+    to "下書き"
+    "再編集"
+  col
+    from "承認済"
+    to "精算完了"
+    "振込"
+
+---
+
+slide er_diagram
+  kicker "データ設計"
+  headline "経費精算システムのER図"
+  foot "from/toを持つcolがリレーション、それ以外はエンティティ"
+  col "従業員"
+    "{PK} employee_id"
+    "name"
+    "department"
+  col "経費申請"
+    "{PK} expense_id"
+    "{FK} employee_id"
+    "amount"
+    "status"
+  col "領収書"
+    "{PK} receipt_id"
+    "{FK} expense_id"
+    "image_url"
+  col
+    from "従業員"
+    to "経費申請"
+    "1" "N"
+  col
+    from "経費申請"
+    to "領収書"
+    "1" "N"
+
+---
+
+slide layered_stack
+  kicker "技術構成"
+  headline "経費精算SaaSの技術スタック"
+  foot "上から: フロント→API→データの順"
+  col "フロントエンド" highlight
+    "React / Next.js"
+  col "API層"
+    "Node.js / Express"
+  col "データ層"
+    "PostgreSQL / Redis"
+
+---
+
+slide cloud_architecture
+  kicker "インフラ構成"
+  headline "配信基盤のアーキテクチャ"
+  foot "左から右へのリクエストフロー"
+  col "クライアント"
+    "ブラウザ / モバイルアプリ"
+  col "CDN/Edge"
+    "Cloudflare"
+  col "アプリケーション"
+    "Workers"
+  col "データ" highlight
+    "D1 / R2"
+
+---
+
+slide c4_context
+  kicker "システム設計"
+  headline "経費精算システムのコンテキスト"
+  foot "中心=対象システム（常に強調）"
+  col "経費精算システム"
+    "経費申請の受付と承認フローを担う"
+  col "従業員"
+    "Webブラウザから申請"
+  col "承認者"
+    "スマホアプリで承認"
+  col "会計システム"
+    "承認済データを連携"
+
+---
+
+slide slo_sli_table
+  kicker "信頼性"
+  headline "主要SLIの状況"
+  columns "SLO目標" "直近実績" "エラーバジェット残" "状態"
+  foot "行=SLI、列=目標・実績・状態"
+  col "API可用性" highlight
+    "99.9%" "99.95%" "62%" "◎"
+  col "レイテンシP95"
+    "200ms以下" "180ms" "80%" "○"
+  col "OCR精度"
+    "95%以上" "93%" "20%" "△"
+
+---
+
+slide incident_severity_table
+  kicker "運用"
+  headline "インシデント重大度の定義"
+  columns "定義" "初動SLA" "エスカレーション"
+  foot "SEV1は行highlightで強調"
+  col "SEV1" highlight
+    "全ユーザー影響のサービス停止" "15分以内" "即時・役員報告"
+  col "SEV2"
+    "一部機能の重大な障害" "30分以内" "オンコール担当"
+  col "SEV3"
+    "軽微な不具合" "翌営業日" "通常チケット"

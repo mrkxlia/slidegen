@@ -40,10 +40,10 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 
 ---
 
-## 2. 実装済みの型（`RENDERERS` に計124型）
+## 2. 実装済みの型（`RENDERERS` に計134型）
 
 > **真実は `slidegen/render.py` の `RENDERERS`**（`uv run python -c "import slidegen,slidegen.render as r;print(len(r.RENDERERS))"`
-> → 124）。本書は分類のための見取り図で、以下のセクション3も含め多くが既に ✅ 実装済み。
+> → 134）。本書は分類のための見取り図で、以下のセクション3も含め多くが既に ✅ 実装済み。
 > 数の手入力は古くなりやすいので、網羅確認は `RENDERERS` を参照すること。
 
 ### ベース構成（既存）
@@ -110,10 +110,11 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 ✅ journey_map（スイムレーン）／ ✅ empathy_map / persona_card（S5b, 2026-08）
 
 ### 技術資料（②調査）
-✅ code_block / ✅ terminal ／ 📋 code_diff / sql_result（技術登壇の基本セット）
-📋 sequence_diagram / state_transition / er_diagram（Mermaid流用）
-📋 layered_stack / cloud_architecture / c4_context / api_endpoint_table
-✅ api_endpoint_table ／ 📋 slo_sli_table / incident_severity_table
+✅ code_block / ✅ terminal / ✅ api_endpoint_table ／ ✅ code_diff / sql_result（S5c, 2026-08）
+✅ sequence_diagram / state_transition / er_diagram（Mermaid流用と注記していたが、実装は
+  Mermaidレンダリングではなく標準図形合成のみ。詳細は実行計画 S5c セクション参照。S5c, 2026-08）
+✅ layered_stack / cloud_architecture / c4_context（S5c, 2026-08）
+✅ slo_sli_table / incident_severity_table（S5c, 2026-08）
 
 ### 日本の登壇・ビジネス文化（②③調査）
 📋 speaker_intro_card / cta_recruit / chapter_number_strip（登壇サンドイッチ）

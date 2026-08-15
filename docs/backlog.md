@@ -3,7 +3,7 @@
 > 立て直しエンゲージメントで洗い出した技術的負債・課題を**優先度順**にまとめる。
 > 個人/学習プロジェクトのスコープに合わせ、過剰な作り込みは避ける方針。
 > 関連: [requirements.md](../requirements.md) / [spec.md](../spec.md) / [docs/adr/](adr/)
-> 最終更新: 2026-08-15（**方針転換ロードマップ S5b（ビジネスフレーム9型実装）完了**。
+> 最終更新: 2026-08-15（**方針転換ロードマップ S5c（技術資料10型実装）完了**。
 > S1（CF撤去＋DSLリファレンス移設）完了に伴い、Web アプリ前提だった既存項目は Closed 化済み）
 
 ## 🔴 最優先: 方針転換（Web アプリ撤去 → Agent Skills/Plugin 化）
@@ -58,7 +58,19 @@ S5系列（📋約50型・分野別バッチ）の順で、1セッション=1PR�
   `bcg_matrix` は自由軸の `matrix` とは別の独立型（固定象限・固定軸ラベル）とした。
   `RENDERERS` は115→124型。詳細・実施時の判断は
   [実行計画](plans/2026-08-agent-skills-transition.md) の S5b セクション参照。
-- S5c以降（📋約31型・分野別バッチ）: 未着手。
+- **S5c: ✅ 完了**（技術資料10型 `code_diff`/`sql_result`（`render_tech.py` 拡張）・
+  `slo_sli_table`/`incident_severity_table`（`grid_2d` variant）・`cloud_architecture`
+  （`nodes_and_connectors` variant）・`layered_stack`/`c4_context`/`sequence_diagram`/
+  `state_transition`/`er_diagram`（新規 `render_tech_diagrams.py`）を実装。
+  カタログ上「Mermaid流用」と注記されていた3型（sequence_diagram/state_transition/
+  er_diagram）は、着手前にMermaidレンダリング画像を貼る方式ではなく標準図形合成で
+  実装する方針をユーザー確認済み（ADR 0004の画像化絶対禁止と衝突するため。新規ADRは
+  作らず実施時の補足に記録）。`layered_stack`/`er_diagram` の highlight は面積が大きく
+  accent塗りだとP2（8%上限）を超過するため、marimekko/treemap と同じアウトライン枠線
+  方式に統一。`type_catalog.md` の陳腐化した重複📋（`api_endpoint_table`）もあわせて
+  是正。`RENDERERS` は124→134型。詳細・実施時の判断は
+  [実行計画](plans/2026-08-agent-skills-transition.md) の S5c セクション参照。
+- S5d以降（📋約21型・分野別バッチ）: 未着手。
 
 **新規（S2 由来）:**
 - PyPI 公開の検討（`uvx --from git+...` を GitHub 依存から解放し、バージョン解決も速くなる）。
