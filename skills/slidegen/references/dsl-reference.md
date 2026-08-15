@@ -23,7 +23,7 @@ slide <型名>
 型ごとの差は「col にタイトルが要るか」「col の行数」「用途」だけ。下記カタログの
 用途を見て型名を選び、中身（headline/col の文言）だけを書けばよい。
 
-## 型カタログ（RENDERERS 全153型。用途で型名を選ぶ）
+## 型カタログ（RENDERERS 全160型。用途で型名を選ぶ）
 - title / section / agenda / quote / bullets … 表紙・章扉・目次・引用・箇条書き
 - compare(2〜4) / cards(2〜6) / kpi(1〜4) / process(3〜6) / pros_cons(2) / table / persona_card
   / speaker_intro_card / takeaways_emoji(2〜6)
@@ -40,12 +40,15 @@ slide <型名>
 - 5e / kwl … 教育フレーム（5E・KWL）
 - worked_example / theorem_proof / imrad_overview … 問題-解法・定理-証明（col2つ固定）・
     論文構成（Introduction-Methods-Results-Discussion）
+- smart_goal(5要素固定) / elevator_pitch … SMARTゴール（Specific-Measurable-Achievable-
+    Relevant-Time-bound）・エレベーターピッチ（For-Who-Our Product-Unlikeの4ブロック）
 - golden_circle / jtbd_statement … Why-How-What（同心円を縦積みに簡略化）・
     Job to be Done（When-I want to-So I can の3ブロック）
 - storybrand_sb7(7要素固定) … StoryBrand（Character-Problem-Guide-Plan-CTA-Success-Failure）
 - pixar_story_spine(7要素固定) … Pixarのストーリースパイン（時系列7ビート・横一列）
 - split_layout(基底) / before_after / problem_solution / dual_hero / image_text … 左右分割：対比・課題解決・2要素並置・画像+文
-- hypothesis_prediction / limitations_future / flashcard … 左右分割：仮説と予測・限界と展望・用語カード
+- hypothesis_prediction / limitations_future / flashcard / recipe_step … 左右分割：
+    仮説と予測・限界と展望・用語カード・レシピ（左=材料・右=手順）
 - before_after_metric … Before/After の大数字2値比較（中央矢印。下記参照）
 - grid_2d(基底) / comparison_matrix / scorecard_compare / raci / heatmap_matrix / decision_matrix / plain_grid
   / priority_matrix_2x2 / quiz_mcq / mandala_chart / sdg_grid / conjugation_table
@@ -61,10 +64,13 @@ slide <型名>
 - hero_canvas(基底) / big_fact / stat_trio / tagline / takahashi / ted_idea / break_slide / statement / cta_recruit
     … 単一フォーカス（巨大数字1つ／3つの数字並置／一言コピー／高橋メソッド／TED型メッセージ／休憩幕間／宣言文／採用CTA。書き方は下記参照）
 - columns_with_header(基底) / policy_3col / know_dontknow / editorial_cols / numbered_columns / data_limitations
-    … ヘッダー帯+N列（論点整理・分かっている/いないこと・編集コラム・番号付き列・データの限界注記）
+  / travel_itinerary / okr
+    … ヘッダー帯+N列（論点整理・分かっている/いないこと・編集コラム・番号付き列・データの限界注記・
+      旅行日程表・OKR。leadがヘッダー帯の文言になる。書き方は下記参照）
 - narrative_curve(基底) / emotion_arc / story_curve / trend_line / sparkline_narrative … 折れ線+注釈ピン（感情曲線・物語曲線・トレンド線・注釈付き推移）
 - band_strip(基底) / section_band / sidebar / source_footer / chapter_band … 水平/垂直の帯（章扉・サイドバー・出典フッタ・章番号帯）
-- framed_canvas(基底) / program / greeting / certificate / announcement … 外枠+内部（式次第・挨拶状・賞状・告知）
+- framed_canvas(基底) / program / greeting / certificate / announcement … 外枠+内部（式次第・挨拶状・賞状・告知。
+    式次第は連番のみ・時刻付きなら event_timetable を使う）
 - bar_chart / line_chart / bar_horizontal / stacked_bar / stacked_100_bar / clustered_bar / area_chart
     … 添付Excel/CSVの数値をネイティブ編集可能グラフ化（下記の書き方を厳守）
 - scatter / bubble
@@ -95,6 +101,10 @@ slide <型名>
 - abstract_slide … 論文アブストラクト（abstract本文＋keywordsチップ。col は使わない。下記参照）
 - annotated_chart(上限8) … 自前描画の棒グラフ＋注釈コールアウト（ネイティブChartには
     注釈を付けられないため。下記参照）
+- event_timetable(上限10) … イベントのタイムテーブル（時刻バッジ＋内容の行リスト。
+    programとは時刻列の有無で使い分ける。下記参照）
+- maturity_model(上限6) … 成熟度モデル（横方向N段階。右ほど成熟＝カードが階段状に
+    高くなる。下記参照）
 
 ## hero_canvas 系の書き方（big_fact 等は col ではなく専用プロパティ）
 slide big_fact
@@ -710,3 +720,49 @@ slide before_after_metric
     "手動での確認作業"
   col "30秒" highlight
     "自動化後の処理時間"
+
+## event_timetable の書き方（col.title=時刻、lines=内容）
+
+slide event_timetable
+  headline "セミナー タイムテーブル"
+  col "10:00"
+    "開会の挨拶"
+  col "10:15" highlight
+    "基調講演"
+
+## maturity_model の書き方（col記述順=左から右。右ほど成熟してカードが高くなる。上限6）
+
+slide maturity_model
+  headline "データ活用の成熟度モデル"
+  col "Level 1｜属人的"
+    "Excelで個別集計"
+  col "Level 3｜標準化" highlight
+    "共通ダッシュボード"
+  col "Level 5｜最適化"
+    "AIによる自動判断"
+
+## columns_with_header 系：travel_itinerary / okr（lead がヘッダー帯の文言になる）
+
+travel_itinerary は col.title=Day見出し（Day 1等）、lines=その日の予定一覧。
+okr は lead に "Objective: ..." を書き、col=Key Result（title=KR文、lines=測定基準・
+進捗などの補足）。numbered=Trueのため各KRに自動で01/02…の番号が振られる。
+
+slide travel_itinerary
+  headline "出張日程"
+  lead "大阪・福岡の2社を訪問する2泊3日の出張"
+  col "Day 1"
+    "新幹線で大阪へ移動"
+    "A社にて導入事例インタビュー"
+
+slide okr
+  headline "経理部門のOKR"
+  lead "Objective: 経費精算業務の負荷を半減する"
+  col "月次精算時間を40時間→10時間に短縮"
+    "達成率70%（現在28時間）"
+
+## smart_goal / elevator_pitch / recipe_step（col の数と順序が固定）
+
+smart_goal は col を5つ（S→M→A→R→Tの順。5列row）、elevator_pitch は4つ
+（For→Who→Our Product→Unlikeの順。縦積み）、recipe_step は2つ
+（材料→手順の順。左右分割・手順の番号は本文に書く）で書く。順序を守ればcolに
+タイトルは不要（recipe_stepの手順は自動番号なし）。

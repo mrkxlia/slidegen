@@ -3,7 +3,8 @@
 > 立て直しエンゲージメントで洗い出した技術的負債・課題を**優先度順**にまとめる。
 > 個人/学習プロジェクトのスコープに合わせ、過剰な作り込みは避ける方針。
 > 関連: [requirements.md](../requirements.md) / [spec.md](../spec.md) / [docs/adr/](adr/)
-> 最終更新: 2026-08-15（**方針転換ロードマップ S5f（ストーリー・マーケ＋データ補助7型実装）完了**。
+> 最終更新: 2026-08-15（**方針転換ロードマップ S5g（個人・イベント・ライフ7型実装）完了。
+> S5系列は一区切り**。
 > S1（CF撤去＋DSLリファレンス移設）完了に伴い、Web アプリ前提だった既存項目は Closed 化済み）
 
 ## 🔴 最優先: 方針転換（Web アプリ撤去 → Agent Skills/Plugin 化）
@@ -102,8 +103,21 @@ S5系列（📋約50型・分野別バッチ）の順で、1セッション=1PR�
   storybrand_sb7（7要素）はcols=4グリッド（4+3配置、cols=3の3+3+1より空白が少ない）を
   採用。`RENDERERS` は146→153型。詳細・実施時の判断は
   [実行計画](plans/2026-08-agent-skills-transition.md) の S5f セクション参照。
-- S5g（個人・イベント・ライフ。📋約7型。当初スナップショットの件数のため実数は
-  type_catalog.md §4「個人・イベント・ライフ」参照）: 未着手。S5系列はS5gが最後の見込み。
+- **S5g: ✅ 完了**（個人・イベント・ライフ7型のうち5型 `smart_goal`/`elevator_pitch`は
+  `labeled_blocks` variant追記、`recipe_step`は`split_layout` variant追記、
+  `travel_itinerary`/`okr`は`columns_with_header` variant追記（`lead`をヘッダー帯・
+  Objective帯として利用）のみで実装。残り2型は新規小実装（`render_life.py`）：
+  `event_timetable`（時刻バッジ＋内容の行リスト。既存`program`＝式次第とは時刻列の
+  有無で差別化、type-selection-guideに相互参照を明記）、`maturity_model`（横方向N段階・
+  右ほど成熟してカードが階段状に高くなる新規ジオメトリ。highlightは面積が大きい段の
+  accent塗りだとP2上限を超過しやすいためlayered_stack等と同じアウトライン枠線方式で
+  実装）。`RENDERERS` は153→160型。詳細・実施時の判断は
+  [実行計画](plans/2026-08-agent-skills-transition.md) の S5g セクション参照。
+- **S5系列（分野別バッチ）はS5gで一区切り**。ただし type_catalog.md §4
+  「tsundoku知見由来の新規候補」（S3, 2026-08で発見）の6型
+  `pictogram_array`/`dot_matrix_chart`/`org_chart`/`ranking_list`/`faq_qa`/
+  `mission_vision_values` はどのS5バッチにも割り当てられておらず📋のまま残っている。
+  実装するかはユーザー判断（後続バッチ「S5h」の起案が必要）。
 
 **新規（S2 由来）:**
 - PyPI 公開の検討（`uvx --from git+...` を GitHub 依存から解放し、バージョン解決も速くなる）。
