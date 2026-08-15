@@ -229,7 +229,7 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 >   ドキュメントで、`grid_2d` 系は comparison_matrix を含め元々一切掲載されておらず、
 >   `test_docs_drift.py` はこの文書について「教える型 ⊆ RENDERERS」のみを検査するため影響なし。
 
-### S5系列: 📋 約50型の分野別バッチ【状況: S5a/S5b/S5c/S5d/S5e 完了、S5f以降 未着手】
+### S5系列: 📋 約50型の分野別バッチ【状況: S5a/S5b/S5c/S5d/S5e/S5f 完了、S5g以降 未着手】
 
 1セッション=1分野を目安に、S3 で見直した優先順位に沿って並べ替えて実施する。
 
@@ -251,7 +251,8 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
   【完了】**: speaker_intro_card / cta_recruit / takeaways_emoji / houkoku_sodan_irai
 - **S5e 教育・学術（8型）【完了】**: frayer_model / worked_example / theorem_proof /
   flashcard / imrad_overview / abstract_slide / prisma_flow / consort_flow
-- **S5f ストーリー・マーケ＋データ補助（7型）**
+- **S5f ストーリー・マーケ＋データ補助（7型）【完了】**: golden_circle / storybrand_sb7 /
+  pixar_story_spine / aida_funnel / jtbd_statement / annotated_chart / before_after_metric
 - **S5g 個人・イベント（7型）**
 
 各バッチの完了条件は S4 と同じ（型カタログ整合・snapshot 更新・examples 追加・CI green）。
@@ -435,6 +436,37 @@ slidegen は現在「DSL→編集可能 pptx の純Python ライブラリ」＋�
 >   回転や新規シェイプ技法は使わなかった（S5cで確立した「回転不使用」判断を踏襲）。
 > - `RENDERERS` は138→146型（`examples/education_demo.slide` を新規追加し、8型を
 >   1枚ずつ実演）。
+> - `docs/system_prompt.md` は変更不要と判断した（S4以降と同じ、型名を列挙しない非網羅文書）。
+
+> **S5f 実施時の補足（2026-08-15）**:
+> - type_catalog.md §4「ストーリー・マーケ」5型＋「データ補助」2型＝計7型が plan の
+>   「7型」と正確に一致し、S5dのような数の食い違いは無かった。着手前調査で
+>   RENDERERSとの名前衝突・意味的重複も無いことを確認した。
+> - 7型を実装コストで分けた。(A) `golden_circle`/`storybrand_sb7`/`pixar_story_spine`/
+>   `jtbd_statement` は `labeled_blocks`（`render_base_labeled.py`）へVARIANTS追記のみ。
+>   `golden_circle` の正式な同心円（Simon Sinek）は「回転・カスタムジオメトリ禁止」
+>   原則下でテキスト配置が破綻しやすくコスト高のため、`haikei`と同じ縦積み（col）に
+>   簡略化した（vpc簡略化＝S5b、frayer_model＝S5eと同種の判断）。`storybrand_sb7`
+>   （7要素）は grid layout の cols を3ではなく4にした（3+3+1より4+3の方が最終行の
+>   空白が少なく収まりが良いと判断）。`pixar_story_spine`（7ビート）は
+>   narrative_curve（emotion_arc等の基底）がラベル供給機構を持たず本文欄も無いため
+>   小改修が要ると判明し、代わりに新規コード0で済む labeled_blocks の layout="row"
+>   （kishotenketsu等の物語系と同じ横一列）を採用した。(B) `aida_funnel` は
+>   `nodes_and_connectors`（`render_base_nodes.py`）の既存 `funnel` レイアウトに固定
+>   ラベルを載せるだけ（`pdca`が`cycle_loop`＋固定ラベルの前例と同型）。数値必須の
+>   `funnel`・定性段の`funnel_steps`との紛らわしさはdsl-reference/type-selection-guide
+>   に相互参照を明記（S5aの前例を踏襲）。(C) `before_after_metric` は
+>   `render_data_support.py` に新規関数（`split_layout`の`_panel`が箇条書き表示
+>   固定でvariant追記では大数字表示に対応できないと判明したため独自実装。
+>   before_afterの2パネル＋中央矢印とstat_trioの大数字表示を組み合わせた）。
+>   (D) `annotated_chart` は `render_charts_shapes.py` に新規関数。ネイティブChart API
+>   （render_charts.py）にはpython-pptxがレンダリング後の描画位置を取得できないため
+>   特定データ点への注釈コールアウトを正確配置する前例が無いと判明し、S5aと同じ
+>   「自前で棒を矩形描画する」方針を踏襲した。値は`lines[0]`、注釈は`rows`の1つ目の
+>   値（ラベル自由）から取得し、`_row_num`（ラベル付きrowsを値として読む既存ヘルパー）
+>   とは競合しないよう値と注釈を別々の読み出し経路にした。
+> - `RENDERERS` は146→153型（`examples/story_marketing_demo.slide` を新規追加し、
+>   経費精算SaaSのマーケティングを題材に7型を実演）。
 > - `docs/system_prompt.md` は変更不要と判断した（S4以降と同じ、型名を列挙しない非網羅文書）。
 
 ## 進め方の運用ルール

@@ -690,6 +690,71 @@ def render_sankey(slide, data: Slide, theme):
                  label, size=12, color_name="ink", align=PP_ALIGN.LEFT, anchor=MSO_ANCHOR.MIDDLE)
 
 
+# ---------------------------------------------------------------------------
+# annotated_chart（自前描画の棒グラフ＋注釈コールアウト）
+#   col "1月"        # title=カテゴリ
+#     "80"            # lines[0]=値
+#   col "2月" highlight
+#     "65"
+#     注釈 "キャンペーン終了で急落"   # rows があれば1つ目の値を注釈として引き出し線付きで表示
+#                                    # （ラベルは自由。ネイティブChart APIには
+#                                    #   描画後の座標を取得する手段が無いため自前描画とした）
+# ---------------------------------------------------------------------------
+_ANNOTATED_CHART_MAX = 8
+
+
+def render_annotated_chart(slide, data: Slide, theme):
+    top = render_header(slide, data, theme)
+    render_foot(slide, data, theme)
+    items = data.blocks[:_ANNOTATED_CHART_MAX]
+    n = len(items)
+    if n == 0:
+        return
+
+    unit = data.props.get("unit", "")
+    _unit_note(slide, theme, MARGIN, top - Inches(0.05), CONTENT_W, unit)
+
+    vals = [parse_number(b.lines[0], context="annotated_chart") if b.lines else 0.0 for b in items]
+    max_v = max(vals) if any(v > 0 for v in vals) else 1.0
+
+    bottom = SLIDE_H - Inches(0.7)
+    axis_y = bottom - Inches(0.35)
+    plot_top = top + Inches(0.9)   # 注釈コールアウトの余白を上に確保
+    plot_h = axis_y - plot_top
+    gap = Inches(0.2)
+    bw = columns_geometry(CONTENT_W, n, gap)
+
+    for i, (b, v) in enumerate(zip(items, vals)):
+        x = MARGIN + i * (bw + gap)
+        bh = max(plot_h * (v / max_v if max_v else 0), Inches(0.04))
+        y = axis_y - bh
+        color = "accent" if b.highlight else "main"
+        add_rect(slide, int(x), int(y), int(bw), int(bh), theme, color, rounded=False)
+        add_text(slide, int(x), int(y - Inches(0.28)), int(bw), Inches(0.26), theme,
+                 _fmt_num(v), size=11, color_name="ink", bold=True,
+                 align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.BOTTOM)
+        add_text(slide, int(x), int(axis_y + Inches(0.05)), int(bw), Inches(0.3), theme,
+                 b.title, size=11, color_name="muted", align=PP_ALIGN.CENTER)
+
+        note = b.rows[0][1] if b.rows else ""
+        if note:
+            note_h = Inches(0.5)
+            note_w = min(Inches(2.2), CONTENT_W)
+            note_x = _clamp_x(x + bw / 2 - note_w / 2, note_w)
+            note_y = max(plot_top - Inches(0.6), top + Inches(0.15))
+            line_top = note_y + note_h
+            ln = slide.shapes.add_connector(
+                MSO_CONNECTOR.STRAIGHT, int(x + bw / 2), int(line_top),
+                int(x + bw / 2), int(y))
+            ln.line.color.rgb = theme.rgb("muted")
+            ln.line.width = Pt(1.0)
+            add_rect(slide, int(note_x), int(note_y), int(note_w), int(note_h),
+                     theme, "base_2", rounded=True)
+            add_text(slide, int(note_x + Inches(0.08)), int(note_y), int(note_w - Inches(0.16)),
+                     int(note_h), theme, note, size=10, color_name="ink",
+                     align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+
+
 R.register("bullet", render_bullet)
 R.register("funnel", render_funnel)
 R.register("football_field", render_football_field)
@@ -697,3 +762,4 @@ R.register("harvey_ball_table", render_harvey_ball_table)
 R.register("marimekko", render_marimekko)
 R.register("treemap", render_treemap)
 R.register("sankey", render_sankey)
+R.register("annotated_chart", render_annotated_chart)

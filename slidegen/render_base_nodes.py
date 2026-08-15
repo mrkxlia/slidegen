@@ -47,6 +47,8 @@ VARIANTS = {
     "consort_flow": {"layout": "vertical_side",
         "labels": ["組入れ｜Enrollment", "割付｜Allocation",
                    "追跡｜Follow-up", "解析｜Analysis"]},
+    "aida_funnel": {"layout": "funnel",
+        "labels": ["Attention｜注意", "Interest｜関心", "Desire｜欲求", "Action｜行動"]},
 }
 
 

@@ -13,12 +13,17 @@
 |---|---|---|
 | 2〜4案を横並びで比較する | `compare` | |
 | 現状とTo-Beを左右で対比する | `before_after` | |
+| 数値をBefore/After（大数字2つ＋矢印）で対比する | `before_after_metric` | 箇条書きでなく大数字を見せたい場合 |
 | 課題と解決策を左右で示す | `problem_solution` | |
 | 2要素を対等に並べる | `dual_hero` | |
 | 仮説と予測を左右で示す | `hypothesis_prediction` | |
 | 限界と次に向けた展望を左右で示す | `limitations_future` | |
 | 4象限で分類・位置づけを示す | `matrix` | |
 | SWOT分析（4象限固定） | `swot` | |
+| Golden Circle（Why-How-What）を示す | `golden_circle` | 同心円ではなく縦積みで表現 |
+| StoryBrand（7要素固定）でプロダクトのストーリーを示す | `storybrand_sb7` | |
+| Pixar式ストーリースパイン（7つの物語ビート）を示す | `pixar_story_spine` | 横一列・時系列 |
+| Jobs to be Done（When-I want to-So I can）を示す | `jtbd_statement` | |
 | 用語学習の4象限（定義/特徴/具体例/非例）を示す | `frayer_model` | 中央に対象語を重ね描き |
 | PPM（花形/問題児/金のなる木/負け犬の固定2x2） | `bcg_matrix` | 自由に軸ラベルを決めたい4象限は `matrix` |
 | 意思決定基準で評価する | `decision_matrix` | |
@@ -43,6 +48,7 @@
 | 循環・PDCAを示す | `cycle` / `cycle_loop` / `pdca` | |
 | 分岐フローを示す | `flow_branching` | |
 | じょうろ型（下位ほど絞り込まれる）の分解を示す | `funnel_steps` | |
+| AIDA集客ファネル（Attention-Interest-Desire-Action）を示す | `aida_funnel` | funnel_stepsと同一実装・固定ラベル |
 | ピラミッド型（上位ほど規模が小さい）の階層を示す | `pyramid` | |
 | ビジネスモデルキャンバス（9ブロック固定） | `bmc` | |
 | リーンキャンバス（9ブロック固定） | `lean_canvas` | bmc と同じ非対称レイアウト |
@@ -57,6 +63,7 @@
 |---|---|---|
 | 指標(KPI)を1〜4個並べて示す | `kpi` | |
 | 単一系列の量を比較する | `bar_chart` / `bar_horizontal` | 項目の順位を見せるなら横棒 |
+| 特定の棒に注釈コールアウトを付けて示す | `annotated_chart` | ネイティブChart非対応。自前描画の棒グラフ |
 | 複数系列を比較する | `clustered_bar` | |
 | 時系列の推移を示す | `line_chart` | |
 | 積み上げで内訳を示す | `stacked_bar` | 主役は1系列に絞る（design-guidelines.md §4） |

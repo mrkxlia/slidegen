@@ -13,7 +13,8 @@ Claude Code に限らず各 AI エージェントから利用可能にする方�
 S3: tsundoku 知識抽出＋デザインガイドライン＝**完了**。S4: 5型実装（grid_2d variant）＝**完了**。
 S5a: チャート系10型実装＝**完了**。S5b: ビジネスフレーム9型実装＝**完了**。
 S5c: 技術資料10型実装＝**完了**。S5d: 日本の登壇文化4型実装＝**完了**。
-S5e: 教育・学術8型実装＝**完了**。S5f以降＝未着手）。
+S5e: 教育・学術8型実装＝**完了**。S5f: ストーリー・マーケ＋データ補助7型実装＝**完了**。
+S5g以降＝未着手）。
 **リポジトリは S2 で public 化した**（履歴のシークレット監査済み・クリーン。
 詳細は実行計画 S2 セクションの実施時補足）。
 
@@ -45,7 +46,7 @@ S5e: 教育・学術8型実装＝**完了**。S5f以降＝未着手）。
 
 ## ディレクトリ
 
-- `slidegen/` … コアライブラリ。型は継続的に追加され現在 `RENDERERS` に**計146型**登録済みだが、
+- `slidegen/` … コアライブラリ。型は継続的に追加され現在 `RENDERERS` に**計153型**登録済みだが、
   **レンダ規約（編集可能なネイティブ要素・theme経由・登録は `register`/`register_many`）と public API は不変**。
   ネイティブchart は `render_charts.py`(複数形)が正
   （`bar_chart`/`line_chart`/`stacked_bar`/`stacked_100_bar`/`bar_horizontal`/`clustered_bar`/`area_chart`、
@@ -70,7 +71,12 @@ S5e: 教育・学術8型実装＝**完了**。S5f以降＝未着手）。
   `labeled_blocks` variant、`flashcard`＝`split_layout` variant、`prisma_flow`/`consort_flow`＝
   `nodes_and_connectors` の新レイアウト `vertical_side`（縦フロー＋rows由来の除外サイド
   ボックス。labels違いのみの同一実装）、`frayer_model`/`abstract_slide`＝新規
-  `render_education.py`。
+  `render_education.py`。ストーリー・マーケ＋データ補助型（S5f, 2026-08）は
+  `golden_circle`/`storybrand_sb7`/`pixar_story_spine`/`jtbd_statement`＝
+  `labeled_blocks` variant、`aida_funnel`＝`nodes_and_connectors` の既存 `funnel` レイアウト
+  ＋固定ラベル、`before_after_metric`＝`render_data_support.py` に新規関数、
+  `annotated_chart`＝`render_charts_shapes.py` に新規関数（ネイティブChart APIには
+  データ点への注釈コールアウトを正確配置する手段が無いため自前描画）。
 - `skills/slidegen/` … Agent Skill 本体。`SKILL.md`（frontmatter はオープン仕様6フィールドのみ。
   **型名は列挙しない** — `tests/test_plugin_manifests.py` が機械ガード）、`scripts/slidegen.sh`
   （リポジトリ内外どちらでも動くレンダラッパー。内: `uv run slidegen`、外: `uvx --from git+...`）、
@@ -84,7 +90,7 @@ S5e: 教育・学術8型実装＝**完了**。S5f以降＝未着手）。
   `tests/test_plugin_manifests.py` で同期保証。
 - `tests/` … `test_invariants.py`（構造インバリアント）、`test_dsl_reference.py`
   （dsl-reference.md ≡ RENDERERS の同値ガード）、`test_examples.py`（examples/*.slide の parse/render 回帰）、
-  `test_visual_regression.py`（全146型の図形ツリースナップショット）、`test_docs_drift.py`
+  `test_visual_regression.py`（全153型の図形ツリースナップショット）、`test_docs_drift.py`
   （system_prompt.md/type_catalog.md のドリフト検知）等。
 - `tools/` … `new_type.py`（新型の雛形生成）、`visual.py`（ビジュアル回帰用モンタージュ生成）。
 - `docs/` … 要件補助・仕様補助・ADR・設計・型カタログ・方針転換ロードマップ（`docs/plans/`）。
@@ -117,4 +123,4 @@ make validate-skill   # Agent Skill/プラグインマニフェスト検証（sk
 
 課題・ロードマップは [docs/backlog.md](docs/backlog.md) に集約。方針転換の進捗は
 [docs/plans/2026-08-agent-skills-transition.md](docs/plans/2026-08-agent-skills-transition.md)
-（S5e: 教育・学術8型実装＝完了。次は S5f: ストーリー・マーケ＋データ補助7型）。
+（S5f: ストーリー・マーケ＋データ補助7型実装＝完了。次は S5g: 個人・イベント7型）。

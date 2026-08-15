@@ -40,10 +40,10 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 
 ---
 
-## 2. 実装済みの型（`RENDERERS` に計146型）
+## 2. 実装済みの型（`RENDERERS` に計153型）
 
 > **真実は `slidegen/render.py` の `RENDERERS`**（`uv run python -c "import slidegen,slidegen.render as r;print(len(r.RENDERERS))"`
-> → 146）。本書は分類のための見取り図で、以下のセクション3も含め多くが既に ✅ 実装済み。
+> → 153）。本書は分類のための見取り図で、以下のセクション3も含め多くが既に ✅ 実装済み。
 > 数の手入力は古くなりやすいので、網羅確認は `RENDERERS` を参照すること。
 
 ### ベース構成（既存）
@@ -128,12 +128,12 @@ DSL: S=単純(ラベルのみ) N=普通 C=複雑
 ✅ imrad_overview / abstract_slide / prisma_flow / consort_flow（S5e, 2026-08）
 
 ### ストーリー・マーケ（③調査）
-📋 golden_circle / storybrand_sb7 / pixar_story_spine
-📋 aida_funnel / jtbd_statement ／ ✅ brand_pillars / pricing_tiers（他セクションでも実装済み表記あり）
+✅ golden_circle / storybrand_sb7 / pixar_story_spine（S5f, 2026-08）
+✅ aida_funnel / jtbd_statement（S5f, 2026-08）／ ✅ brand_pillars / pricing_tiers（他セクションでも実装済み表記あり）
 
 ### データ補助（③調査）
 ✅ data_source_footer（実装済み・ROI最大）
-✅ big_fact / ✅ stat_trio ／ 📋 annotated_chart / before_after_metric
+✅ big_fact / ✅ stat_trio ／ ✅ annotated_chart / before_after_metric（S5f, 2026-08）
 
 ### 個人・イベント・ライフ（③調査）
 ✅ pricing_tiers ／ 📋 elevator_pitch / event_timetable / okr / maturity_model
