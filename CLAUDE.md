@@ -6,7 +6,9 @@ Claude Code に限らず各 AI エージェントから利用できる。
 
 ## 現在の状態
 
-- public リポジトリ。`RENDERERS` に**計168型**登録済み（型カタログの📋＝未実装は実質ゼロ）。
+- public リポジトリ。**機能追加は終了し凍結運用**（新機能・新型は追加しない。
+  見送り項目と理由は [docs/backlog.md](docs/backlog.md)、判断の経緯は [docs/history.md](docs/history.md)）。
+- `RENDERERS` に**計168型**登録済みで確定（型カタログの📋＝未実装は実質ゼロ）。
 - 要件/仕様は [requirements.md](requirements.md) / [spec.md](spec.md)。設計判断は `docs/adr/`
   （0001 uv 統一、0002 編集可能pptx必達、0003 pptx↔DSL 責務分離。
   索引は [docs/adr/README.md](docs/adr/README.md)）。
@@ -109,4 +111,5 @@ make validate-skill   # Agent Skill/プラグインマニフェスト検証（sk
 
 ## 次にやること
 
-課題・ロードマップは [docs/backlog.md](docs/backlog.md) に集約。
+**凍結運用のため、新機能・新型の追加はしない。** 残る未処理項目（外部サービスの後片付け＝ユーザー作業）と、
+見送りを決めた項目とその理由は [docs/backlog.md](docs/backlog.md) に集約。

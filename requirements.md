@@ -44,6 +44,7 @@ slidegen は、独自の中間記法(DSL)から、PowerPoint で**編集可能�
 - **FR-LIB-2** 「型 ＋ 要素N個」を書くと、要素数からレイアウトを自動選択。計 **168 型**（9基底×variant×中身）。
   → `docs/type_catalog.md`、網羅の真実は `slidegen/render.py` の `RENDERERS`
 - **FR-LIB-3** 会社テンプレ(.potx/.pptx)を土台に生成できる（`build(..., template=...)`）。
+  取り込むのはテーマ配色の**ブランド色のみ**（背景・文字色は既定固定、レイアウトは継承しない）。→ spec §2
 - **FR-LIB-4** CLI: `slidegen build` / `slidegen sync`（＋後方互換の `python -m slidegen.cli|sync`）。→ spec §3
 - **FR-LIB-5** 手編集 pptx の**文言差分**を元の `.slide` に同期（`sync`、dry-run / `--apply`）。
 

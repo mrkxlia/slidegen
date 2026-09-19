@@ -5,8 +5,8 @@
 Claude Code に限らず各 AI エージェントから利用できる。
 
 中間記法パターン(MNP)の考え方で、**AI にはスライドの内容（記法）だけを書かせ**、
-レイアウト・配色・フォントは「型カタログ」「デザイン制約」「会社テンプレ(potx)」で固定する。
-出力は画像化しない（**後から編集できる本物の pptx**）。
+レイアウト・配色・フォントは「型カタログ」「デザイン制約」で固定する（会社テンプレ(potx)からは
+**ブランド色を取り込む**）。出力は画像化しない（**後から編集できる本物の pptx**）。
 
 > 📋 要件 → [requirements.md](requirements.md)　／　🔧 仕様 → [spec.md](spec.md)　／　🧠 背景思想 → [docs/ppt_design_doc.md](docs/ppt_design_doc.md)　／　🏛 設計判断(ADR) → [docs/adr/](docs/adr/)
 
@@ -56,6 +56,11 @@ slidegen sync  deck.slide deck.pptx [--apply]                      # 手編集�
 ```
 
 `python -m slidegen build ...` でも同じ。従来の `python -m slidegen.cli` / `.sync` も後方互換で動く。
+
+> `--template` が potx から取り込むのは、**先頭スライドマスターのテーマ配色のうちブランド色
+> （main / main_2 / accent）だけ**。背景色・文字色は可読性優先で slidegen 既定を使い、
+> potx 側のレイアウトやプレースホルダは継承しない（配置は型カタログが決める）。
+> 実装は `slidegen/theme.py` の `theme_from_potx()`。
 
 ## ライブラリとして使う
 
@@ -127,10 +132,10 @@ uv run python -c "import slidegen, slidegen.render as r; print(len(r.RENDERERS))
 | コンテンツ（記法） | AI が書く | `docs/system_prompt.md` / `skills/slidegen/references/dsl-reference.md` |
 | 構造（どう配置） | 型カタログ | `slidegen/render*.py` の `render_<type>()` |
 | 見せ方（何を禁じるか） | デザイン制約 | `slidegen/theme.py` ＋ テスト第1層が常時監視 |
-| ブランド書式 | potx | `build(..., template=...)` |
+| ブランド色 | potx | `build(..., template=...)`（テーマ配色のブランド色のみ取り込む） |
 
-## ロードマップ
+## 開発方針
 
-課題・ネクストアクションは [docs/backlog.md](docs/backlog.md) に優先度順で集約。主な項目:
-技術図 Mermaid 連携、pptx → DSL の決定的双方向化（[ADR 0003](docs/adr/0003-provenance-roundtrip.md)）、
-i18n、PyPI 公開の検討。
+**機能追加は終了し、凍結運用に入っている。** 型カタログ（168型）と public API は現状で確定で、
+新機能・新型は追加しない。見送りを決めた項目（Mermaid 連携・pptx→DSL の決定的双方向化・i18n・PyPI 公開）と
+その理由は [docs/backlog.md](docs/backlog.md) に記載。判断の経緯は [docs/history.md](docs/history.md)。

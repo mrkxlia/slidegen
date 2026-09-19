@@ -32,7 +32,9 @@
 
 - `theme`: `slidegen/theme.py` の `Theme`（配色3カテゴリ 70:25:5、フォント1種、pt サイズ群）。
   既定 `DEFAULT_THEME` は青系（main `1F3A5F`）＋赤アクセント（`E2483D`）。
-- `template` 指定時は potx/pptx を土台にする（未指定時は 16:9 白紙）。
+- `template` 指定時は potx/pptx を土台にする（未指定時は 16:9 白紙）。取り込むのは
+  `theme_from_potx()` が読む**先頭スライドマスターのテーマ配色のブランド色（main / main_2 / accent）だけ**で、
+  背景色・文字色は可読性優先で `DEFAULT_THEME` を固定使用し、potx 側のレイアウト・プレースホルダは継承しない。
 
 ## 3. CLI — `slidegen/__main__.py`（`slidegen` コマンド）
 
