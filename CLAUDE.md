@@ -71,6 +71,11 @@ Claude Code に限らず各 AI エージェントから利用できる。
   `design-guidelines.md`（デザイン原則）・`type-selection-guide.md`（型の逆引き）も同居。
   後2者が SKILL.md から参照されていることと、`type-selection-guide.md` の型名 ⊆ `RENDERERS` は
   `tests/test_plugin_manifests.py` が機械ガードする）。
+- `copilot/slidegen-copilot/` … Copilot in PowerPoint 向けのカスタムスキル（`SKILL.md` 単体）。
+  Copilot ではコマンドを実行しないため、DSL/レンダには触れず、構成の進め方・パターン選択・
+  図形でのレイアウトのレシピだけを書く。プラグインの `skills/` とは分けて置く（Claude Code 等で
+  `slidegen` スキルと競合させないため）。パターン識別子 ⊆ `RENDERERS`・name＝フォルダ名・
+  実行手順を含まないことは `tests/test_copilot_skill.py` が機械ガードする。ZIP は `make copilot-skill`。
 - ルート `plugin.json`（Agent Plugins 1.0）・`.claude-plugin/plugin.json` +
   `marketplace.json`（Claude Code）… プラグインマニフェスト。version は `pyproject.toml` と
   `tests/test_plugin_manifests.py` で同期保証。
