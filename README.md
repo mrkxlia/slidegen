@@ -34,10 +34,14 @@ npx plugins add mrkxlia/slidegen
 外部コマンドは使わず、slidegen の構成の作法・図解パターン・デザイン原則を指示として渡し、
 スライドは Copilot 自身がテンプレートの書式のまま図形とグラフで組む（DSL のレンダはしない）。
 
-- OneDrive の `ドキュメント/Copilot/Microsoft PowerPoint/skills/` に `slidegen-copilot` フォルダごと置く、または
-- `make copilot-skill` で作った `dist/slidegen-copilot.zip` を Copilot ペインの「スキルを追加」からアップロードする。
+- Copilot ペインの「スキルの管理」→「カスタムスキル」で OneDrive のスキルフォルダを作成・表示し、
+  そこに `slidegen-copilot` フォルダごと置く。または
+- `make copilot-skill` で作った `dist/slidegen-copilot.zip` を Copilot ペインからアップロードする
+  （ZIP 内はフォルダ1つ＋`SKILL.md`。この構成で受け付けられるかは公式に明記が無いため、
+  うまくいかない場合はフォルダ配置を使う）。
 
-使うときは Copilot のプロンプト欄で `@slidegen-copilot` を指定する（または依頼内容から自動で選ばれる）。
+使うときはプロンプト欄の「+」→スキルの選択、または `@slidegen-copilot` で指定する
+（依頼内容から自動で選ばれることもある）。
 
 ### プラグイン非対応の環境（素の利用）
 リポジトリを clone し、エージェントに `skills/slidegen/SKILL.md` を読ませる。
