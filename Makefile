@@ -1,7 +1,7 @@
 # slidegen Makefile — テスト駆動で型を増やすときのショートカット
 # 社内 Claude Code は基本これだけ覚えればよい
 
-.PHONY: test visual all clean help snapshot-update validate-skill
+.PHONY: test visual all clean help snapshot-update validate-skill copilot-skill
 
 # 第1層：構造インバリアントの自動テスト（pytest）
 test:
@@ -39,7 +39,14 @@ clean:
 # claude plugin validate は claude CLI のローカル導入が前提のためここで手動実行する）
 validate-skill:
 	uvx --from "git+https://github.com/agentskills/agentskills#subdirectory=skills-ref" skills-ref validate skills/slidegen
+	uvx --from "git+https://github.com/agentskills/agentskills#subdirectory=skills-ref" skills-ref validate copilot/slidegen-copilot
 	claude plugin validate . --strict
+
+# Copilot in PowerPoint 向けスキルを、Copilot の「スキルを追加」でアップロードできる ZIP にする
+copilot-skill:
+	@mkdir -p dist
+	cd copilot && uv run python -m zipfile -c ../dist/slidegen-copilot.zip slidegen-copilot
+	@echo "→ dist/slidegen-copilot.zip"
 
 help:
 	@echo "make test         - 第1層: pytestで構造インバリアントを確認"
@@ -51,3 +58,4 @@ help:
 	@echo "                  - 新型の検証（pytest+モンタージュ）"
 	@echo "make snapshot-update - 第2層(自動): 図形ツリーの golden を再生成（見た目変更/新型後）"
 	@echo "make validate-skill  - Agent Skill/プラグインマニフェストの検証（skills-ref + claude plugin validate）"
+	@echo "make copilot-skill   - Copilot in PowerPoint 向けスキルの ZIP を dist/ に生成"

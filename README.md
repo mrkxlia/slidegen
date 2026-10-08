@@ -29,6 +29,16 @@ Claude Code / Agent Plugins 1.0 対応クライアントの両形式に対応す
 npx plugins add mrkxlia/slidegen
 ```
 
+### Copilot in PowerPoint（Microsoft 365）
+`copilot/slidegen-copilot/` は Copilot in PowerPoint のカスタムスキル用の別スキル。
+外部コマンドは使わず、slidegen の構成の作法・図解パターン・デザイン原則を指示として渡し、
+スライドは Copilot 自身がテンプレートの書式のまま図形とグラフで組む（DSL のレンダはしない）。
+
+- OneDrive の `ドキュメント/Copilot/Microsoft PowerPoint/skills/` に `slidegen-copilot` フォルダごと置く、または
+- `make copilot-skill` で作った `dist/slidegen-copilot.zip` を Copilot ペインの「スキルを追加」からアップロードする。
+
+使うときは Copilot のプロンプト欄で `@slidegen-copilot` を指定する（または依頼内容から自動で選ばれる）。
+
 ### プラグイン非対応の環境（素の利用）
 リポジトリを clone し、エージェントに `skills/slidegen/SKILL.md` を読ませる。
 レンダは `uv run slidegen build`（リポジトリ内）または
@@ -76,6 +86,7 @@ API 仕様は [spec.md](spec.md) §2。
 ```
 slidegen/   コアライブラリ（parser / render*.py / theme / api / cli）。RENDERERS = 168 型
 skills/     Agent Skill 本体（SKILL.md・scripts/ レンダラッパー・references/ DSL リファレンス等）
+copilot/    Copilot in PowerPoint 向けスキル（SKILL.md 単体。指示のみで完結）
 plugin.json / .claude-plugin/   プラグインマニフェスト（Agent Plugins 1.0 / Claude Code。両方 skills/ を共有）
 tools/      new_type.py（新型雛形）/ visual.py（ビジュアル回帰用モンタージュ生成）
 tests/      構造インバリアント・DSL リファレンス整合・examples 回帰・全型図形ツリースナップショット・docs ドリフト検知
