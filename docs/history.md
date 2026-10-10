@@ -110,6 +110,7 @@ RENDERERS を 100型 → 168型 に拡充してカタログの📋をゼロに�
 | S5g | 個人・イベント・ライフ7型（elevator_pitch / event_timetable / okr / maturity_model / recipe_step / travel_itinerary / smart_goal。新規 render_life.py） | 153→160 | #36 |
 | S5h | tsundoku 新規候補6型（pictogram_array / dot_matrix_chart / org_chart / ranking_list / faq_qa / mission_vision_values） | 160→166 | #37 |
 | 単発 | 外部記事（パワポ研の IR 実例解説）との照合で見つかったギャップ2型（tam_sam_som / roadmap） | 166→168 | #38 |
+| 単発 | Cone社「39パターン」との再照合で見つかったギャップ4型（mutual_relation / scale_compare / nested_boxes / case_study）。円グラフは ❌ 判断を維持して不採用 | 168→172 | — |
 
 バッチ横断で確立した主な設計判断（現行実装に生きているもの。詳細な経緯は各 PR 参照）:
 

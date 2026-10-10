@@ -1,0 +1,76 @@
+# 39パターン(Cone社)との再照合で見つかったギャップ4型の実証
+# （mutual_relation / scale_compare / nested_boxes / case_study）。
+
+slide mutual_relation
+  kicker "ビジネスモデル"
+  headline "プラットフォームを中心に3者が価値を交換する"
+  foot "1個目のcol＝中心。相手colの give＝相手→中心、get＝中心→相手"
+  col "自社プラットフォーム"
+    "マッチングと決済を提供"
+  col "出店企業"
+    give "出店料"
+    get "送客"
+  col "ユーザー" highlight
+    give "購入代金"
+    get "品揃えと保証"
+  col "物流パートナー"
+    give "配送網"
+    get "配送委託料"
+
+---
+
+slide mutual_relation
+  kicker "提携スキーム"
+  headline "販売代理店とは{送客と手数料}で相互に支え合う"
+  col "自社"
+    "SaaS開発・サポート"
+  col "販売代理店"
+    "地方の中堅企業に強い"
+    give "顧客紹介"
+    get "紹介手数料 20%"
+
+---
+
+slide scale_compare
+  kicker "市場規模"
+  headline "国内市場は{海外の約1/4}にとどまる"
+  foot "円の面積が値に比例。単位を揃えて書く"
+  col "北米"
+    "4,800億円"
+  col "欧州"
+    "3,100億円"
+  col "日本" highlight
+    "1,200億円"
+  col "東南アジア"
+    "300億円"
+
+---
+
+slide nested_boxes
+  kicker "対象範囲"
+  headline "今期は{製造業の経理部門}に絞って展開する"
+  col "国内企業全体"
+    "約360万社"
+  col "従業員300名以上の製造業"
+    "約3,000社・既存顧客の4割"
+  col "経理部門" highlight
+    "紙の請求書処理が月500件超の部署から着手"
+
+---
+
+slide case_study
+  kicker "導入事例"
+  headline "A社は請求書処理の工数を{70%削減}した"
+  foot "数値は導入6か月後の実績"
+  col
+    "A株式会社（製造業・従業員1,200名）"
+    "経理部 12名"
+  col
+    "月2,000件の紙請求書を手入力"
+    "月末に残業が集中"
+  col
+    "OCR付き請求書受領サービスを導入"
+    "会計ソフトとAPI連携"
+  col
+    "処理工数 {70%削減}"
+    "月末残業ゼロを達成"

@@ -16,7 +16,7 @@
   座標・色・フォント・サイズは**書けない／書かない**（デザイン制約を構造的に担保）。
 - **主なプロパティ**: `kicker` / `headline` / `foot` / `title` / `subtitle` / `source` / `categories` / `unit` / `columns` ほか。
 - **型カタログ**: 9基底 × variant × 中身。一覧は [docs/type_catalog.md](docs/type_catalog.md)、
-  網羅の**単一情報源は `slidegen/render.py` の `RENDERERS`（計 168 型）**。
+  網羅の**単一情報源は `slidegen/render.py` の `RENDERERS`（計 172 型）**。
 - **チャート型**: 専用の型名（`bar_chart`/`line_chart`/`stacked_bar`/`stacked_100_bar`/`bar_horizontal`/`clustered_bar`）を
   slide の型に使う。`categories`（横軸）＋ `col`（=系列名）配下に**数値だけの行**。詳細は
   [docs/system_prompt.md](docs/system_prompt.md)（設計参照）／ ライブ定義は
