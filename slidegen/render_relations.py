@@ -14,9 +14,13 @@ render_relations.py — 39パターン(Cone社)から、要素間の関係を示
   formula   … 数式型（A × B = C のように要素関係を式で示す）
   timeline  … 時系列年表（左→右）。26則「時系列は左から右」
   image_left… 画像（または図解領域）左 + テキスト右。26則「画像は必ず左」
+  mutual_relation … 相互関係（中心1者と相手1〜3者の間を、往復2本の矢印＋ラベルで結ぶ）
+  scale_compare   … 規模比較（面積が値に比例する円を下端揃えで並べる）
+  nested_boxes    … 包含（外側→内側の入れ子の角丸矩形。汎用N段の包含関係）
 """
 from __future__ import annotations
 import math
+import re
 from pptx.util import Inches, Pt
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
@@ -25,7 +29,7 @@ from . import render as R
 from .render import (add_rect, add_text, add_hline, render_header, render_foot,
                      SLIDE_W, SLIDE_H, MARGIN, CONTENT_W)
 from .parser import Slide, split_emphasis
-from .render_util import columns_geometry, fill_shape
+from .render_util import columns_geometry, fill_shape, parse_number
 
 
 def _add_oval(slide, x, y, w, h, theme, color_name):
@@ -454,6 +458,257 @@ def render_image_left(slide, data: Slide, theme):
 
 
 # 登録
+
+# ---------------------------------------------------------------------------
+# 強調の共通処理：accent 塗りは面積が小さいときだけ（P2: accent 面積8%上限）。
+# 大きな図形は accent の太枠で強調する（色は theme 経由・塗りは通常色のまま）。
+# ---------------------------------------------------------------------------
+_ACCENT_FILL_MAX_RATIO = 0.06
+
+
+def _accent_fill_ok(w, h) -> bool:
+    return (int(w) * int(h)) / (int(SLIDE_W) * int(SLIDE_H)) <= _ACCENT_FILL_MAX_RATIO
+
+
+def _accent_outline(shp, theme):
+    shp.line.color.rgb = theme.rgb("accent")
+    shp.line.width = Pt(3)
+
+
+# ---------------------------------------------------------------------------
+# mutual_relation — 相互関係（中心1者 ⇄ 相手1〜3者）
+#   1個目の col = 中心（自社など）、2個目以降 = 相手（上限3。左右→下の順に配置）。
+#   相手 col の rows: `give "…"`＝相手→中心に渡すもの、`get "…"`＝中心→相手に渡すもの。
+#   lines はカード内の補足。各相手との間に往復2本のブロック矢印（muted）を置く。
+# ---------------------------------------------------------------------------
+def _relation_card(slide, theme, x, y, w, h, blk, fill, text_color):
+    shp = add_rect(slide, int(x), int(y), int(w), int(h), theme, fill, rounded=True)
+    if blk.highlight:
+        if _accent_fill_ok(w, h):
+            fill_shape(shp, theme, "accent")
+            text_color = "on_accent"
+        else:
+            _accent_outline(shp, theme)
+    lines = list(blk.lines)
+    title_h = h * (0.45 if lines else 1.0)
+    add_text(slide, int(x), int(y), int(w), int(title_h), theme, blk.title,
+             size=16, color_name=text_color, bold=True,
+             align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.BOTTOM if lines else MSO_ANCHOR.MIDDLE)
+    if lines:
+        add_text(slide, int(x + Inches(0.1)), int(y + title_h), int(w - Inches(0.2)),
+                 int(h - title_h), theme, split_emphasis(" ".join(lines)),
+                 size=11, color_name=text_color,
+                 align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.TOP)
+
+
+def _flow_labels(blk):
+    rows = dict(blk.rows)
+    return rows.get("give", ""), rows.get("get", "")
+
+
+def render_mutual_relation(slide, data: Slide, theme):
+    top = render_header(slide, data, theme)
+    render_foot(slide, data, theme)
+    blocks = data.blocks[:4]
+    if not blocks:
+        return
+    hub, partners = blocks[0], blocks[1:]
+    k = len(partners)
+    bottom = SLIDE_H - Inches(0.7)
+    avail_h = bottom - top
+
+    card_w = Inches(2.7)
+    vgap = Inches(0.9)
+    if k == 3:
+        row_h = (avail_h - vgap) / 2
+        row_y = top
+    else:
+        row_h = min(Inches(2.0), avail_h)
+        row_y = top + (avail_h - row_h) / 2
+    cy = row_y + row_h / 2
+
+    # 横並び位置：相手1者なら [中心, 相手]、2者以上なら [左相手, 中心, 右相手]
+    if k <= 1:
+        span = CONTENT_W * 0.8
+        hub_x = MARGIN + (CONTENT_W - span) / 2
+        side = [(hub_x + span - card_w, "right")] if k == 1 else []
+    else:
+        hub_x = MARGIN + (CONTENT_W - card_w) / 2
+        side = [(MARGIN, "left"), (MARGIN + CONTENT_W - card_w, "right")]
+
+    _relation_card(slide, theme, hub_x, row_y, card_w, row_h, hub, "main", "on_main")
+
+    arrow_t = Inches(0.32)
+    label_h = Inches(0.4)
+    for blk, (px, pos) in zip(partners[:2], side):
+        _relation_card(slide, theme, px, row_y, card_w, row_h, blk, "main_3", "ink")
+        give, get = _flow_labels(blk)
+        if pos == "right":
+            gx0, gx1 = hub_x + card_w, px
+            to_partner, to_hub = MSO_SHAPE.RIGHT_ARROW, MSO_SHAPE.LEFT_ARROW
+        else:
+            gx0, gx1 = px + card_w, hub_x
+            to_partner, to_hub = MSO_SHAPE.LEFT_ARROW, MSO_SHAPE.RIGHT_ARROW
+        ax = gx0 + Inches(0.15)
+        aw = gx1 - gx0 - Inches(0.3)
+        # 上段＝中心→相手（get）、下段＝相手→中心（give）
+        for shape_kind, ay, label, ly in (
+            (to_partner, cy - Inches(0.08) - arrow_t, get, cy - Inches(0.08) - arrow_t - label_h),
+            (to_hub, cy + Inches(0.08), give, cy + Inches(0.08) + arrow_t),
+        ):
+            shp = slide.shapes.add_shape(shape_kind, int(ax), int(ay), int(aw), int(arrow_t))
+            fill_shape(shp, theme, "muted", no_shadow=True)
+            if label:
+                add_text(slide, int(ax), int(ly), int(aw), int(label_h), theme,
+                         split_emphasis(label), size=11, color_name="ink",
+                         align=PP_ALIGN.CENTER,
+                         anchor=MSO_ANCHOR.BOTTOM if ly < cy else MSO_ANCHOR.TOP)
+
+    if k == 3:
+        blk = partners[2]
+        by = row_y + row_h + vgap
+        _relation_card(slide, theme, hub_x, by, card_w, row_h, blk, "main_3", "ink")
+        give, get = _flow_labels(blk)
+        ccx = hub_x + card_w / 2
+        ay = row_y + row_h + Inches(0.1)
+        ah = vgap - Inches(0.2)
+        lw = Inches(2.4)
+        for shape_kind, axx, label, lx, align in (
+            (MSO_SHAPE.DOWN_ARROW, ccx - Inches(0.08) - arrow_t, get,
+             ccx - Inches(0.16) - arrow_t - lw, PP_ALIGN.RIGHT),
+            (MSO_SHAPE.UP_ARROW, ccx + Inches(0.08), give,
+             ccx + Inches(0.16) + arrow_t, PP_ALIGN.LEFT),
+        ):
+            shp = slide.shapes.add_shape(shape_kind, int(axx), int(ay), int(arrow_t), int(ah))
+            fill_shape(shp, theme, "muted", no_shadow=True)
+            if label:
+                add_text(slide, int(lx), int(ay), int(lw), int(ah), theme,
+                         split_emphasis(label), size=11, color_name="ink",
+                         align=align, anchor=MSO_ANCHOR.MIDDLE)
+
+
+# ---------------------------------------------------------------------------
+# scale_compare — 規模比較（面積∝値の円を下端揃えで並べる。2〜5個）
+#   col.title＝ラベル、lines[0]＝表示値（例 "1.2兆円"）。比率計算用の数値は
+#   rows の `value "12000"` があればそれ、無ければ表示値の先頭の数値を使う（単位は揃える）。
+#   小さすぎて見えなくならないよう最小径を設け、表示値は円に収まらなければ円の上に出す。
+# ---------------------------------------------------------------------------
+_NUM_RE = re.compile(r"[-+]?\d[\d,]*(?:\.\d+)?")
+
+
+def _scale_value(blk) -> float:
+    rows = dict(blk.rows)
+    if "value" in rows:
+        return parse_number(rows["value"], context=f"scale_compare {blk.title}")
+    m = _NUM_RE.search(blk.lines[0]) if blk.lines else None
+    if not m:
+        return parse_number("", context=f"scale_compare {blk.title}")
+    return parse_number(m.group(0), context=f"scale_compare {blk.title}")
+
+
+def render_scale_compare(slide, data: Slide, theme):
+    top = render_header(slide, data, theme)
+    render_foot(slide, data, theme)
+    blocks = data.blocks[:5]
+    n = len(blocks)
+    if n == 0:
+        return
+    values = [max(_scale_value(b), 0.0) for b in blocks]
+    vmax = max(values) or 1.0
+
+    bottom = SLIDE_H - Inches(0.7)
+    label_h = Inches(0.5)
+    value_h = Inches(0.4)
+    baseline = bottom - label_h
+    gap = Inches(0.3)
+    col_w = columns_geometry(CONTENT_W, n, gap)
+    d_max = min(col_w, baseline - top - value_h)
+    d_min = Inches(0.3)
+
+    for i, (blk, v) in enumerate(zip(blocks, values)):
+        d = max(int(d_max * math.sqrt(v / vmax)), int(d_min))
+        cx = MARGIN + i * (col_w + gap) + col_w / 2
+        shp = _add_oval(slide, int(cx - d / 2), int(baseline - d), d, d, theme, "main")
+        text_color = "on_main"
+        if blk.highlight:
+            if _accent_fill_ok(d, d):
+                fill_shape(shp, theme, "accent", no_shadow=True)
+                text_color = "on_accent"
+            else:
+                _accent_outline(shp, theme)
+        add_text(slide, int(cx - col_w / 2), int(baseline + Inches(0.05)), int(col_w),
+                 int(label_h - Inches(0.05)), theme, blk.title, size=14, color_name="ink",
+                 bold=True, align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.TOP)
+        if not blk.lines:
+            continue
+        shown = blk.lines[0]
+        if d >= Inches(1.3):
+            add_text(slide, int(cx - d / 2), int(baseline - d), d, d, theme,
+                     shown, size=18, color_name=text_color, bold=True,
+                     align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+        else:
+            add_text(slide, int(cx - col_w / 2), int(baseline - d - value_h), int(col_w),
+                     int(value_h), theme, shown, size=14,
+                     color_name="accent" if blk.highlight else "ink", bold=True,
+                     align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.BOTTOM)
+
+
+# ---------------------------------------------------------------------------
+# nested_boxes — 包含（外側→内側の入れ子。2〜4段）
+#   1個目の col が最外周。各段の上部帯に「ラベル（col.title）＋補足（lines）」を置き、
+#   その下に1段内側の矩形を入れる。最内段はラベルと補足を中央配置。
+#   色は外→内に base_2 → main_3 → main_2 → main（内側ほど濃い＝焦点）。
+# ---------------------------------------------------------------------------
+_NEST_COLORS = [("base_2", "ink"), ("main_3", "ink"), ("main_2", "on_main"), ("main", "on_main")]
+
+
+def render_nested_boxes(slide, data: Slide, theme):
+    top = render_header(slide, data, theme)
+    render_foot(slide, data, theme)
+    blocks = data.blocks[:4]
+    n = len(blocks)
+    if n == 0:
+        return
+    bottom = SLIDE_H - Inches(0.7)
+    avail_h = bottom - top
+    inset_x = Inches(0.35)
+    inset_b = Inches(0.2)
+    band_h = min(Inches(0.85), avail_h * 0.6 / max(n - 1, 1))
+    palette = _NEST_COLORS[len(_NEST_COLORS) - n:] if n < len(_NEST_COLORS) else _NEST_COLORS
+
+    x, y, w, h = MARGIN, top, CONTENT_W, avail_h
+    for i, blk in enumerate(blocks):
+        fill, text_color = palette[i]
+        shp = add_rect(slide, int(x), int(y), int(w), int(h), theme, fill, rounded=True)
+        if blk.highlight:
+            if _accent_fill_ok(w, h):
+                fill_shape(shp, theme, "accent")
+                text_color = "on_accent"
+            else:
+                _accent_outline(shp, theme)
+        innermost = (i == n - 1)
+        desc = " ".join(blk.lines)
+        if innermost:
+            title_h = h * (0.5 if desc else 1.0)
+            add_text(slide, int(x), int(y), int(w), int(title_h), theme, blk.title,
+                     size=18, color_name=text_color, bold=True, align=PP_ALIGN.CENTER,
+                     anchor=MSO_ANCHOR.BOTTOM if desc else MSO_ANCHOR.MIDDLE)
+            if desc:
+                add_text(slide, int(x + Inches(0.2)), int(y + title_h), int(w - Inches(0.4)),
+                         int(h - title_h), theme, split_emphasis(desc), size=12,
+                         color_name=text_color, align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.TOP)
+            break
+        label_w = min(Inches(3.0), w * 0.35)
+        add_text(slide, int(x + Inches(0.2)), int(y), int(label_w), int(band_h), theme,
+                 blk.title, size=16, color_name=text_color, bold=True, anchor=MSO_ANCHOR.MIDDLE)
+        if desc:
+            add_text(slide, int(x + Inches(0.3) + label_w), int(y), int(w - label_w - Inches(0.5)),
+                     int(band_h), theme, split_emphasis(desc), size=12,
+                     color_name=text_color, anchor=MSO_ANCHOR.MIDDLE)
+        x, y = x + inset_x, y + band_h
+        w, h = w - 2 * inset_x, h - band_h - inset_b
+
+
 R.register("matrix", render_matrix)
 R.register("cycle", render_cycle)
 R.register("pyramid", render_pyramid)
@@ -462,3 +717,6 @@ R.register("org_chart", render_org_chart)
 R.register("formula", render_formula)
 R.register("timeline", render_timeline)
 R.register("image_left", render_image_left)
+R.register("mutual_relation", render_mutual_relation)
+R.register("scale_compare", render_scale_compare)
+R.register("nested_boxes", render_nested_boxes)

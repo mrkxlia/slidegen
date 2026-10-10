@@ -35,10 +35,10 @@
 
 ---
 
-## 2. 実装済みの型（`RENDERERS` に計168型）
+## 2. 実装済みの型（`RENDERERS` に計172型）
 
 > **真実は `slidegen/render.py` の `RENDERERS`**（`uv run python -c "import slidegen,slidegen.render as r;print(len(r.RENDERERS))"`
-> → 168）。本書は分類のための見取り図。
+> → 172）。本書は分類のための見取り図。
 > 数の手入力は古くなりやすいので、網羅確認は `RENDERERS` を参照すること。
 
 ### ベース構成（既存）
@@ -169,6 +169,16 @@ tsundoku library の資料作成ノウハウ記事5本（詳細出典は
   render_frameworks3.py）
 ✅ roadmap（レーン×期間のスパンバー。journey_mapのグリッド様式を踏襲し、rowsの期間指定
   "Q1"/"Q1-Q3"を該当列にまたがるバーとして描画。render_frameworks2.py）
+
+### 39パターン（Cone社）再照合由来
+
+speakerdeck.com/coneinc の「39パターン」と全型を再照合し、既存型で表現できなかった
+関係図・事例ページを追加。円グラフは上記の非推奨判断を維持して取り込まない。
+
+✅ mutual_relation（中心1者⇄相手1〜3者の往復ブロック矢印＋ラベル。render_relations.py）
+✅ scale_compare（面積∝値の円を下端揃えで並べる規模比較。上限5。render_relations.py）
+✅ nested_boxes（外→内の入れ子角丸矩形による包含。上限4段。render_relations.py）
+✅ case_study（導入企業→課題→施策→成果の4ブロック固定。labeled_blocks variant）
 
 ---
 

@@ -23,7 +23,7 @@ slide <型名>
 型ごとの差は「col にタイトルが要るか」「col の行数」「用途」だけ。下記カタログの
 用途を見て型名を選び、中身（headline/col の文言）だけを書けばよい。
 
-## 型カタログ（RENDERERS 全168型。用途で型名を選ぶ）
+## 型カタログ（RENDERERS 全172型。用途で型名を選ぶ）
 - title / section / agenda / quote / bullets … 表紙・章扉・目次・引用・箇条書き
 - compare(2〜4) / cards(2〜6) / kpi(1〜4) / process(3〜6) / pros_cons(2) / table / persona_card
   / speaker_intro_card / takeaways_emoji(2〜6) / ranking_list(上限8)
@@ -34,6 +34,7 @@ slide <型名>
 - labeled_blocks(基底) / prep / sds / desc … 話法フレーム（Point-Reason-Example-Point 等）
 - kishotenketsu / johakyu … 物語フレーム（起承転結・序破急）
 - feia / haikei / houkoku_sodan_irai … 分析・提案（Finding-Action・背景-課題-解決・報告-相談-依頼）
+- case_study … 導入事例（導入企業→課題→施策→成果の4ブロック固定・2x2。成果を強調）
 - kpt / ssc / fourls … ふりかえり（Keep-Problem-Try・Stop-Start-Continue・4Ls）
 - brand_pillars / sipoc / what_sowhat_nowwhat / mission_vision_values … フレームワーク解説
     （mission_vision_valuesはbrand_pillarsの3固定ロール版：Mission-Vision-Values）
@@ -114,6 +115,8 @@ slide <型名>
 - dot_matrix_chart(上限25) / pictogram_array(上限25) … 単一の値を「N個中M個を塗った
     単位アイコン」で示す（円のドット／人型の代わりの角丸長方形。1つの値のみ・col複数は
     非対応。下記参照）
+- mutual_relation / scale_compare / nested_boxes … 相互関係（中心1者⇄相手1〜3者を往復矢印＋
+    ラベルで結ぶ）・規模比較（面積∝値の円。上限5）・包含（外→内の入れ子矩形。上限4段）（下記参照）
 
 ## hero_canvas 系の書き方（big_fact 等は col ではなく専用プロパティ）
 slide big_fact
@@ -862,3 +865,66 @@ slide roadmap
     Q3-Q4 "API公開"
   col "セールス" highlight
     Q2 "パートナー開拓"
+
+## mutual_relation の書き方（1つ目の col=中心、以降=相手（上限3）。rows の give/get が矢印ラベル）
+
+相手は左右→下の順に配置される。相手 col の `give "…"` が「相手→中心」、`get "…"` が
+「中心→相手」の矢印ラベル（どちらも省略可）。lines はカード内の補足。一方向の流れだけなら
+process_flow、循環なら cycle_loop を使う。
+
+slide mutual_relation
+  kicker "ビジネスモデル"
+  headline "プラットフォームを中心に3者が価値を交換する"
+  col "自社プラットフォーム"
+    "マッチングと決済を提供"
+  col "出店企業"
+    give "出店料"
+    get "送客"
+  col "ユーザー" highlight
+    give "購入代金"
+    get "品揃えと保証"
+
+## scale_compare の書き方（col.title=ラベル、lines[0]=表示値。円の面積が値に比例。上限5）
+
+比率は表示値の先頭の数値から計算するので、**全 col の単位を揃える**（"1.2兆円" と "800億円" を
+混ぜない）。単位を揃えにくいときは rows に `value "12000"` を書くとそれを比率計算に使う。
+規模の差を直感的に見せる用途向け。値を正確に読ませたいなら bar_chart / bar_horizontal を使う。
+
+slide scale_compare
+  kicker "市場規模"
+  headline "国内市場は{海外の約1/4}にとどまる"
+  col "北米"
+    "4,800億円"
+  col "日本" highlight
+    "1,200億円"
+  col "東南アジア"
+    "300億円"
+
+## nested_boxes の書き方（col 記述順=外側→内側。上限4段。lines=各段の補足）
+
+各段の上部にラベルと補足、その内側に次の段を入れる。最内段は中央配置。市場規模の3重円は
+tam_sam_som、層の積み上げ（上下関係）は layered_stack を使う。
+
+slide nested_boxes
+  kicker "対象範囲"
+  headline "今期は{製造業の経理部門}に絞って展開する"
+  col "国内企業全体"
+    "約360万社"
+  col "従業員300名以上の製造業"
+    "約3,000社"
+  col "経理部門" highlight
+    "紙の請求書処理が月500件超の部署から着手"
+
+## case_study の書き方（col 4つ固定順：導入企業→課題→施策→成果。col にタイトル不要）
+
+slide case_study
+  kicker "導入事例"
+  headline "A社は請求書処理の工数を{70%削減}した"
+  col
+    "A株式会社（製造業・従業員1,200名）"
+  col
+    "月2,000件の紙請求書を手入力"
+  col
+    "OCR付き請求書受領サービスを導入"
+  col
+    "処理工数 {70%削減}"

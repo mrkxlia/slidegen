@@ -6,7 +6,7 @@ Claude Code に限らず各 AI エージェントから利用できる。
 
 ## 現在の状態
 
-- public リポジトリ。`RENDERERS` に**計168型**登録済み（型カタログの📋＝未実装は実質ゼロ）。
+- public リポジトリ。`RENDERERS` に**計172型**登録済み（型カタログの📋＝未実装は実質ゼロ）。
 - 要件/仕様は [requirements.md](requirements.md) / [spec.md](spec.md)。設計判断は `docs/adr/`
   （0001 uv 統一、0002 編集可能pptx必達、0003 pptx↔DSL 責務分離。
   索引は [docs/adr/README.md](docs/adr/README.md)）。
@@ -53,7 +53,7 @@ Claude Code に限らず各 AI エージェントから利用できる。
   - `labeled_blocks`（`render_base_labeled.py`）variant の型は多数：`houkoku_sodan_irai`/
     `worked_example`/`theorem_proof`/`imrad_overview`/`golden_circle`/`storybrand_sb7`/
     `pixar_story_spine`/`jtbd_statement`/`smart_goal`/`elevator_pitch`/`faq_qa`/
-    `mission_vision_values` 等。
+    `mission_vision_values`/`case_study` 等。
   - そのほか：`cta_recruit`＝`hero_canvas` の mode、`flashcard`/`recipe_step`＝`split_layout`
     variant、`travel_itinerary`/`okr`＝`columns_with_header` variant（`lead`がヘッダー帯）、
     `prisma_flow`/`consort_flow`＝`nodes_and_connectors` のレイアウト `vertical_side`
@@ -62,7 +62,9 @@ Claude Code に限らず各 AI エージェントから利用できる。
     `frayer_model`/`abstract_slide`＝`render_education.py`、`event_timetable`/`maturity_model`＝
     `render_life.py`、`before_after_metric`＝`render_data_support.py`、
     `takeaways_emoji`/`ranking_list`＝`render_more.py`、`org_chart`＝`render_relations.py`
-    （既存`tree`の1段限定を rows 経由の上司参照で多段へ拡張）。
+    （既存`tree`の1段限定を rows 経由の上司参照で多段へ拡張）、`mutual_relation`/`scale_compare`/`nested_boxes`＝`render_relations.py`
+    （相互関係・面積∝値の規模比較・入れ子の包含。大きな図形の highlight は accent 塗りでなく
+    accent 太枠にして P2 の accent 面積上限を守る）。
 - `skills/slidegen/` … Agent Skill 本体。`SKILL.md`（frontmatter はオープン仕様6フィールドのみ。
   **型名は列挙しない** — `tests/test_plugin_manifests.py` が機械ガード）、`scripts/slidegen.sh`
   （リポジトリ内外どちらでも動くレンダラッパー。内: `uv run slidegen`、外: `uvx --from git+...`）、

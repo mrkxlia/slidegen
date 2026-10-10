@@ -163,6 +163,11 @@ VARIANTS = {
         "labels": ["Mission｜使命", "Vision｜展望", "Values｜価値観"],
         "layout": "row", "accent_idx": None,
     },
+    # 39パターン(Cone社)由来の追加 ---------------------------------------------
+    "case_study": {  # 導入事例：顧客→課題→施策→成果（haikei の事例紹介版。成果を強調）
+        "labels": ["導入企業", "課題", "施策", "成果"],
+        "layout": "grid", "accent_idx": 3,
+    },
     # ビジネスフレーム(S5b) --------------------------------------------------
     "4p": {
         "labels": ["Product｜製品", "Price｜価格", "Place｜流通", "Promotion｜販促"],
