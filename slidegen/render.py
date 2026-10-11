@@ -123,7 +123,7 @@ def render_compare(slide, data: Slide, theme: Theme):
         # カラム見出し（強調列のみ accent、他は main）
         head_h = Inches(0.55)
         head_color = "accent" if blk.highlight else "main"
-        hb = add_rect(slide, x, top, col_w, head_h, theme, head_color, rounded=True)
+        add_rect(slide, x, top, col_w, head_h, theme, head_color, rounded=True)
         add_text(slide, x, top, col_w, head_h, theme, blk.title,
                  size=theme.sz_col_title, color_name="on_main", bold=True,
                  align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)

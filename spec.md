@@ -41,7 +41,6 @@ slidegen build <input.slide> -o <out.pptx> [--template <company.potx>]
 slidegen sync  <original.slide> <edited.pptx> [--apply] [-o <updated.slide>]
 ```
 - `build` は `api.render_file` を、`sync` は `slidegen/sync.py` を利用。
-- 後方互換: `python -m slidegen.cli` / `python -m slidegen.sync` も動く。
 
 ## 4. レンダリング規約 — `slidegen/render.py`（必達要件 R0 の実装）
 

@@ -77,7 +77,7 @@ def render_venn2(slide, data: Slide, theme):
     lx = cx - d + overlap / 2
     rx = cx - overlap / 2
 
-    def circle(x, color, alpha_label):
+    def circle(x, color):
         shp = slide.shapes.add_shape(MSO_SHAPE.OVAL, int(x), int(cy - d / 2), int(d), int(d))
         shp.fill.solid(); shp.fill.fore_color.rgb = theme.rgb(color)
         shp.line.color.rgb = theme.rgb("base"); shp.line.width = Pt(1.5)
@@ -85,8 +85,8 @@ def render_venn2(slide, data: Slide, theme):
         # 透過は環境差が出るので使わず、塗りベタ＋重なりは後段テキストで表現
         return shp
 
-    circle(lx, "main", "L")
-    circle(rx, "main_2", "R")
+    circle(lx, "main")
+    circle(rx, "main_2")
 
     labels = data.blocks
     # 左/重なり/右 のラベル（col 3つを想定）

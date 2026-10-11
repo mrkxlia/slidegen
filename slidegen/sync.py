@@ -17,12 +17,11 @@ sync.py — 手編集同期（Hand-Edit Sync）。
 これにより、Sonnet生成 → 人が文言を直す → 直しを記法に取り込む、のループが回る。
 
 使い方:
-  python -m slidegen.sync original.slide edited.pptx            # 差分を表示（dry-run）
-  python -m slidegen.sync original.slide edited.pptx --apply    # .slide を書き換える
-  python -m slidegen.sync original.slide edited.pptx --apply -o new.slide  # 別名で保存
+  slidegen sync original.slide edited.pptx            # 差分を表示（dry-run）
+  slidegen sync original.slide edited.pptx --apply    # .slide を書き換える
+  slidegen sync original.slide edited.pptx --apply -o new.slide  # 別名で保存
 """
 from __future__ import annotations
-import argparse
 import difflib
 from pptx import Presentation
 
@@ -137,34 +136,3 @@ def _format_diff(diff) -> str:
             lines.append(f"   ⚠ {entry['note']}")
     return "\n".join(lines)
 
-
-def main():
-    ap = argparse.ArgumentParser(
-        description="手編集同期：編集後pptxの文言変更を元の.slideに反映")
-    ap.add_argument("slide", help="生成元の記法ファイル(.slide)")
-    ap.add_argument("edited_pptx", help="人が編集した後の .pptx")
-    ap.add_argument("--apply", action="store_true", help=".slide を実際に書き換える")
-    ap.add_argument("-o", "--output", default=None,
-                    help="書き換え結果の保存先（省略時は元の.slideを上書き）")
-    args = ap.parse_args()
-
-    with open(args.slide, encoding="utf-8") as f:
-        src = f.read()
-
-    diff = compute_diff(src, args.edited_pptx)
-    print(_format_diff(diff))
-
-    if args.apply:
-        new_src, applied = apply_changes(src, diff)
-        out = args.output or args.slide
-        with open(out, "w", encoding="utf-8") as f:
-            f.write(new_src)
-        print(f"\n→ {applied}件の文言変更を {out} に反映しました。")
-    else:
-        total = sum(len(e["changes"]) for e in diff)
-        if total:
-            print(f"\n（dry-run）{total}件の文言変更を検出。--apply で .slide に反映します。")
-
-
-if __name__ == "__main__":
-    main()

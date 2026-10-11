@@ -32,52 +32,36 @@
 出力は記法のみ。
 [ここに 画像 / inspect結果JSON / 説明 ]
 ```
-→ 出てきた .slide を `python -m slidegen.cli x.slide -o x.pptx` で生成して確認。
+→ 出てきた .slide を `slidegen build x.slide -o x.pptx` で生成して確認。
 
 ---
 
 ## レベル②：新型の追加（カタログにない構造のとき）
 
-### Step 1. 型スペック(JSON)を起こす
-Claude に、入力を見て下記スキーマの JSON を書かせる。これが中間表現（MNPの記法設計をAIに任せる発想と同じ）。
-```json
-{
-  "name": "feature_grid",
-  "intent": "特徴を3〜6個グリッドで見せる",
-  "uses_header": true,
-  "uses_foot": true,
-  "element": "col",
-  "count_rule": "3..6",
-  "layout": "grid",          // grid | columns | rows | centered | table
-  "highlight": "accent",
-  "regions": [
-    {"role": "title", "size": "col_title"},
-    {"role": "desc",  "size": "body"}
-  ]
-}
-```
+### Step 1. 型の意図・レイアウト・要素数を決める
+Claude に入力を見て、意図（短文）・レイアウト（grid | columns | rows | centered | table）・
+要素数ルール（例 `3..6`）を決めさせる。
 pptx入力なら `inspect_pptx` の出力（位置%・配色面積比・フォント階層）が根拠になる。
 配色面積比が 70:25:5 から大きく外れていたら、**取り込まず**ベース寄りに正規化する
 （元スライドの色をそのまま真似ない。デザイン制約を優先する）。
 
 ### Step 2. render関数の雛形を生成
 ```
-python -m slidegen.scaffold_type typespec.json -o slidegen/render_feature_grid.py
+make new TYPE=feature_grid INTENT="特徴を3〜6個グリッドで見せる" LAYOUT=grid COUNT="3..6"
 ```
+`slidegen/render_feature_grid.py`（雛形）と `examples/feature_grid.slide` を生成し、
+`__init__.py` への登録も行う。
 
 ### Step 3. 雛形の TODO を実装
 `add_rect / add_text / add_hline` だけで配置を書く。**新色・新フォントを足さない**（theme経由のみ）。
-強調は accent のみ。末尾の `R.RENDERERS["feature_grid"] = ...` で自動登録される。
+強調は accent のみ。末尾の `R.register("feature_grid", ...)` で登録される。
 
-### Step 4. __init__.py で読み込み
-`render_more` と同様に `from . import render_feature_grid` を追加（import副作用で登録）。
-
-### Step 5. dsl-reference.md に型の書式を追記
+### Step 4. dsl-reference.md に型の書式を追記
 AIがその型の記法を書けるよう、`skills/slidegen/references/dsl-reference.md` に使い方と例を
 1ブロック足す（**必須**。`tests/test_dsl_reference.py` が「教える型 ≡ RENDERERS」を CI で
 機械保証しており、怠ると CI が落ちる）。
 
-### Step 6. QA
+### Step 5. QA
 サンプル記法を1枚作り、生成→画像化→目視（pptx skillのVisual QA手順）。
 チェック：はみ出し・重なり・余白・配色比・強調が1箇所か。
 
@@ -87,7 +71,7 @@ AIがその型の記法を書けるよう、`skills/slidegen/references/dsl-refe
 
 - **決定的に読める部分はコード**（inspect_pptx：位置・色・サイズの抽出）
 - **意味の解釈はLLM**（これはgrid型だ、3〜6個だ、という判断）
-- **雛形生成はコード**（scaffold_type：定型コードを吐く）
+- **雛形生成はコード**（tools/new_type.py：定型コードを吐く）
 - **詰めはLLM**（社内Claude Codeが配置を実装）
 
 この分業により、毎回ゼロからレイアウトを起こさず、既存の安全な部品（theme/共通ヘルパー）の

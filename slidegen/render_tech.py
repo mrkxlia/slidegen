@@ -26,7 +26,7 @@ def _code_lines(data: Slide):
     return []
 
 
-def _mono_text(slide, x, y, w, h, theme, lines, *, size, color_name, on_dark, line_colors=None):
+def _mono_text(slide, x, y, w, h, theme, lines, *, size, color_name, line_colors=None):
     """等幅テキストを1行=1段落で描く。line_colors を渡すと行ごとに色を変えられる
     （未指定時は全行 color_name の単色＝既存呼び出し元の挙動は不変）。"""
     box = slide.shapes.add_textbox(int(x), int(y), int(w), int(h))
@@ -65,7 +65,7 @@ def render_code_block(slide, data: Slide, theme):
                  lang, size=11, color_name="muted", bold=True)
         ty += Inches(0.35)
     _mono_text(slide, MARGIN + pad, ty, CONTENT_W - pad * 2, bottom - ty - Inches(0.1),
-               theme, lines, size=14, color_name="base", on_dark=True)
+               theme, lines, size=14, color_name="base")
 
 
 def render_terminal(slide, data: Slide, theme):
@@ -85,7 +85,7 @@ def render_terminal(slide, data: Slide, theme):
             shown.append("$ " + ln)     # コマンド行
     pad = Inches(0.2)
     _mono_text(slide, MARGIN + pad, y + pad, CONTENT_W - pad * 2, h - pad * 2,
-               theme, shown, size=14, color_name="base", on_dark=True)
+               theme, shown, size=14, color_name="base")
 
 
 # メソッド → 色
@@ -164,7 +164,7 @@ def render_code_diff(slide, data: Slide, theme):
         else:
             colors.append("base")
     _mono_text(slide, MARGIN + pad, ty, CONTENT_W - pad * 2, bottom - ty - Inches(0.1),
-               theme, lines, size=14, color_name="base", on_dark=True, line_colors=colors)
+               theme, lines, size=14, color_name="base", line_colors=colors)
 
 
 # ---------------------------------------------------------------------------
@@ -191,7 +191,7 @@ def render_sql_result(slide, data: Slide, theme):
         panel_h = min(Inches(0.35) * len(query_lines) + Inches(0.2), Inches(1.8))
         add_rect(slide, MARGIN, int(y), CONTENT_W, int(panel_h), theme, "ink", rounded=True)
         _mono_text(slide, MARGIN + Inches(0.2), y + Inches(0.1), CONTENT_W - Inches(0.4),
-                   panel_h - Inches(0.2), theme, query_lines, size=13, color_name="base", on_dark=True)
+                   panel_h - Inches(0.2), theme, query_lines, size=13, color_name="base")
         y += panel_h + Inches(0.2)
 
     cols = data.blocks[:_SQL_MAX_COLS]

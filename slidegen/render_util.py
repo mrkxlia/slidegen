@@ -76,7 +76,7 @@ def columns_geometry(total_w, n: int, gap):
 
 def fill_shape(shape, theme, color_name, *, no_shadow=False):
     """塗り潰し＋線なしのネイティブ図形にする共通処理。
-    no_shadow=True の呼び出し元（render_relations.py の _add_oval/_add_triangle 等）は
+    no_shadow=True の呼び出し元（render_relations.py の _add_oval 等）は
     ここで shadow も無効化する。add_rect 経由の呼び出し元は従来どおり呼び出し側で
     shadow.inherit=False を設定するため、ここでは既定 no_shadow=False（挙動不変）。
     """

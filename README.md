@@ -69,7 +69,7 @@ slidegen build deck.slide -o deck.pptx [--template company.potx]   # 記法 → 
 slidegen sync  deck.slide deck.pptx [--apply]                      # 手編集の文言差分を .slide に反映
 ```
 
-`python -m slidegen build ...` でも同じ。従来の `python -m slidegen.cli` / `.sync` も後方互換で動く。
+`python -m slidegen build ...` でも同じ。
 
 ## ライブラリとして使う
 
