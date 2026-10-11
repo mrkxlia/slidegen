@@ -88,7 +88,7 @@ API 仕様は [spec.md](spec.md) §2。
 ## ディレクトリ早見
 
 ```
-slidegen/   コアライブラリ（parser / render*.py / theme / api / cli）。RENDERERS = 172 型
+slidegen/   コアライブラリ（parser / render*.py / theme / api / cli）。RENDERERS = 173 型
 skills/     Agent Skill 本体（SKILL.md・scripts/ レンダラッパー・references/ DSL リファレンス等）
 copilot/    Copilot in PowerPoint 向けスキル（SKILL.md 単体。指示のみで完結）
 plugin.json / .claude-plugin/   プラグインマニフェスト（Agent Plugins 1.0 / Claude Code。両方 skills/ を共有）
@@ -122,13 +122,13 @@ uv run --extra dev pytest tests/ -q                       # 単発はこちら�
 
 新しい型を**テスト駆動**で増やす手順は [docs/test_driven_workflow.md](docs/test_driven_workflow.md)。
 
-## 対応する型（計 172 型）
+## 対応する型（計 173 型）
 
 「**9つの基底レイアウト × variant（ラベル/配置/強調位置）× 中身**」の3軸分解で広いカタログを吸収する設計。
 個別型を量産しない。網羅の**単一情報源は `RENDERERS`**:
 
 ```bash
-uv run python -c "import slidegen, slidegen.render as r; print(len(r.RENDERERS))"   # → 172
+uv run python -c "import slidegen, slidegen.render as r; print(len(r.RENDERERS))"   # → 173
 ```
 
 代表例: `title` / `section` / `agenda` / `bullets`・`compare` / `cards` / `kpi` / `process` / `table`・

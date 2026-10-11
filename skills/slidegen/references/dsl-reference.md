@@ -23,7 +23,7 @@ slide <型名>
 型ごとの差は「col にタイトルが要るか」「col の行数」「用途」だけ。下記カタログの
 用途を見て型名を選び、中身（headline/col の文言）だけを書けばよい。
 
-## 型カタログ（RENDERERS 全172型。用途で型名を選ぶ）
+## 型カタログ（RENDERERS 全173型。用途で型名を選ぶ）
 - title / section / agenda / quote / bullets … 表紙・章扉・目次・引用・箇条書き
 - compare(2〜4) / cards(2〜6) / kpi(1〜4) / process(3〜6) / pros_cons(2) / table / persona_card
   / speaker_intro_card / takeaways_emoji(2〜6) / ranking_list(上限8)
@@ -31,6 +31,8 @@ slide <型名>
       持ち帰りポイント・順位バッジ付きランキング（下記参照）
 - matrix / cycle / pyramid / tree / org_chart(ノード10・レベル3上限) / formula / timeline / image_left
     … 対応表・循環・階層・樹形図・多段組織図・数式・年表・画像+文（org_chartはrowsで上司参照。下記参照）
+- logic_tree(ノード12・レベル4・葉6・注記列2上限) … 左→右の多段ロジックツリー＋葉ごとの注記列
+    （MECE分解・イシューツリー・売上分解。葉から破線矢印で注記列へ。下記参照）
 - labeled_blocks(基底) / prep / sds / desc … 話法フレーム（Point-Reason-Example-Point 等）
 - kishotenketsu / johakyu … 物語フレーム（起承転結・序破急）
 - feia / haikei / houkoku_sodan_irai … 分析・提案（Finding-Action・背景-課題-解決・報告-相談-依頼）
@@ -791,6 +793,28 @@ slide org_chart
     上司 "CEO"          # rows[0]の値=上司名（ラベルは自由）
   col "エンジニアリング部長"
     上司 "CTO"
+
+## logic_tree の書き方（rows[0]の値=親ノード名。葉の lines=注記列。上限ノード12・レベル4・葉6・注記列2）
+
+左→右に分解する横型ロジックツリー。親参照は org_chart と同じ（ラベルは自由、無ければルート）。
+DSL記述順が上から下の並びになる。葉（子を持たないノード）の lines[0], lines[1] が右の注記列
+（破線矢印の先）に入り、`columns` の2個目以降が注記列の見出し・1個目がツリー側の見出しになる
+（columns は任意）。葉でないノードの lines はノード内の補足（小さい文字）になる。
+分解の切り口はペア概念（国内/国外、申請者/申請 等）にすると MECE に近づく。
+1枚で読めるのは3段程度まで。深いときは枝ごとに別スライドへ分ける。
+
+slide logic_tree
+  headline "売上減少の主因は{既存顧客の単価}にある"
+  columns "売上の分解" "前年比"
+  col "売上"
+  col "既存顧客売上"
+    親 "売上"            # rows[0]の値=親ノード名（ラベルは自由）
+  col "既存顧客数"
+    親 "既存顧客売上"
+    "-1%"                # 葉の lines=注記列
+  col "既存単価" highlight
+    親 "既存顧客売上"
+    "{-12%}"
 
 ## dot_matrix_chart / pictogram_array の書き方（col1つ・title=ラベル、lines[0]=値）
 

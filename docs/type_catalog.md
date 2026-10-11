@@ -35,10 +35,10 @@
 
 ---
 
-## 2. 実装済みの型（`RENDERERS` に計172型）
+## 2. 実装済みの型（`RENDERERS` に計173型）
 
 > **真実は `slidegen/render.py` の `RENDERERS`**（`uv run python -c "import slidegen,slidegen.render as r;print(len(r.RENDERERS))"`
-> → 172）。本書は分類のための見取り図。
+> → 173）。本書は分類のための見取り図。
 > 数の手入力は古くなりやすいので、網羅確認は `RENDERERS` を参照すること。
 
 ### ベース構成（既存）
@@ -179,6 +179,15 @@ speakerdeck.com/coneinc の「39パターン」と全型を再照合し、既存
 ✅ scale_compare（面積∝値の円を下端揃えで並べる規模比較。上限5。render_relations.py）
 ✅ nested_boxes（外→内の入れ子角丸矩形による包含。上限4段。render_relations.py）
 ✅ case_study（導入企業→課題→施策→成果の4ブロック固定。labeled_blocks variant）
+
+### 外資系コンサルのロジックツリー活用（X ポスト）由来
+
+x.com/j_matsugami/status/1736163815744762062（経産省報告書 p.34・アクセンチュア受託の紹介）の
+「左→右の多段ツリー＋葉から破線矢印で結んだ注記列」は、tree（1段）・org_chart（上→下・注記なし）
+では描けなかった。文章側の原則（ペア概念での MECE 分解）は design-guidelines.md §3 に取り込み済み。
+
+✅ logic_tree（左→右の多段ロジックツリー＋葉ごとの注記列。columns で列見出し。親参照は
+  org_chart と同じ rows[0]。ノード12・レベル4・葉6・注記列2上限。render_relations.py）
 
 ---
 
