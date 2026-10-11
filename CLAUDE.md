@@ -6,7 +6,7 @@ Claude Code に限らず各 AI エージェントから利用できる。
 
 ## 現在の状態
 
-- public リポジトリ。`RENDERERS` に**計172型**登録済み（型カタログの📋＝未実装は実質ゼロ）。
+- public リポジトリ。`RENDERERS` に**計173型**登録済み（型カタログの📋＝未実装は実質ゼロ）。
 - 要件/仕様は [requirements.md](requirements.md) / [spec.md](spec.md)。設計判断は `docs/adr/`
   （0001 uv 統一、0002 編集可能pptx必達、0003 pptx↔DSL 責務分離。
   索引は [docs/adr/README.md](docs/adr/README.md)）。
@@ -64,7 +64,9 @@ Claude Code に限らず各 AI エージェントから利用できる。
     `takeaways_emoji`/`ranking_list`＝`render_more.py`、`org_chart`＝`render_relations.py`
     （既存`tree`の1段限定を rows 経由の上司参照で多段へ拡張）、`mutual_relation`/`scale_compare`/`nested_boxes`＝`render_relations.py`
     （相互関係・面積∝値の規模比較・入れ子の包含。大きな図形の highlight は accent 塗りでなく
-    accent 太枠にして P2 の accent 面積上限を守る）。
+    accent 太枠にして P2 の accent 面積上限を守る）、`logic_tree`＝`render_relations.py`
+    （左→右の多段ロジックツリー＋葉ごとの注記列。親参照は org_chart と同じ rows[0]。
+    S2 のシェイプ数上限のためノード12・レベル4・葉6・注記列2にクランプ）。
 - `skills/slidegen/` … Agent Skill 本体。`SKILL.md`（frontmatter はオープン仕様6フィールドのみ。
   **型名は列挙しない** — `tests/test_plugin_manifests.py` が機械ガード）、`scripts/slidegen.sh`
   （リポジトリ内外どちらでも動くレンダラッパー。内: `uv run slidegen`、外: `uvx --from git+...`）、

@@ -41,7 +41,7 @@ slidegen は、独自の中間記法(DSL)から、PowerPoint で**編集可能�
 
 ### 4-1. 機能要件（FR-LIB）
 - **FR-LIB-1** DSL テキスト → pptx を3経路で返す（`bytes` / `Presentation` / ファイル）。→ spec §2, `slidegen/api.py`
-- **FR-LIB-2** 「型 ＋ 要素N個」を書くと、要素数からレイアウトを自動選択。計 **172 型**（9基底×variant×中身）。
+- **FR-LIB-2** 「型 ＋ 要素N個」を書くと、要素数からレイアウトを自動選択。計 **173 型**（9基底×variant×中身）。
   → `docs/type_catalog.md`、網羅の真実は `slidegen/render.py` の `RENDERERS`
 - **FR-LIB-3** 会社テンプレ(.potx/.pptx)を土台に生成できる（`build(..., template=...)`）。
 - **FR-LIB-4** CLI: `slidegen build` / `slidegen sync`（＋後方互換の `python -m slidegen.cli|sync`）。→ spec §3

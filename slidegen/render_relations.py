@@ -17,13 +17,16 @@ render_relations.py — 39パターン(Cone社)から、要素間の関係を示
   mutual_relation … 相互関係（中心1者と相手1〜3者の間を、往復2本の矢印＋ラベルで結ぶ）
   scale_compare   … 規模比較（面積が値に比例する円を下端揃えで並べる）
   nested_boxes    … 包含（外側→内側の入れ子の角丸矩形。汎用N段の包含関係）
+  logic_tree      … 左→右の多段ロジックツリー＋葉ごとの注記列（破線矢印で結ぶ。列見出し任意）
 """
 from __future__ import annotations
 import math
 import re
 from pptx.util import Inches, Pt
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
-from pptx.enum.shapes import MSO_SHAPE
+from pptx.enum.shapes import MSO_SHAPE, MSO_CONNECTOR
+from pptx.enum.dml import MSO_LINE
+from pptx.oxml.ns import qn
 
 from . import render as R
 from .render import (add_rect, add_text, add_hline, render_header, render_foot,
@@ -709,6 +712,217 @@ def render_nested_boxes(slide, data: Slide, theme):
         w, h = w - 2 * inset_x, h - band_h - inset_b
 
 
+# ---------------------------------------------------------------------------
+# logic_tree — 左→右の多段ロジックツリー＋葉ごとの注記列
+#   columns "ツリーの見出し" "注記列1の見出し" "注記列2の見出し"   # 任意。無ければ見出し帯なし
+#   col "既保有データ"
+#   col "申請者情報"
+#     親 "既保有データ"          # rows[0]の値＝親ノード名（ラベルは自由。org_chart と同じ）
+#   col "アカウント情報" highlight
+#     親 "申請者情報"
+#     "Gビズフォーム全手続"     # 葉の lines[i]＝注記列 i の文言（{強調} 可）
+#     "{GビズID}からデータを取得"
+# 葉でないノードの lines はノード内の補足（小さい文字）になる。
+# 上限: ノード12・レベル4・葉6・注記列2（S2 のシェイプ数上限と可読性のため。超過分は描かない）
+# ---------------------------------------------------------------------------
+_LOGIC_TREE_MAX_NODES = 12
+_LOGIC_TREE_MAX_LEVELS = 4
+_LOGIC_TREE_MAX_LEAVES = 6
+_LOGIC_TREE_MAX_NOTES = 2
+
+
+def _logic_tree_layout(blocks):
+    """親参照を解決し、DFS順（DSL記述順）の (block, level) と葉の並びを返す。循環は根扱い。"""
+    names = [b.title for b in blocks]
+    parent_of = {}
+    for b in blocks:
+        p = b.rows[0][1] if b.rows else None
+        parent_of[b.title] = p if (p in names and p != b.title) else None
+    for name in names:  # 循環参照を断つ（循環に入ったノードは根にする）
+        cur, seen = name, set()
+        while parent_of.get(cur):
+            if cur in seen:
+                parent_of[name] = None
+                break
+            seen.add(cur)
+            cur = parent_of[cur]
+    children = {n: [] for n in names}
+    by_name = {}
+    for b in blocks:
+        if b.title in by_name:
+            continue  # 同名ノードは先勝ち
+        by_name[b.title] = b
+        if parent_of[b.title]:
+            children[parent_of[b.title]].append(b)
+    order, leaves = [], []
+
+    def walk(b, lv):
+        if lv >= _LOGIC_TREE_MAX_LEVELS or len(leaves) >= _LOGIC_TREE_MAX_LEAVES:
+            return False
+        kids = children[b.title]
+        if not kids:
+            order.append((b, lv, True))
+            leaves.append(b)
+            return True
+        entry = [b, lv, False]
+        order.append(entry)
+        drawn = [walk(k, lv + 1) for k in kids]
+        if not any(drawn):  # 子が1つも描けなかった（深さ超過）→ 自分が葉
+            entry[2] = True
+            leaves.append(b)
+        return True
+
+    for b in blocks:
+        if parent_of[b.title] is None and by_name.get(b.title) is b:
+            walk(b, 0)
+    return [tuple(e) for e in order], leaves, parent_of
+
+
+def _arrow_end(connector):
+    ln = connector.line._get_or_add_ln()
+    tail = ln.find(qn("a:tailEnd"))
+    if tail is None:
+        tail = ln.makeelement(qn("a:tailEnd"), {})
+        ln.append(tail)
+    tail.set("type", "triangle")
+
+
+def render_logic_tree(slide, data: Slide, theme):
+    top = render_header(slide, data, theme)
+    render_foot(slide, data, theme)
+    blocks = data.blocks[:_LOGIC_TREE_MAX_NODES]
+    if not blocks:
+        return
+    order, leaves, parent_of = _logic_tree_layout(blocks)
+    headers = data.props.get("columns_list") or (
+        [data.props["columns"]] if data.props.get("columns") else [])
+    n_notes = min(_LOGIC_TREE_MAX_NOTES,
+                  max([len(headers) - 1] + [len(b.lines) for b in leaves]))
+    n_levels = max(lv for _, lv, _ in order) + 1
+
+    # 横方向：ツリー領域＋(矢印の間隔)＋注記列。注記列は後ろほど広い（説明文が入る）
+    arrow_gap = Inches(0.6)
+    if n_notes == 0:
+        tree_w = CONTENT_W
+    else:
+        tree_w = int(CONTENT_W * (0.6 if n_notes == 1 else 0.5))
+    notes_w = CONTENT_W - tree_w - (arrow_gap if n_notes else 0)
+    note_ws = ([notes_w] if n_notes == 1 else
+               [int(notes_w * 0.38), notes_w - int(notes_w * 0.38)] if n_notes == 2 else [])
+    note_gap = Inches(0.2)
+    note_xs, x = [], MARGIN + tree_w + arrow_gap
+    for w in note_ws:
+        note_xs.append(x)
+        x += w
+    lv_gap = Inches(0.35)
+    node_w = int(min(Inches(2.6), (tree_w - lv_gap * (n_levels - 1)) / n_levels))
+    node_size = 11 if n_levels >= 4 else 12
+
+    # 列見出し帯（任意）
+    y0 = top
+    if headers:
+        head_h = Inches(0.4)
+        spans = [(MARGIN, tree_w)] + [(note_xs[i], note_ws[i] - (note_gap if i < n_notes - 1 else 0))
+                                      for i in range(n_notes)]
+        for (hx, hw), label in zip(spans, headers):
+            add_text(slide, int(hx), int(y0), int(hw), int(head_h), theme, label,
+                     size=12, color_name="muted", bold=True,
+                     align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+            add_hline(slide, int(hx), int(y0 + head_h), int(hw), theme, "rule", 1.0)
+        y0 = y0 + head_h + Inches(0.2)
+
+    # 縦方向：葉1つ＝1行。親は最初の子と同じ行（上揃え）に置く
+    bottom = SLIDE_H - Inches(0.7)
+    slot_h = (bottom - y0) / len(leaves)
+    node_h = int(min(Inches(0.8), slot_h * 0.8))
+    leaf_row = {id(b): i for i, b in enumerate(leaves)}
+    pos = {}
+
+    def first_leaf_row(name):
+        # DFS順で name 以降に最初に現れる葉の行
+        start = next(i for i, (b, _, _) in enumerate(order) if b.title == name)
+        for b, _, is_leaf in order[start:]:
+            if is_leaf:
+                return leaf_row[id(b)]
+        return 0
+
+    for b, lv, is_leaf in order:
+        row = leaf_row[id(b)] if is_leaf else first_leaf_row(b.title)
+        x = MARGIN + lv * (node_w + lv_gap)
+        y = int(y0 + row * slot_h + (slot_h - node_h) / 2)
+        pos[b.title] = (int(x), y)
+
+    # 親→子の結線：直線のみで組む（カギ型コネクタは描画系によって折れ位置がずれるため）。
+    # 親の右端→最初の子は同じ行なので1本、残りの子は幹（隙間の中央の縦線）から水平線を引く
+    def _line(x1, y1, x2, y2):
+        ln = slide.shapes.add_connector(MSO_CONNECTOR.STRAIGHT, int(x1), int(y1), int(x2), int(y2))
+        ln.line.color.rgb = theme.rgb("rule")
+        ln.line.width = Pt(1.5)
+
+    kids_of = {}
+    for b, lv, _ in order:
+        p = parent_of.get(b.title)
+        if p and p in pos:
+            kids_of.setdefault(p, []).append(b.title)
+    for p, kids in kids_of.items():
+        px, py = pos[p]
+        trunk_x = px + node_w + lv_gap // 2
+        mids = [pos[k][1] + node_h // 2 for k in kids]
+        _line(px + node_w, py + node_h // 2, pos[kids[0]][0], mids[0])
+        if len(kids) > 1:
+            _line(trunk_x, mids[0], trunk_x, mids[-1])
+            for k, m in zip(kids[1:], mids[1:]):
+                _line(trunk_x, m, pos[k][0], m)
+
+    for b, lv, is_leaf in order:
+        x, y = pos[b.title]
+        if b.highlight:
+            color, text_color = "accent", "on_accent"
+        elif lv == 0:
+            color, text_color = "main", "on_main"
+        else:
+            color, text_color = "base_2", "ink"
+        rect = add_rect(slide, x, y, node_w, node_h, theme, color)
+        rect.shadow.inherit = False
+        if not is_leaf and b.lines:
+            box = add_text(slide, x, y, node_w, node_h, theme, b.title, size=node_size,
+                           color_name=text_color, bold=True,
+                           align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+            p2 = box.text_frame.add_paragraph()
+            p2.alignment = PP_ALIGN.CENTER
+            r = p2.add_run()
+            r.text = " ".join(b.lines)
+            r.font.size = Pt(10)
+            r.font.name = theme.font
+            r.font.color.rgb = theme.rgb(text_color)
+        else:
+            add_text(slide, x, y, node_w, node_h, theme, b.title, size=node_size,
+                     color_name=text_color, bold=True,
+                     align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+
+    # 葉→注記列（破線矢印＋文言）
+    for b in leaves:
+        notes = b.lines[:n_notes]
+        if not notes:
+            continue
+        x, y = pos[b.title]
+        mid = y + node_h // 2
+        conn = slide.shapes.add_connector(
+            MSO_CONNECTOR.STRAIGHT, x + node_w + Inches(0.08), mid,
+            int(note_xs[0] - Inches(0.08)), mid)
+        conn.line.color.rgb = theme.rgb("muted")
+        conn.line.width = Pt(1.25)
+        conn.line.dash_style = MSO_LINE.DASH
+        _arrow_end(conn)
+        row_top = int(mid - slot_h / 2)
+        for i, note in enumerate(notes):
+            w = note_ws[i] - (note_gap if i < n_notes - 1 else 0)
+            add_text(slide, int(note_xs[i]), row_top, int(w), int(slot_h), theme,
+                     split_emphasis(note), size=12, color_name="ink",
+                     align=PP_ALIGN.CENTER if (i == 0 and n_notes == 2) else PP_ALIGN.LEFT,
+                     anchor=MSO_ANCHOR.MIDDLE)
+
+
 R.register("matrix", render_matrix)
 R.register("cycle", render_cycle)
 R.register("pyramid", render_pyramid)
@@ -720,3 +934,4 @@ R.register("image_left", render_image_left)
 R.register("mutual_relation", render_mutual_relation)
 R.register("scale_compare", render_scale_compare)
 R.register("nested_boxes", render_nested_boxes)
+R.register("logic_tree", render_logic_tree)
