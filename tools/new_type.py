@@ -8,11 +8,10 @@ Claude Code が「新しい型を足す」と言われたとき、これを使�
     --layout columns --count "3..5"
 
 1コマンドで以下を実行：
-  1. 型スペック JSON を保存
-  2. slidegen/render_<name>.py の雛形を生成
-  3. examples/<name>.slide のサンプル記法スケルトンを生成
-  4. （実装後に）pytest を走らせて第1層を通過確認
-  5. （実装後に）モンタージュを生成
+  1. slidegen/render_<name>.py の雛形を生成
+  2. examples/<name>.slide のサンプル記法スケルトンを生成
+  3. （実装後に）pytest を走らせて第1層を通過確認
+  4. （実装後に）モンタージュを生成
 
 ループの回し方:
   $ uv run --extra dev python tools/new_type.py mytype --intent "..." --layout grid
@@ -23,12 +22,62 @@ Claude Code が「新しい型を足す」と言われたとき、これを使�
    → pytest + モンタージュ生成 + チェックリスト表示
 """
 from __future__ import annotations
-import sys, os, json, argparse, subprocess, pathlib
+import sys, os, argparse, subprocess, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SLIDEGEN = ROOT / "slidegen"
 EXAMPLES = ROOT / "examples"
-SPECS = ROOT / "type_specs"
+
+
+LAYOUT_HINTS = {
+    "grid":     "cols = 2 if n <= 4 else 3  # 要素数で列数を決める",
+    "columns":  "cols = n                   # 横一列",
+    "rows":     "rows = n                   # 縦積み",
+    "centered": "# 中央に1要素を大きく",
+    "table":    "# slide.shapes.add_table(...) を使う（本物のPPTテーブル）",
+}
+
+
+def scaffold(name: str, intent: str, layout: str, count_rule: str) -> str:
+    """slidegen/render_<name>.py の雛形コードを返す。"""
+    hint = LAYOUT_HINTS[layout]
+
+    return f'''"""
+render_{name}.py — 型「{name}」: {intent}
+自動生成された雛形。社内Claude Codeで中身を実装する。
+規約: §2-bis(編集可能・ネイティブ要素のみ) / §3(強調はaccentのみ・新色禁止)。
+要素数ルール: {count_rule}
+"""
+from pptx.util import Inches, Pt
+from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
+
+from . import render as R
+from .render import (add_rect, add_text, add_hline, render_header, render_foot,
+                     SLIDE_W, SLIDE_H, MARGIN, CONTENT_W)
+from .parser import Slide, split_emphasis
+
+
+def render_{name}(slide, data: Slide, theme):
+    top = render_header(slide, data, theme)
+    render_foot(slide, data, theme)
+    n = len(data.blocks)
+    if n == 0:
+        return
+    {hint}
+    bottom = SLIDE_H - Inches(0.7)
+
+    for i, blk in enumerate(data.blocks):
+        color = "accent" if blk.highlight else "main"   # 強調はaccentのみ
+        # TODO: レイアウト({layout})に従って配置を実装
+        # 利用可能: add_rect(slide,x,y,w,h,theme,color_name,rounded=) /
+        #          add_text(slide,x,y,w,h,theme,runs,size=,color_name=,bold=,align=,anchor=) /
+        #          add_hline(slide,x,y,w,theme,color_name,weight)
+        # title: size=theme.sz_col_title / desc: size=theme.sz_body
+        pass
+
+
+R.register("{name}", render_{name})
+'''
 
 
 SAMPLE_SLIDE_TEMPLATE = """\
@@ -51,34 +100,13 @@ slide {name}
 
 def step_init(args):
     """Phase 1: 雛形を作る"""
-    spec = {
-        "name": args.name,
-        "intent": args.intent,
-        "uses_header": True,
-        "uses_foot": True,
-        "element": "col",
-        "count_rule": args.count,
-        "layout": args.layout,
-        "highlight": "accent",
-        "regions": [
-            {"role": "title", "size": "col_title"},
-            {"role": "desc",  "size": "body"},
-        ],
-    }
-    SPECS.mkdir(exist_ok=True)
-    spec_path = SPECS / f"{args.name}.json"
-    spec_path.write_text(json.dumps(spec, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"  ✓ 型スペック: {spec_path}")
-
     # render関数の雛形を生成
     render_path = SLIDEGEN / f"render_{args.name}.py"
     if render_path.exists() and not args.force:
         print(f"  ! {render_path} が既に存在。--force で上書き")
     else:
-        subprocess.run([
-            sys.executable, "-m", "slidegen.scaffold_type",
-            str(spec_path), "-o", str(render_path),
-        ], check=True, cwd=str(ROOT))
+        render_path.write_text(
+            scaffold(args.name, args.intent, args.layout, args.count), encoding="utf-8")
         print(f"  ✓ レンダラ雛形: {render_path}")
 
     # __init__.py に登録を追加（自動）

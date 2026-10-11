@@ -232,4 +232,4 @@ x.com/j_matsugami/status/1736163815744762062（経産省報告書 p.34・アク�
 
 ## 運用機能（型ではないが重要）
 
-✅ 手編集同期(sync.py)：生成→人がPowerPointで文言修正→`python -m slidegen.sync x.slide x.pptx --apply`で記法に反映。生成と手修正のループが回る。
+✅ 手編集同期(sync.py)：生成→人がPowerPointで文言修正→`slidegen sync x.slide x.pptx --apply`で記法に反映。生成と手修正のループが回る。

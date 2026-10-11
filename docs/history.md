@@ -164,3 +164,13 @@ RENDERERS を 100型 → 168型 に拡充してカタログの📋をゼロに�
 - `docs/plans/2026-08-agent-skills-transition.md`（完走済み実行計画。本ファイルに吸収）
 - `skills/slidegen/references/phase-prompts.md`（旧 Web アプリの壁打ちフェーズプロンプトの
   出自保存用残置。要点は SKILL.md 本文に編み込み済みで役目を終えた）
+
+## YAGNI 方針での整理
+
+使われていない／二重になっていた仕組みを削除した（全文は git 履歴で参照可能）。
+
+- `slidegen/cli.py` と `sync.py` の `main()`（`python -m slidegen.cli` / `python -m slidegen.sync` の
+  後方互換入口）。統合CLI `slidegen build` / `slidegen sync` と同一ロジックの重複だったため一本化。
+- `slidegen/scaffold_type.py` と型スペック JSON（`type_specs/`）の中間表現。雛形生成は開発専用のため
+  wheel から外し、`tools/new_type.py` に直接組み込んだ（JSON の未使用フィールドも廃止）。
+- 未使用コード（`render_relations._add_triangle`、`render_tech._mono_text` の `on_dark` 引数など）。

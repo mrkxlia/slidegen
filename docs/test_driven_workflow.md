@@ -68,7 +68,6 @@ make new TYPE=pyramid_inverted \
 ```
 
 これで以下が自動生成される:
-- `type_specs/pyramid_inverted.json` — 型スペック
 - `slidegen/render_pyramid_inverted.py` — レンダラ雛形（TODO付き）
 - `examples/pyramid_inverted.slide` — サンプル記法のスケルトン
 - `slidegen/__init__.py` に登録を追加

@@ -41,12 +41,6 @@ def _add_oval(slide, x, y, w, h, theme, color_name):
     return shp
 
 
-def _add_triangle(slide, x, y, w, h, theme, color_name):
-    shp = slide.shapes.add_shape(MSO_SHAPE.ISOSCELES_TRIANGLE, x, y, w, h)
-    fill_shape(shp, theme, color_name, no_shadow=True)
-    return shp
-
-
 # ---------------------------------------------------------------------------
 # matrix — 2x2 マトリクス（4象限）
 #   ・横軸/縦軸ラベルは props["x_axis"], props["y_axis"] か "横軸"/"縦軸"
@@ -384,7 +378,6 @@ def render_timeline(slide, data: Slide, theme):
         # 上下交互配置（i偶数：上、奇数：下）
         up = (i % 2 == 0)
         label_h = Inches(0.5)
-        desc_h = Inches(1.0)
         if up:
             ly = line_y - Inches(1.5)
             dy = line_y - Inches(0.55)

@@ -5,10 +5,7 @@ __main__.py — 統合CLI。`slidegen` コマンド／`python -m slidegen` の�
   slidegen build  input.slide -o out.pptx [--template company.potx]
   slidegen sync   original.slide edited.pptx [--apply] [-o updated.slide]
 
-後方互換：従来の `python -m slidegen.cli` / `python -m slidegen.sync` も
-そのまま使える（cli.py / sync.py の main() を温存）。本ファイルはそれらと同じ
-ロジックを薄く再構成し、build は api.render_file を、sync は sync モジュールの
-関数を再利用する。
+build は api.render_file を、sync は sync モジュールの関数を再利用する。
 """
 from __future__ import annotations
 import argparse
