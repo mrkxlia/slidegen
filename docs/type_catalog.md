@@ -168,7 +168,8 @@ tsundoku library の資料作成ノウハウ記事5本（詳細出典は
 ✅ tam_sam_som（市場規模の入れ子円。下端揃えOVAL3つ・TAM→SAM→SOM固定順。
   render_frameworks3.py）
 ✅ roadmap（レーン×期間のスパンバー。journey_mapのグリッド様式を踏襲し、rowsの期間指定
-  "Q1"/"Q1-Q3"を該当列にまたがるバーとして描画。render_frameworks2.py）
+  "Q1"/"Q1-Q3"を該当列にまたがるバーとして描画。期間の重ならないバーは同じ行に詰める。
+  milestones で期間見出し下に▲マイルストーン（上限4）。render_frameworks2.py）
 
 ### 39パターン（Cone社）再照合由来
 

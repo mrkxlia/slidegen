@@ -13,12 +13,13 @@ render_frameworks2.py — ビジネスフレーム個別型 第2弾。
 from __future__ import annotations
 import logging
 from pptx.util import Inches
+from pptx.enum.shapes import MSO_SHAPE
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 
 from . import render as R
 from .render import add_rect, add_text, render_header, render_foot, SLIDE_H, MARGIN, CONTENT_W
 from .parser import Slide, split_emphasis
-from .render_util import block_items, add_items_text, columns_geometry
+from .render_util import block_items, add_items_text, columns_geometry, fill_shape
 
 _log = logging.getLogger(__name__)
 
@@ -180,11 +181,14 @@ def render_journey_map(slide, data: Slide, theme):
 #   col "プロダクト"               # title=レーン名。highlightでバーをaccentに
 #     Q1-Q2 "OCR精度改善"          # rows: (期間指定, 施策名)。"Q1"単一 or "開始-終了"範囲
 #     Q3-Q4 "API公開"
-# 期間名が periods に見つからない場合は警告ログ＋そのバーをスキップ。
-# レーン内の複数バーはサブ行に分けて縦に並べる（期間が重なっても衝突しない）。
+#   milestones "Q2:β版公開" "Q4:GA"  # 任意。期間名:ラベル で期間見出しの下に▲を打つ
+# 期間名が periods に見つからない場合は警告ログ＋そのバー/マイルストーンをスキップ。
+# レーン内のバーは期間が重ならない限り同じサブ行に詰め、重なるときだけ下のサブ行へ送る。
 # ---------------------------------------------------------------------------
 _ROADMAP_MAX_LANES = 4
 _ROADMAP_MAX_BARS_PER_LANE = 4
+# S2（シェイプ数上限）を守るため▲+ラベルの2図形×4個まで
+_ROADMAP_MAX_MILESTONES = 4
 
 def _roadmap_span(label: str, periods: list[str]):
     """期間指定を (開始index, 終了index) に解決する。解決不能なら None。"""
@@ -197,6 +201,38 @@ def _roadmap_span(label: str, periods: list[str]):
             i, j = periods.index(start), periods.index(end)
             return min(i, j), max(i, j)
     return None
+
+def _roadmap_pack(spans: list[tuple[int, int]]) -> list[int]:
+    """各バーのサブ行番号を返す。記述順に、期間が重ならない最初のサブ行へ詰める。"""
+    rows: list[list[tuple[int, int]]] = []
+    out = []
+    for j0, j1 in spans:
+        for k, used in enumerate(rows):
+            if all(j1 < u0 or j0 > u1 for u0, u1 in used):
+                used.append((j0, j1))
+                out.append(k)
+                break
+        else:
+            rows.append([(j0, j1)])
+            out.append(len(rows) - 1)
+    return out
+
+def _roadmap_milestones(data: Slide, periods: list[str]) -> list[tuple[int, str]]:
+    """milestones "期間名:ラベル" ... を (期間index, ラベル) に解決する。"""
+    specs = data.props.get("milestones_list")
+    if specs is None:
+        single = data.props.get("milestones")
+        specs = [single] if single else []
+    out = []
+    for spec in specs[:_ROADMAP_MAX_MILESTONES]:
+        name, _, label = spec.replace("：", ":").partition(":")
+        name = name.strip()
+        if name not in periods:
+            _log.warning("roadmap のマイルストーン %r は periods %s に解決できないためスキップします。",
+                         spec, periods)
+            continue
+        out.append((periods.index(name), label.strip()))
+    return out
 
 def render_roadmap(slide, data: Slide, theme):
     top = render_header(slide, data, theme)
@@ -228,8 +264,10 @@ def render_roadmap(slide, data: Slide, theme):
     grid_w = CONTENT_W - label_w
     cw = columns_geometry(grid_w, ncol, gap)
     header_h = Inches(0.5)
+    milestones = _roadmap_milestones(data, periods)
+    ms_h = Inches(0.55) if milestones else 0
     nrow = len(lanes)
-    rh = (avail_h - header_h - gap * nrow) / nrow
+    rh = (avail_h - header_h - ms_h - gap * nrow) / nrow
 
     # 期間見出し（journey_mapのステージ見出しと同じ様式）
     x0 = MARGIN + label_w
@@ -240,8 +278,24 @@ def render_roadmap(slide, data: Slide, theme):
                  size=12, color_name="on_main", bold=True,
                  align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
 
+    # マイルストーン帯（期間見出しの直下。列中央に▲、その下にラベル）
+    tri_w, tri_h = Inches(0.16), Inches(0.14)
+    for j, label in milestones:
+        cx = x0 + j * (cw + gap) + cw / 2
+        ty = top + header_h + Inches(0.04)
+        tri = slide.shapes.add_shape(MSO_SHAPE.ISOSCELES_TRIANGLE, int(cx - tri_w / 2), int(ty),
+                                     int(tri_w), int(tri_h))
+        fill_shape(tri, theme, "accent")
+        tri.shadow.inherit = False
+        # ラベルは▲中心のまま最大2列幅。端の列ではグリッドからはみ出ない幅まで狭める（2行に折り返す）
+        lw = max(cw, min(cw * 2 + gap, 2 * (cx - x0), 2 * (x0 + grid_w - cx)))
+        lx = cx - lw / 2
+        add_text(slide, int(lx), int(ty + tri_h), int(lw), int(ms_h - tri_h - Inches(0.04)), theme,
+                 label, size=10, color_name="ink", bold=True,
+                 align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.TOP)
+
     for i, b in enumerate(lanes):
-        y = top + header_h + gap + i * (rh + gap)
+        y = top + header_h + ms_h + gap + i * (rh + gap)
         add_rect(slide, int(MARGIN), int(y), int(label_w - gap), int(rh), theme,
                  "main_3", rounded=True)
         add_text(slide, int(MARGIN + Inches(0.1)), int(y), int(label_w - gap - Inches(0.2)),
@@ -259,8 +313,10 @@ def render_roadmap(slide, data: Slide, theme):
             entries.append((span, value))
         if not entries:
             continue
-        sub_h = (rh - gap * (len(entries) + 1)) / len(entries)
-        for k, ((j0, j1), value) in enumerate(entries):
+        slots = _roadmap_pack([span for span, _ in entries])
+        nsub = max(slots) + 1
+        sub_h = (rh - gap * (nsub + 1)) / nsub
+        for k, ((j0, j1), value) in zip(slots, entries):
             bx = x0 + j0 * (cw + gap)
             bw = cw * (j1 - j0 + 1) + gap * (j1 - j0)
             by = y + gap + k * (sub_h + gap)
